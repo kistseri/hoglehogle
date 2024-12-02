@@ -7,13 +7,15 @@ import 'package:hoho_hanja/main.dart';
 import 'package:hoho_hanja/screens/matching/matching_widgets/matching_counter.dart';
 import 'package:hoho_hanja/screens/matching/matching_widgets/matching_header.dart';
 import 'package:hoho_hanja/screens/matching/matching_widgets/matching_images.dart';
-import 'package:hoho_hanja/widgets/custom_appbar.dart';
+import 'package:hoho_hanja/widgets/appbar/custom_appbar.dart';
 
 class MatchingScreen extends StatefulWidget {
+  final String phase;
   final int? openPage;
 
   const MatchingScreen({
     super.key,
+    required this.phase,
     this.openPage,
   });
 
@@ -26,6 +28,7 @@ class _MatchingScreenState extends State<MatchingScreen> {
       CarouselSliderController();
   final MatchingDataController matchingDataController =
       Get.find<MatchingDataController>();
+
   int currentIndex = 0;
   int numOfItems = 64;
   List<bool> isFlippedList = [];
@@ -51,12 +54,12 @@ class _MatchingScreenState extends State<MatchingScreen> {
       backgroundColor: const Color(0xFFF9FFF1),
       appBar: const CustomAppBar(),
       body: Padding(
-        padding: EdgeInsets.only(bottom: 32.0.sp),
+        padding: EdgeInsets.only(bottom: 32.sp),
         child: Column(
           children: [
-            const Expanded(
+            Expanded(
               flex: 2,
-              child: MatchingHeader(),
+              child: MatchingHeader(phase: widget.phase),
             ),
             Expanded(
               flex: 8,
@@ -64,9 +67,17 @@ class _MatchingScreenState extends State<MatchingScreen> {
                 numOfItems: numOfItems,
                 carouselController: carouselController,
                 onFlip: (index) {
-                  String soundUrl =
-                      matchingDataController.matchingData[index].sound;
-                  effect.playFlipSound(soundUrl);
+                  if (!isFlippedList[index]) {
+                    String soundUrl =
+                        matchingDataController.matchingData[index].sound;
+                    effect.playFlipSound(soundUrl);
+                  }
+                  setState(() {
+                    isFlippedList[index] = !isFlippedList[index];
+                    imgList[index] = isFlippedList[index]
+                        ? 'https://sunandtree2.cafe24.com/app/memorize/80/img/8000${index + 1}_f.png'
+                        : 'https://sunandtree2.cafe24.com/app/memorize/80/img/8000${index + 1}_b.png';
+                  });
                 },
                 onPageChanged: (index) {
                   setState(() {

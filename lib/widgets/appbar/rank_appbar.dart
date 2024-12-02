@@ -9,6 +9,7 @@ import 'package:hoho_hanja/_core/size.dart';
 import 'package:hoho_hanja/_core/style.dart';
 import 'package:hoho_hanja/data/models/goods_data.dart';
 import 'package:hoho_hanja/data/models/login_data.dart';
+import 'package:hoho_hanja/main.dart';
 import 'package:hoho_hanja/services/auth/my_goods_service.dart';
 import 'package:hoho_hanja/utils/load_profile_image.dart';
 
@@ -46,6 +47,7 @@ class _RankAppBarState extends State<RankAppBar> {
             ),
           ),
           onPressed: () {
+            effect.tapSound();
             widget.onPressed();
           },
         ),

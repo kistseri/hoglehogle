@@ -12,6 +12,7 @@ import 'package:hoho_hanja/data/models/login_data.dart';
 import 'package:hoho_hanja/screens/myroom/myroom_wigets/my_room_item.dart';
 import 'package:hoho_hanja/services/auth/my_goods_service.dart';
 import 'package:hoho_hanja/utils/load_profile_image.dart';
+import 'package:hoho_hanja/widgets/grade_dropdown_item.dart';
 
 class HomeAppBar extends StatefulWidget implements PreferredSizeWidget {
   final ValueChanged<String> onValueChanged;
@@ -46,29 +47,43 @@ class _HomeAppBarState extends State<HomeAppBar> {
       leadingWidth: MediaQuery.of(context).size.width * 0.35,
       leading: Padding(
         padding: EdgeInsets.only(left: 8.r),
-        child: DropdownButton(
-          value: index,
-          onChanged: (int? value) {
-            setState(() {
-              index = value!;
-              widget.onValueChanged(value.toString());
-            });
-          },
-          underline: SizedBox.shrink(),
-          icon: Icon(
-            CupertinoIcons.chevron_down,
-            color: mFontWhite,
-            size: fontMedium,
-          ),
-          items: grades.entries.map((grades) {
-            return DropdownMenuItem<int>(
-              value: int.parse(grades.key),
-              child: GradeDropdownItem(
-                value: int.parse(grades.key),
-                gradeLabel: grades.value,
+        child: Row(
+          children: [
+            Container(
+              alignment: Alignment.center,
+              child: Text(
+                alias['$index']!,
+                style: TextStyle(
+                  color: mFontWhite,
+                  fontSize: 15.sp,
+                ),
               ),
-            );
-          }).toList(),
+            ),
+            DropdownButton(
+              value: index,
+              onChanged: (int? value) {
+                setState(() {
+                  index = value!;
+                  widget.onValueChanged(value.toString());
+                });
+              },
+              underline: SizedBox.shrink(),
+              icon: Icon(
+                CupertinoIcons.chevron_down,
+                color: mFontWhite,
+                size: fontMedium,
+              ),
+              items: grades.entries.map((grades) {
+                return DropdownMenuItem<int>(
+                  value: int.parse(grades.key),
+                  child: GradeDropdownItem(
+                    value: int.parse(grades.key),
+                    gradeLabel: grades.value,
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
         ),
       ),
       actions: [
@@ -151,62 +166,5 @@ class _HomeAppBarState extends State<HomeAppBar> {
           getImageProvider(box.get('${userId}_accessoriesImage')),
       'backgroundImage': getImageProvider(box.get('${userId}_backgroundImage')),
     };
-  }
-}
-
-class GradeDropdownItem extends StatelessWidget {
-  final int value;
-  final String gradeLabel;
-
-  const GradeDropdownItem({
-    super.key,
-    required this.value,
-    required this.gradeLabel,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return DropdownMenuItem(
-      value: value,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            alignment: Alignment.center,
-            child: Text(
-              '수재',
-              style: TextStyle(
-                color: mFontWhite,
-                fontSize: 15.sp,
-              ),
-            ),
-          ),
-          SizedBox(width: 2.w),
-          Padding(
-            padding: EdgeInsets.only(right: 8.r),
-            child: Container(
-              height: 18.h,
-              width: 35.w,
-              decoration: BoxDecoration(
-                color: mBackWhite,
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              alignment: Alignment.center,
-              child: FittedBox(
-                child: Text(
-                  gradeLabel,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: primaryColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

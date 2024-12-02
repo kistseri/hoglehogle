@@ -26,7 +26,7 @@ class RankData {
   RankData.fromJson(Map<String, dynamic> json)
       : result = json["result"],
         id = json["id"],
-        totalPoints = json["total_points"],
+        totalPoints = json["total_points"] ?? 0,
         nickName = json["nickname"],
         clothesImage = json["category10_item_img"],
         hatImage = json["category20_item_img"],

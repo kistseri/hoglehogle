@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hoho_hanja/screens/tracing/tracing_widgets/tracing_body.dart';
-import 'package:hoho_hanja/widgets/custom_appbar.dart';
+import 'package:hoho_hanja/widgets/appbar/custom_appbar.dart';
 
 class TracingScreen extends StatelessWidget {
   final String phase;

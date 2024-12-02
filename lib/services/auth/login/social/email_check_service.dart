@@ -27,6 +27,7 @@ Future<dynamic> emailCheckService(String email) async {
         final resultValue = result['result'];
         // "0000" == 존재하는 이메일
         // "9999" == 존재하지 않는 이메일
+        Logger().d(resultValue);
         return resultValue;
       }
       return "${response.statusCode}";

@@ -37,7 +37,10 @@ Future<void> matchingService(String phase, int? openPage) async {
               Get.put(MatchingDataController());
           matchingController.setMatchingDataList(matchingDataList);
 
-          Get.to(() => MatchingScreen(openPage: openPage));
+          Get.to(() => MatchingScreen(
+                openPage: openPage,
+                phase: phase,
+              ));
         }
         // 응답 데이터가 오류일 때("9999": 오류)
         else {

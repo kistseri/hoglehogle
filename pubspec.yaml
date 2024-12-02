@@ -45,12 +45,21 @@ dependencies:
   collection: ^1.18.0
   flutter_native_splash: ^2.4.3
   package_info_plus: ^8.1.1
+  device_info_plus: ^11.1.1
+  flutter_launcher_icons: ^0.14.1
 
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+
+flutter_launcher_icons:
+  android: "ic_launcher"
+  ios: "AppIcon"
+  image_path_ios: "assets/images/ic_launcher.png"
+  image_path_android: "assets/images/ic_launcher.png"
+  remove_alpha_ios: true
 
 
 flutter:
@@ -66,7 +75,8 @@ flutter:
 
     - assets/text/
 
-    - assets/bgm/
+    - assets/audio/bgm/
+    - assets/audio/effect/
 
     - .env
 

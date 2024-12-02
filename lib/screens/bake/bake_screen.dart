@@ -5,7 +5,7 @@ import 'package:hoho_hanja/main.dart';
 import 'package:hoho_hanja/screens/bake/bake_widgets/bake_bear.dart';
 import 'package:hoho_hanja/screens/bake/bake_widgets/bake_main.dart';
 import 'package:hoho_hanja/screens/bake/bake_widgets/bake_question.dart';
-import 'package:hoho_hanja/widgets/custom_appbar.dart';
+import 'package:hoho_hanja/widgets/appbar/custom_appbar.dart';
 
 class BakeScreen extends StatefulWidget {
   final String code;

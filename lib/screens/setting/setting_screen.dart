@@ -11,9 +11,9 @@ import 'package:hoho_hanja/screens/auth/login/social_login_screen.dart';
 import 'package:hoho_hanja/screens/setting/setting_widgets/terms_and_privacy.dart';
 import 'package:hoho_hanja/services/auth/update/nickname_check_service.dart';
 import 'package:hoho_hanja/utils/logout.dart';
+import 'package:hoho_hanja/utils/sound.dart';
 import 'package:hoho_hanja/widgets/dialog/coupon_dialog.dart';
 import 'package:hoho_hanja/widgets/dialog/withdraw_dialog.dart';
-import 'package:volume_controller/volume_controller.dart';
 
 class SettingScreen extends StatefulWidget {
   const SettingScreen({super.key});
@@ -24,8 +24,9 @@ class SettingScreen extends StatefulWidget {
 
 class _SettingScreenState extends State<SettingScreen> {
   final loginController = Get.put(LoginDataController());
-  double effectVolume = 0;
-  double bgmVolume = 0;
+  final bgmController = BackgroundMusicController();
+  double effectVolume = 0.0;
+  double bgmVolume = 0.0;
   bool notificationsEnabled = true;
   bool isNickNameEditing = false;
   bool isCouponInsert = false;
@@ -36,23 +37,13 @@ class _SettingScreenState extends State<SettingScreen> {
     super.initState();
     nicknameController.text = loginController.loginData.value!.nickName;
     _loadVolume();
-    VolumeController().getVolume().then((volume) {
-      setState(() {
-        bgmVolume = volume;
-      });
-    });
-
-    VolumeController().listener((volume) {
-      setState(() {
-        bgmVolume = volume;
-      });
-    });
   }
 
   Future<void> _loadVolume() async {
     final box = Hive.box('settingBox');
     setState(() {
-      effectVolume = box.get('effectVolume', defaultValue: 0.5);
+      effectVolume = box.get('effectVolume', defaultValue: 0);
+      bgmVolume = box.get('bgmVolume', defaultValue: 0);
     });
   }
 
@@ -187,15 +178,15 @@ class _SettingScreenState extends State<SettingScreen> {
                   style: TextStyle(color: mFontSub, fontSize: 16.sp),
                 ),
                 title: Slider(
-                  value: bgmVolume,
+                  value: music.getVolume(),
                   min: 0.0,
                   max: 1.0,
                   inactiveColor: Colors.yellow,
                   activeColor: Colors.green,
                   onChanged: (value) {
                     setState(() {
-                      bgmVolume = value;
-                      VolumeController().setVolume(value);
+                      music.setVolume(value);
+                      _saveVolume('bgmVolume', value);
                     });
                   },
                 ),
@@ -207,16 +198,16 @@ class _SettingScreenState extends State<SettingScreen> {
                   style: TextStyle(color: mFontSub, fontSize: 16.sp),
                 ),
                 title: Slider(
-                  value: effectVolume,
+                  value: effect.getVolume(),
                   min: 0.0,
-                  max: 1.0,
+                  max: 10.0,
                   inactiveColor: Colors.yellow,
                   activeColor: Colors.green,
                   onChanged: (value) {
                     setState(() {
-                      effectVolume = value < 0.5 ? 0.0 : 1.0;
-                      effect.setVolume(effectVolume);
-                      _saveVolume('effectVolume', effectVolume);
+                      // effectVolume = value < 0.5 ? 0.0 : 1.0;
+                      effect.setVolume(value);
+                      _saveVolume('effectVolume', value);
                     });
                   },
                 ),
@@ -270,7 +261,7 @@ class _SettingScreenState extends State<SettingScreen> {
                 ),
               ),
               SizedBox(height: 20.h),
-
+              // 로그 아웃
               GestureDetector(
                 onTap: () {
                   Get.offAll(() => const LoginScreen());
@@ -295,7 +286,7 @@ class _SettingScreenState extends State<SettingScreen> {
                 ),
               ),
               SizedBox(height: 20.h),
-
+              // 회원 탈퇴
               GestureDetector(
                 onTap: () {
                   showWithdrawDialog();
@@ -330,7 +321,7 @@ class _SettingScreenState extends State<SettingScreen> {
 
   @override
   void dispose() {
-    VolumeController().removeListener();
+    bgmController.dispose();
     nicknameController.dispose();
     super.dispose();
   }

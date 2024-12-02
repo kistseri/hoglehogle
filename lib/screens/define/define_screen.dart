@@ -8,7 +8,7 @@ import 'package:hoho_hanja/_core/size.dart';
 import 'package:hoho_hanja/data/models/define_data.dart';
 import 'package:hoho_hanja/main.dart';
 import 'package:hoho_hanja/utils/result_service.dart';
-import 'package:hoho_hanja/widgets/custom_appbar.dart';
+import 'package:hoho_hanja/widgets/appbar/custom_appbar.dart';
 import 'package:hoho_hanja/widgets/dialog/result_dialog.dart';
 
 class DefineScreen extends StatefulWidget {

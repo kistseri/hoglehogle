@@ -1,39 +1,43 @@
 import 'package:just_audio/just_audio.dart';
 import 'package:logger/logger.dart';
 
-class BackgroundMusic {
-  final AudioPlayer _backgroundPlayer = AudioPlayer();
+class BackgroundMusicController {
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  double _volume = 0;
 
   Future<void> playBackgroundMusic(String page) async {
-    try {
-      if (page != 'main') {
-        await _backgroundPlayer.stop();
-      }
-      await _backgroundPlayer.setLoopMode(LoopMode.one);
-      await _backgroundPlayer.setAsset('assets/bgm/$page.mp3');
-      _backgroundPlayer.play();
-    } catch (e) {
-      Logger().e("배경음악 로드 중 오류 발생: $e");
-    }
+    await _audioPlayer.setAsset('assets/audio/bgm/$page.mp3');
+    _audioPlayer.setLoopMode(LoopMode.one);
+    _audioPlayer.setVolume(_volume);
+    _audioPlayer.play();
   }
 
-  Future<void> stopBackgroundMusic() async {
-    await _backgroundPlayer.stop();
+  void stopBackgroundMusic() {
+    _audioPlayer.stop();
   }
 
-  Future<void> dispose() async {
-    await _backgroundPlayer.dispose();
+  void setVolume(double volume) {
+    _volume = volume;
+    _audioPlayer.setVolume(_volume);
+  }
+
+  double getVolume() => _volume;
+
+  void dispose() {
+    _audioPlayer.dispose();
   }
 }
 
 class SoundEffects {
   final AudioPlayer _effectPlayer = AudioPlayer();
-  double _volume = 1.0;
+  double _volume = 0.0;
 
   void setVolume(double volume) {
     _volume = volume;
     _effectPlayer.setVolume(_volume);
   }
+
+  double getVolume() => _volume;
 
   Future<void> playFlipSound(String soundUrl) async {
     try {
@@ -46,7 +50,7 @@ class SoundEffects {
 
   Future<void> tapSound() async {
     try {
-      await _effectPlayer.setAsset('assets/bgm/click.mp3');
+      await _effectPlayer.setAsset('assets/audio/effect/click.mp3');
       _effectPlayer.play();
     } catch (e) {
       Logger().e("효과음 로드 중 오류 발생: $e");
@@ -56,7 +60,7 @@ class SoundEffects {
   Future<void> correctSound() async {
     if (_effectPlayer.volume > 0) {
       try {
-        await _effectPlayer.setAsset('assets/bgm/correct.mp3');
+        await _effectPlayer.setAsset('assets/audio/effect/correct.mp3');
         _effectPlayer.play();
       } catch (e) {
         Logger().e("효과음 로드 중 오류 발생: $e");
@@ -67,7 +71,7 @@ class SoundEffects {
   Future<void> wrongSound() async {
     if (_effectPlayer.volume > 0) {
       try {
-        await _effectPlayer.setAsset('assets/bgm/no.mp3');
+        await _effectPlayer.setAsset('assets/audio/effect/no.mp3');
         _effectPlayer.play();
       } catch (e) {
         Logger().e("효과음 로드 중 오류 발생: $e");

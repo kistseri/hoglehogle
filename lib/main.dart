@@ -9,6 +9,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:hoho_hanja/_core/style.dart';
 import 'package:hoho_hanja/screens/auth/login/social_login_screen.dart';
 import 'package:hoho_hanja/services/auth/login/auto_login.dart';
+import 'package:hoho_hanja/utils/check_app_version.dart';
 import 'package:hoho_hanja/utils/network_check.dart';
 import 'package:hoho_hanja/utils/sound.dart';
 import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart';
@@ -16,7 +17,7 @@ import 'package:path_provider/path_provider.dart';
 
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 final SoundEffects effect = SoundEffects();
-final BackgroundMusic music = BackgroundMusic();
+final BackgroundMusicController music = Get.put(BackgroundMusicController());
 
 Future<void> main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -30,6 +31,11 @@ Future<void> main() async {
 
   // 스토리지 초기화
   Get.put(const FlutterSecureStorage());
+
+  // 네트워크연결 초기화
+  Get.put(ConnectivityController());
+
+  await versionCheck();
 
   //화면 세로방향 고정
   await SystemChrome.setPreferredOrientations([
@@ -56,13 +62,10 @@ Future<void> main() async {
       splitScreenMode: true,
       builder: (context, child) {
         return GetMaterialApp(
-          debugShowCheckedModeBanner: false,
-          initialBinding: BindingsBuilder(() async {
-            Get.put(ConnectivityController());
-          }),
+          // initialBinding: BindingsBuilder(() async {}),
           theme: lightTheme,
           darkTheme: darkTheme,
-          themeMode: ThemeMode.system,
+          themeMode: ThemeMode.light,
           navigatorObservers: [routeObserver],
           home: const MyApp(),
           builder: (context, child) {
@@ -92,6 +95,7 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     autoLogin = checkAndPerformAutoLogin();
+    versionCheck();
   }
 
   @override

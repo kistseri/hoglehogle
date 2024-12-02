@@ -9,7 +9,7 @@ import 'package:hoho_hanja/data/models/my_room_data.dart';
 import 'package:hoho_hanja/screens/home/home_screen.dart';
 import 'package:hoho_hanja/screens/myroom/myroom_wigets/my_room_item.dart';
 import 'package:hoho_hanja/screens/myroom/myroom_wigets/my_room_tab.dart';
-import 'package:hoho_hanja/widgets/custom_appbar.dart';
+import 'package:hoho_hanja/widgets/appbar/custom_appbar.dart';
 
 class MyRoomScreen extends StatefulWidget {
   const MyRoomScreen({super.key});

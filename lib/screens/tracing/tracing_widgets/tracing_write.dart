@@ -7,7 +7,7 @@ import 'package:hoho_hanja/data/models/tracing_data.dart';
 import 'package:hoho_hanja/main.dart';
 import 'package:hoho_hanja/screens/tracing/tracing_widgets/tracing_word.dart';
 import 'package:hoho_hanja/utils/result_service.dart';
-import 'package:hoho_hanja/widgets/custom_appbar.dart';
+import 'package:hoho_hanja/widgets/appbar/custom_appbar.dart';
 import 'package:hoho_hanja/widgets/dialog/result_dialog.dart';
 import 'package:logger/logger.dart';
 

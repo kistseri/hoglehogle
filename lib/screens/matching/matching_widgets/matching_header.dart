@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hoho_hanja/_core/colors.dart';
+import 'package:hoho_hanja/_core/constants.dart';
 
 class MatchingHeader extends StatelessWidget {
-  const MatchingHeader({super.key});
+  final String phase;
+  const MatchingHeader({super.key, required this.phase});
 
   @override
   Widget build(BuildContext context) {
@@ -11,7 +13,7 @@ class MatchingHeader extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            '8급 한자 맞추기',
+            '${grades[phase]} 한자 맞추기',
             style: TextStyle(
                 color: mFontMain,
                 fontSize: 24.0.sp,

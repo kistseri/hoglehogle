@@ -6,7 +6,7 @@ import 'package:hoho_hanja/data/models/cookie_data.dart';
 import 'package:hoho_hanja/main.dart';
 import 'package:hoho_hanja/screens/cookie/cookie_widgets/cookie_game.dart';
 import 'package:hoho_hanja/screens/cookie/cookie_widgets/cookie_question.dart';
-import 'package:hoho_hanja/widgets/custom_appbar.dart';
+import 'package:hoho_hanja/widgets/appbar/custom_appbar.dart';
 
 class CookieScreen extends StatefulWidget {
   final String code;

@@ -125,17 +125,6 @@ const List<Color> gridElement = [
   Color(0xFF389988),
 ];
 
-// const List<String> kanji = [
-//   '日 月 火 水 木 金 土 口',
-//   '山 川 田 力 大 小 靑 白',
-//   '上 中 下 人 一 二 少 年',
-//   '三 四 五 六 七 八 九 十',
-//   '出 入 內 外 手 足 耳 目',
-//   '王 子 男 女 父 母 兄 弟',
-//   '東 西 南 北 韓 國 民 軍',
-//   '學 敎 先 生 敎 室 門 長',
-// ];
-
 const List<AssetImage> bakeIcons = [
   AssetImage('assets/images/bake/bake_b01.png'),
   AssetImage('assets/images/bake/bake_b02.png'),
@@ -159,6 +148,14 @@ Map<String, String> grades = {
   "60": "6급",
   "52": "준5급",
   "50": "5급",
+};
+Map<String, String> alias = {
+  "80": "수재",
+  "70": "신동",
+  "62": "천재",
+  "60": "박사",
+  "52": "한스쿨1",
+  "50": "한스쿨2",
 };
 
 Map<String, String> contentsCodes = {

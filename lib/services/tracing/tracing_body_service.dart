@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
+import 'package:hoho_hanja/_core/constants.dart';
 import 'package:hoho_hanja/_core/http.dart';
 import 'package:hoho_hanja/data/models/tracing_menu_data.dart';
 import 'package:hoho_hanja/screens/tracing/tracing_screen.dart';
@@ -42,7 +43,7 @@ Future<void> tracingBodyService(String phase, openPage) async {
           Get.to(
             () => TracingScreen(
               phase: phase,
-              code: tracingMenuDataController.tracingMenuDataList!.first.phase,
+              code: contentsCodes['tracing']!,
               openPage: openPage,
             ),
           );
