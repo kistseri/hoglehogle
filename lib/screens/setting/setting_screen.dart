@@ -42,8 +42,8 @@ class _SettingScreenState extends State<SettingScreen> {
   Future<void> _loadVolume() async {
     final box = Hive.box('settingBox');
     setState(() {
-      effectVolume = box.get('effectVolume', defaultValue: 0);
-      bgmVolume = box.get('bgmVolume', defaultValue: 0);
+      effectVolume = box.get('effectVolume', defaultValue: 0.0);
+      bgmVolume = box.get('bgmVolume', defaultValue: 0.0);
     });
   }
 

@@ -28,11 +28,11 @@
 				<key>CFBundleTypeRole</key>
 				<string>Editor</string>
 				<key>CFBundleURLName</key>
-				<string>hohohanja</string>
+				<string>hoglehogle</string>
 				<key>CFBundleURLSchemes</key>
 				<array>
-					<string>hohohanja</string>
-					<string>com.googleusercontent.apps.[IOS_CLIENT_ID]</string>
+					<string>hoglehogle</string>
+					<string>com.googleusercontent.apps.84498195538-kaftlg9rjvle8kv7re21qcteuag2ih3p</string>
 				</array>
 			</dict>
 		</array>
@@ -64,6 +64,6 @@
 		<key>UIViewControllerBasedStatusBarAppearance</key>
 		<false/>
 		<key>NSMicrophoneUsageDescription</key>
-        <string>이 앱은 마이크를 사용하지 않습니다.</string>
+		<string>이 앱은 마이크를 사용하지 않습니다.</string>
 	</dict>
 </plist>

@@ -26,6 +26,7 @@ class TracingWord extends StatefulWidget {
 }
 
 class _TracingWordState extends State<TracingWord> {
+  final customGloblaKey = GlobalKey();
   List<List<Offset>> _lines = [];
   List<Offset> _currentLine = [];
   double _top = 100;
@@ -53,6 +54,17 @@ class _TracingWordState extends State<TracingWord> {
 
   void _onReset() {
     resetTracing();
+  }
+
+  void _updatePointerPositionWithinBounds(Offset localPosition) {
+    RenderBox renderBox =
+        customGloblaKey.currentContext!.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+
+    setState(() {
+      _left = localPosition.dx.clamp(0.0, size.width - 50.w);
+      _top = localPosition.dy.clamp(0.0, size.height - 50.h);
+    });
   }
 
   Future<void> _loadSvgPathFromServer(Size size, int currentIndex) async {
@@ -141,6 +153,15 @@ class _TracingWordState extends State<TracingWord> {
 
   void _handlePan(DragUpdateDetails? updateDetails,
       {DragStartDetails? startDetails, DragEndDetails? endDetails}) {
+    RenderBox renderBox =
+        customGloblaKey.currentContext!.findRenderObject() as RenderBox;
+    final localPosition = updateDetails?.localPosition ??
+        startDetails?.localPosition ??
+        endDetails?.localPosition;
+
+    if (localPosition != null) {
+      _updatePointerPositionWithinBounds(localPosition);
+    }
     setState(() {
       if (startDetails != null) {
         _currentLine = [startDetails.localPosition];
@@ -208,6 +229,7 @@ class _TracingWordState extends State<TracingWord> {
           child: Stack(
             children: [
               CustomPaint(
+                key: customGloblaKey,
                 size: Size.infinite,
                 painter: TracingPainter(_lines, _currentLine,
                     clipPath: firstPaths,

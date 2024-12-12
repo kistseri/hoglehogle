@@ -4,6 +4,7 @@ import 'package:hoho_hanja/_core/colors.dart';
 import 'package:hoho_hanja/_core/size.dart';
 import 'package:hoho_hanja/data/models/rank_data.dart';
 import 'package:hoho_hanja/widgets/dashed_divider.dart';
+import 'package:logger/logger.dart';
 
 class RankingList extends StatelessWidget {
   final RankDataController rankDataController;
@@ -14,6 +15,7 @@ class RankingList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Logger().d('MediaQuery = ${MediaQuery.of(context).size.height * 0.7}');
     return Positioned(
       left: 0,
       right: 0,
@@ -22,7 +24,7 @@ class RankingList extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(50.r)),
         child: Container(
           color: mBackWhite,
-          height: MediaQuery.of(context).size.height * 0.7,
+          height: 450.h,
           child: Padding(
             padding:
                 EdgeInsets.only(top: gapHuge, right: gapHalf, left: gapHalf),

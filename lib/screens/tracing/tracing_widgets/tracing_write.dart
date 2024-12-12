@@ -92,7 +92,7 @@ class _TracingWriteState extends State<TracingWrite> {
         _updateNote();
       });
     } else {
-      String result = await resultService(widget.code, currentIndex + 1);
+      String result = await resultService(widget.code, completedPathCount + 1);
       resultDialog(Get.context!, completedPathCount + 1, totalIndex, result);
     }
   }

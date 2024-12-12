@@ -10,12 +10,17 @@ import 'package:hoho_hanja/_core/style.dart';
 import 'package:hoho_hanja/data/models/goods_data.dart';
 import 'package:hoho_hanja/data/models/login_data.dart';
 import 'package:hoho_hanja/screens/myroom/myroom_wigets/my_room_item.dart';
+import 'package:hoho_hanja/screens/purchase/purchase_screen.dart';
 import 'package:hoho_hanja/services/auth/my_goods_service.dart';
+import 'package:hoho_hanja/services/purchase/product_service.dart';
 import 'package:hoho_hanja/utils/load_profile_image.dart';
+import 'package:hoho_hanja/widgets/dialog/purchase_dialog.dart';
 import 'package:hoho_hanja/widgets/grade_dropdown_item.dart';
+import 'package:logger/logger.dart';
 
 class HomeAppBar extends StatefulWidget implements PreferredSizeWidget {
   final ValueChanged<String> onValueChanged;
+
   const HomeAppBar({super.key, required this.onValueChanged});
 
   @override
@@ -29,7 +34,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
   final goodsController = Get.put(GoodsDataController());
   final itemController = Get.put(MyroomItemController());
   final loginController = Get.put(LoginDataController());
-  int index = 80;
+  int phase = 80;
 
   @override
   void initState() {
@@ -39,8 +44,6 @@ class _HomeAppBarState extends State<HomeAppBar> {
 
   @override
   Widget build(BuildContext context) {
-    final ratio =
-        MediaQuery.of(context).size.width / MediaQuery.of(context).size.height;
     return AppBar(
       automaticallyImplyLeading: false,
       backgroundColor: mBoxGreen,
@@ -52,7 +55,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
             Container(
               alignment: Alignment.center,
               child: Text(
-                alias['$index']!,
+                alias['$phase']!,
                 style: TextStyle(
                   color: mFontWhite,
                   fontSize: 15.sp,
@@ -60,10 +63,10 @@ class _HomeAppBarState extends State<HomeAppBar> {
               ),
             ),
             DropdownButton(
-              value: index,
+              value: phase,
               onChanged: (int? value) {
                 setState(() {
-                  index = value!;
+                  phase = value!;
                   widget.onValueChanged(value.toString());
                 });
               },
@@ -108,17 +111,28 @@ class _HomeAppBarState extends State<HomeAppBar> {
                 ),
               ),
               SizedBox(width: gapQuarter),
-              Image.asset(
-                'assets/images/icon/diamond.png',
-              ),
-              SizedBox(width: 4.w),
-              Container(
-                alignment: Alignment.center,
-                child: Obx(
-                  () => Text(
-                    goodsController.formattedDia.value,
-                    style: outlineTextStyle(14.sp),
-                  ),
+              GestureDetector(
+                onTap: () async {
+                  Logger().d('다이아 클릭');
+                  await productService();
+                  // await testProductService();
+                },
+                child: Row(
+                  children: [
+                    Image.asset(
+                      'assets/images/icon/diamond.png',
+                    ),
+                    SizedBox(width: 4.w),
+                    Container(
+                      alignment: Alignment.center,
+                      child: Obx(
+                        () => Text(
+                          goodsController.formattedDia.value,
+                          style: outlineTextStyle(14.sp),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hoho_hanja/_core/colors.dart';
+import 'package:marquee/marquee.dart';
 
 class RankCard extends StatelessWidget {
   final String rank;
@@ -67,11 +68,18 @@ class RankCard extends StatelessWidget {
                           },
                         )),
                   ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(vertical: 4.h),
-                    child: Text(
-                      nickName,
-                      style: TextStyle(color: mFontWhite),
+                  SizedBox(
+                    height: 30,
+                    width: 200,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 4.h),
+                      child: Marquee(
+                        text: nickName,
+                        style: TextStyle(color: mFontWhite),
+                        scrollAxis: Axis.horizontal,
+                        velocity: 10.0,
+blankSpace: 30.0,
+                      ),
                     ),
                   ),
                   Container(
