@@ -10,6 +10,7 @@ class JoinTextField extends StatelessWidget {
   final String hintText;
   final String icon;
   final TextFieldType type;
+  final FocusNode? focusNode;
 
   const JoinTextField({
     super.key,
@@ -17,6 +18,7 @@ class JoinTextField extends StatelessWidget {
     required this.hintText,
     required this.icon,
     required this.type,
+    this.focusNode,
   });
 
   @override
@@ -26,6 +28,7 @@ class JoinTextField extends StatelessWidget {
       child: SizedBox(
         height: 50.h,
         child: TextField(
+          focusNode: focusNode,
           controller: controller,
           decoration: InputDecoration(
               hintText: hintText,

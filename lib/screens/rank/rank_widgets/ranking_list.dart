@@ -8,6 +8,7 @@ import 'package:logger/logger.dart';
 
 class RankingList extends StatelessWidget {
   final RankDataController rankDataController;
+
   const RankingList({
     super.key,
     required this.rankDataController,
@@ -15,7 +16,6 @@ class RankingList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Logger().d('MediaQuery = ${MediaQuery.of(context).size.height * 0.7}');
     return Positioned(
       left: 0,
       right: 0,

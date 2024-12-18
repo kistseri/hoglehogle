@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:hoho_hanja/_core/style.dart';
 import 'package:hoho_hanja/screens/auth/login/social_login_screen.dart';
+import 'package:hoho_hanja/screens/home/home_screen.dart';
 import 'package:hoho_hanja/services/auth/login/auto_login.dart';
 import 'package:hoho_hanja/utils/check_app_version.dart';
 import 'package:hoho_hanja/utils/network_check.dart';

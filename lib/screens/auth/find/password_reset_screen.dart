@@ -18,7 +18,7 @@ class PasswordResetScreen extends StatelessWidget {
         TextEditingController();
 
     return Scaffold(
-      appBar: AppBar(automaticallyImplyLeading: false),
+      appBar: AppBar(),
       body: Padding(
         padding: EdgeInsets.all(gapHalf),
         child: Column(

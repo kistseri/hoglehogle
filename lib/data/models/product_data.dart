@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 class ProductData {
   final String productName;
   final int dia;
-  final int? coin;
+  final int coin;
   final String color;
   final int price;
 
@@ -12,14 +12,14 @@ class ProductData {
     required this.dia,
     required this.color,
     required this.price,
-    this.coin,
+    required this.coin,
   });
 
   factory ProductData.fromJson(Map<String, dynamic> json) {
     return ProductData(
       productName: json['product_name'],
       dia: json['dia'],
-      coin: json['coin'],
+      coin: json['coin'] ?? 0,
       color: json['color'],
       price: json['price'],
     );

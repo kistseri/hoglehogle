@@ -35,8 +35,8 @@ Future<void> purchaseService(PurchaseDetails purchaseDetails, price) async {
       'product_name': purchaseDetails.productID,
       'price': price,
       'transaction_id': purchaseDetails.purchaseID,
-      'transacction_date': purchaseDetails.transactionDate,
-      'receiptData': purchaseDetails.verificationData.source,
+      'transaction_date': purchaseDetails.transactionDate,
+      'platform': purchaseDetails.verificationData.source,
       'status': purchaseDetails.status.name,
     };
 

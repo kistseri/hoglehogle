@@ -22,8 +22,6 @@ Future<String> resultService(code, count) async {
       'cnt': count,
     };
 
-    Logger().d(jsonEncode(requestData));
-
     // HTTP POST 요청
     final response = await dio.post(url, data: jsonEncode(requestData));
 

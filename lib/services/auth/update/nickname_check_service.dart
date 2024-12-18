@@ -9,12 +9,12 @@ import 'package:hoho_hanja/widgets/dialog/dialog.dart';
 import 'package:logger/logger.dart';
 
 // 닉네임 중복검사
-Future<void> nicknameCheckService(String nickname) async {
+Future<String> nicknameCheckService(String type, String nickname) async {
   final connectivityController = Get.put(ConnectivityController());
 
   if (connectivityController.isConnected.value) {
     String url = dotenv.get('NICKNAME_CHK_URL');
-
+    Logger().d('호출');
     final Map<String, dynamic> requestData = {
       'nickname': nickname,
     };
@@ -30,19 +30,31 @@ Future<void> nicknameCheckService(String nickname) async {
 
         // 응답 결과가 있는 경우
         if (resultValue == "0000") {
-          await nicknameUpdateService(nickname);
+          if (type == 'update') {
+            await nicknameUpdateService(nickname);
+          }
+          return 'available';
         }
         // 응답 데이터가 오류일 때("9999": 오류)
         else {
-          failDialog('변경 실패', '${result['message']}');
+          if (type == 'join') {
+            Logger().d('중복');
+          }
+          if (type == 'update') {
+            failDialog('변경 실패', '${result['message']}');
+          }
+          return 'duplication';
         }
       }
     }
     // 예외처리
     catch (e) {
       Logger().d('e = $e');
+      return '예외발생';
     }
   } else {
     failDialog("연결 실패", "인터넷 연결을 확인해주세요");
+    return '인터넷 연결 확인';
   }
+  return '';
 }

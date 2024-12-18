@@ -14,6 +14,7 @@ import 'package:hoho_hanja/utils/logout.dart';
 import 'package:hoho_hanja/utils/sound.dart';
 import 'package:hoho_hanja/widgets/dialog/coupon_dialog.dart';
 import 'package:hoho_hanja/widgets/dialog/withdraw_dialog.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class SettingScreen extends StatefulWidget {
   const SettingScreen({super.key});
@@ -103,7 +104,7 @@ class _SettingScreenState extends State<SettingScreen> {
                       trailing: GestureDetector(
                         onTap: () {
                           setState(() {
-                            nicknameCheckService(nicknameController.text);
+                            nicknameCheckService('update', nicknameController.text);
                             isNickNameEditing = false;
                           });
                         },
@@ -228,33 +229,36 @@ class _SettingScreenState extends State<SettingScreen> {
               // ),
               SizedBox(height: 20.h),
               // 쿠폰 등록
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    showCouponDialog(context);
-                  });
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Color(0xFF9AC4C9),
-                    borderRadius: BorderRadius.circular(10.r),
-                  ),
-                  child: Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(gapHalf),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.confirmation_number_outlined,
-                              color: mFontWhite),
-                          Text(
-                            '쿠폰번호 입력',
-                            style: TextStyle(
-                              color: mFontWhite,
-                              fontSize: 16.sp,
+              Visibility(
+                visible: Theme.of(context).platform == TargetPlatform.android,
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      showCouponDialog(context);
+                    });
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Color(0xFF9AC4C9),
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                    child: Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(gapHalf),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.confirmation_number_outlined,
+                                color: mFontWhite),
+                            Text(
+                              '쿠폰번호 입력',
+                              style: TextStyle(
+                                color: mFontWhite,
+                                fontSize: 16.sp,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),

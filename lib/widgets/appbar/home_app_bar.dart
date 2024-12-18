@@ -9,14 +9,13 @@ import 'package:hoho_hanja/_core/size.dart';
 import 'package:hoho_hanja/_core/style.dart';
 import 'package:hoho_hanja/data/models/goods_data.dart';
 import 'package:hoho_hanja/data/models/login_data.dart';
+import 'package:hoho_hanja/screens/home/home_screen.dart';
 import 'package:hoho_hanja/screens/myroom/myroom_wigets/my_room_item.dart';
 import 'package:hoho_hanja/screens/purchase/purchase_screen.dart';
 import 'package:hoho_hanja/services/auth/my_goods_service.dart';
 import 'package:hoho_hanja/services/purchase/product_service.dart';
 import 'package:hoho_hanja/utils/load_profile_image.dart';
-import 'package:hoho_hanja/widgets/dialog/purchase_dialog.dart';
 import 'package:hoho_hanja/widgets/grade_dropdown_item.dart';
-import 'package:logger/logger.dart';
 
 class HomeAppBar extends StatefulWidget implements PreferredSizeWidget {
   final ValueChanged<String> onValueChanged;
@@ -34,7 +33,9 @@ class _HomeAppBarState extends State<HomeAppBar> {
   final goodsController = Get.put(GoodsDataController());
   final itemController = Get.put(MyroomItemController());
   final loginController = Get.put(LoginDataController());
-  int phase = 80;
+  final homeController = Get.find<HomeController>();
+
+  // int phase = 80;
 
   @override
   void initState() {
@@ -54,21 +55,23 @@ class _HomeAppBarState extends State<HomeAppBar> {
           children: [
             Container(
               alignment: Alignment.center,
-              child: Text(
-                alias['$phase']!,
-                style: TextStyle(
-                  color: mFontWhite,
-                  fontSize: 15.sp,
+              child: Obx(
+                () => Text(
+                  alias[homeController.homeValue.value]!,
+                  style: TextStyle(
+                    color: mFontWhite,
+                    fontSize: 15.sp,
+                  ),
                 ),
               ),
             ),
             DropdownButton(
-              value: phase,
+              value: int.parse(homeController.homeValue.value),
               onChanged: (int? value) {
-                setState(() {
-                  phase = value!;
+                if(value != null){
+                  homeController.homeValueUpdate(value.toString());
                   widget.onValueChanged(value.toString());
-                });
+                }
               },
               underline: SizedBox.shrink(),
               icon: Icon(
@@ -113,7 +116,6 @@ class _HomeAppBarState extends State<HomeAppBar> {
               SizedBox(width: gapQuarter),
               GestureDetector(
                 onTap: () async {
-                  Logger().d('다이아 클릭');
                   await productService();
                   // await testProductService();
                 },

@@ -8,6 +8,7 @@ import 'package:hoho_hanja/utils/verification.dart';
 class Verification extends StatelessWidget {
   final String id;
   final bool isJoin;
+
   Verification({super.key, required this.id, required this.isJoin});
 
   final VerificationController controller = Get.put(VerificationController());
@@ -16,6 +17,7 @@ class Verification extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: mBackWhite,
+      appBar: AppBar(),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -123,6 +125,7 @@ class ConfirmButton extends StatelessWidget {
   final String text;
   final String id;
   final bool isJoin;
+
   const ConfirmButton(
       {super.key, required this.text, required this.id, required this.isJoin});
 

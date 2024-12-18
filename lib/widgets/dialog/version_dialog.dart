@@ -18,7 +18,7 @@ void versionDialog(String platform) {
         url =
             'https://play.google.com/store/apps/details?id=com.hohoedu.hoglehogle';
       } else if (platform == "IOS") {
-        url = 'https://apps.apple.com/app/id123456789'; // TODO:앱스토어 등록 이후 수정
+        url = 'https://apps.apple.com/app/id6738404467';
       }
 
       if (await canLaunchUrl(Uri.parse(url))) {

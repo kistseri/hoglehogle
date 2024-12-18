@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:hoho_hanja/main.dart';
 import 'package:hoho_hanja/screens/home/home_widgets/home_body.dart';
 import 'package:hoho_hanja/screens/myroom/my_room_screen.dart';
@@ -10,8 +11,17 @@ import 'package:hoho_hanja/widgets/appbar/custom_appbar.dart';
 import 'package:hoho_hanja/widgets/appbar/home_app_bar.dart';
 import 'package:hoho_hanja/widgets/appbar/rank_appbar.dart';
 import 'package:hoho_hanja/widgets/custom_bottom.dart';
+import 'package:logger/logger.dart';
 
 import '../../utils/contents_lock.dart';
+
+class HomeController extends GetxController {
+  final homeValue = "80".obs;
+
+  void homeValueUpdate(String value) {
+    homeValue.value = value;
+  }
+}
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -23,14 +33,15 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen>
     with WidgetsBindingObserver, RouteAware {
   int _selectedIndex = 2;
-  String _homeValue = "80";
+  final HomeController homeController =
+      Get.put(HomeController(), permanent: true);
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     music.playBackgroundMusic('main');
-    contentsLock(_homeValue);
+    contentsLock(homeController.homeValue.value);
     rankService();
     myroomService();
   }
@@ -95,9 +106,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _onHomeAppBarValueChanged(String value) async {
     await contentsLock(value);
-    setState(() {
-      _homeValue = value;
-    });
+    homeController.homeValueUpdate(value);
   }
 
   PreferredSizeWidget? _buildAppBar() {
@@ -121,8 +130,10 @@ class _HomeScreenState extends State<HomeScreen>
       case 3:
         return const SettingScreen();
       default:
-        return HomeBody(
-          grade: _homeValue,
+        return Obx(
+          () => HomeBody(
+            grade: homeController.homeValue.value,
+          ),
         );
     }
   }
