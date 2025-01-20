@@ -8,13 +8,18 @@ import 'package:hoho_hanja/_core/size.dart';
 import 'package:hoho_hanja/data/models/login_data.dart';
 import 'package:hoho_hanja/main.dart';
 import 'package:hoho_hanja/screens/auth/login/social_login_screen.dart';
+import 'package:hoho_hanja/screens/setting/setting_widgets/coupon_button.dart';
+import 'package:hoho_hanja/screens/setting/setting_widgets/logout_button.dart';
 import 'package:hoho_hanja/screens/setting/setting_widgets/terms_and_privacy.dart';
+import 'package:hoho_hanja/screens/setting/setting_widgets/withdraw_button.dart';
 import 'package:hoho_hanja/services/auth/update/nickname_check_service.dart';
 import 'package:hoho_hanja/utils/logout.dart';
 import 'package:hoho_hanja/utils/sound.dart';
 import 'package:hoho_hanja/widgets/dialog/coupon_dialog.dart';
 import 'package:hoho_hanja/widgets/dialog/withdraw_dialog.dart';
+import 'package:logger/logger.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingScreen extends StatefulWidget {
   const SettingScreen({super.key});
@@ -30,7 +35,6 @@ class _SettingScreenState extends State<SettingScreen> {
   double bgmVolume = 0.0;
   bool notificationsEnabled = true;
   bool isNickNameEditing = false;
-  bool isCouponInsert = false;
   TextEditingController nicknameController = TextEditingController();
 
   @override
@@ -104,7 +108,8 @@ class _SettingScreenState extends State<SettingScreen> {
                       trailing: GestureDetector(
                         onTap: () {
                           setState(() {
-                            nicknameCheckService('update', nicknameController.text);
+                            nicknameCheckService(
+                                'update', nicknameController.text);
                             isNickNameEditing = false;
                           });
                         },
@@ -213,106 +218,15 @@ class _SettingScreenState extends State<SettingScreen> {
                   },
                 ),
               ),
-              // 푸시알림
-              // SwitchListTile(
-              //   title: Text(
-              //     '푸시 알림',
-              //     style: TextStyle(color: mFontSub, fontSize: 16.sp),
-              //   ),
-              //   activeColor: Colors.green,
-              //   value: notificationsEnabled,
-              //   onChanged: (value) {
-              //     setState(() {
-              //       notificationsEnabled = value;
-              //     });
-              //   },
-              // ),
               SizedBox(height: 20.h),
               // 쿠폰 등록
-              Visibility(
-                visible: Theme.of(context).platform == TargetPlatform.android,
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      showCouponDialog(context);
-                    });
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Color(0xFF9AC4C9),
-                      borderRadius: BorderRadius.circular(10.r),
-                    ),
-                    child: Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(gapHalf),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.confirmation_number_outlined,
-                                color: mFontWhite),
-                            Text(
-                              '쿠폰번호 입력',
-                              style: TextStyle(
-                                color: mFontWhite,
-                                fontSize: 16.sp,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              const CouponButton(),
               SizedBox(height: 20.h),
               // 로그 아웃
-              GestureDetector(
-                onTap: () {
-                  Get.offAll(() => const LoginScreen());
-                  logout();
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10.r),
-                      border: Border.all(color: Colors.grey)),
-                  child: Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(gapHalf),
-                      child: Text(
-                        '로그아웃',
-                        style: TextStyle(
-                          color: mFontSub,
-                          fontSize: 16.sp,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              const LogoutButton(),
               SizedBox(height: 20.h),
               // 회원 탈퇴
-              GestureDetector(
-                onTap: () {
-                  showWithdrawDialog();
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10.r),
-                      border: Border.all(color: Colors.grey)),
-                  child: Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(gapHalf),
-                      child: Text(
-                        '회원 탈퇴',
-                        style: TextStyle(
-                          color: mFontSub,
-                          fontSize: 16.sp,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              const WithdrawButton(),
               SizedBox(height: 20.h),
               // 서비스 약관 및 이용 동의
               const TermsAndPrivacy(),

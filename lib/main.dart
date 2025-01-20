@@ -11,6 +11,7 @@ import 'package:hoho_hanja/screens/auth/login/social_login_screen.dart';
 import 'package:hoho_hanja/screens/home/home_screen.dart';
 import 'package:hoho_hanja/services/auth/login/auto_login.dart';
 import 'package:hoho_hanja/utils/check_app_version.dart';
+import 'package:hoho_hanja/utils/coupon_screen.dart';
 import 'package:hoho_hanja/utils/network_check.dart';
 import 'package:hoho_hanja/utils/sound.dart';
 import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart';
@@ -37,6 +38,7 @@ Future<void> main() async {
   Get.put(ConnectivityController());
 
   await versionCheck();
+  await settingScreen();
 
   //화면 세로방향 고정
   await SystemChrome.setPreferredOrientations([

@@ -21,8 +21,8 @@ class MyroomItemController extends GetxController {
   final RxString selectedCategory = ''.obs;
   final RxInt selectedItem = (-1).obs;
   final RxString clothingImage = ''.obs; // 옷 이미지 URL
-  final RxString accessoriesImage = ''.obs; // 모자 이미지 URL
-  final RxString backgroundImage = ''.obs;
+  final RxString accessoriesImage = ''.obs; // 안경 이미지 URL
+  final RxString backgroundImage = ''.obs; // 배경 이미지 URL
   final RxString hatImage = ''.obs; // 모자 이미지 URL
   var characterImage = charcater[0].obs;
   int currentCharacter = 0;
