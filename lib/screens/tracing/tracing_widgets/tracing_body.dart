@@ -10,6 +10,7 @@ class TracingBody extends StatelessWidget {
   final String phase;
   final String code;
   final int openPage;
+  final bool isLocked;
   final tracingBodyData = Get.put(TracingMenuDataController());
 
   TracingBody({
@@ -17,6 +18,7 @@ class TracingBody extends StatelessWidget {
     required this.phase,
     required this.code,
     required this.openPage,
+    required this.isLocked,
   });
 
   @override
@@ -46,7 +48,7 @@ class TracingBody extends StatelessWidget {
                 itemBuilder: (context, index) {
                   return GestureDetector(
                     onTap: () async {
-                      await tracingService(phase, index, code, openPage);
+                      await tracingService(phase, index, code, openPage, isLocked);
                     },
                     child: tracingElements(index),
                   );

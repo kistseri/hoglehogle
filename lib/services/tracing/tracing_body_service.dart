@@ -11,7 +11,7 @@ import 'package:hoho_hanja/widgets/dialog/dialog.dart';
 import 'package:logger/logger.dart';
 
 // 따라쓰기
-Future<void> tracingBodyService(String phase, openPage) async {
+Future<void> tracingBodyService(String phase, openPage, isLocked) async {
   final connectivityController = Get.put(ConnectivityController());
 
   if (connectivityController.isConnected.value) {
@@ -22,20 +22,17 @@ Future<void> tracingBodyService(String phase, openPage) async {
     };
     // HTTP POST 요청
     final response = await dio.post(url, data: jsonEncode(requestData));
-
     try {
       // 응답을 성공적으로 받았을 때
       if (response.statusCode == 200) {
         final List<dynamic> resultList = json.decode(response.data);
-        Logger().d('resultList = $resultList');
-        Logger().d('resultList = ${resultList[0]}');
+
         final resultValue = resultList[0];
 
         // 응답 결과가 있는 경우
         if (resultValue != null) {
           List<TracingMenuData> tracingMenuDataList =
               resultList.map((item) => TracingMenuData.fromJson(item)).toList();
-
           final TracingMenuDataController tracingMenuDataController =
               Get.put(TracingMenuDataController());
           tracingMenuDataController.setTracingMenuData(tracingMenuDataList);
@@ -45,6 +42,7 @@ Future<void> tracingBodyService(String phase, openPage) async {
               phase: phase,
               code: contentsCodes['tracing']!,
               openPage: openPage,
+              isLocked: isLocked,
             ),
           );
         }

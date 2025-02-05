@@ -13,6 +13,7 @@ import 'package:hoho_hanja/widgets/dialog/result_dialog.dart';
 
 class DefineScreen extends StatefulWidget {
   final String code;
+
   const DefineScreen(this.code, {super.key});
 
   @override
@@ -23,13 +24,22 @@ class _DefineScreenState extends State<DefineScreen> {
   final defineController = Get.put(DefineDataController());
   int currentQuestionIndex = 0;
   int correctCount = 0;
+  int inCorrectCount = 0;
   List<Map<String, String>> incorrectAnswers = [];
   List<String> options = [];
+
+  bool isCorrect = false;
+  bool isWrong = false;
+  int? selectedIndex;
 
   @override
   void initState() {
     super.initState();
     music.playBackgroundMusic('quiz');
+    loadQuestion();
+  }
+
+  void loadQuestion() {
     options = List<String>.from(
         defineController.quiz[currentQuestionIndex]['options']);
     options.shuffle(Random());
@@ -38,25 +48,44 @@ class _DefineScreenState extends State<DefineScreen> {
   void checkAnswer(String selectedAnswer) async {
     String correctAnswer =
         defineController.quiz[currentQuestionIndex]['options'][0];
+
     if (selectedAnswer == correctAnswer) {
       effect.correctSound();
       correctCount++;
+      setState(() {
+        isCorrect = true;
+        isWrong = false;
+      });
+
+      await Future.delayed(Duration(milliseconds: 1000));
+
+      if (currentQuestionIndex < defineController.quiz.length - 1) {
+        setState(() {
+          currentQuestionIndex++;
+          selectedIndex = null;
+          isCorrect = false;
+          isWrong = false;
+          loadQuestion();
+        });
+      } else {
+        final coin =
+            await resultService(widget.code, correctCount - inCorrectCount);
+        resultDialog(
+          Get.context!,
+          correctCount - inCorrectCount,
+          defineController.quiz.length,
+          coin,
+        );
+      }
     } else {
       effect.wrongSound();
-    }
-
-    if (currentQuestionIndex < defineController.quiz.length - 1) {
       setState(() {
-        currentQuestionIndex++;
+        isWrong = true;
+        isCorrect = false;
+        if (!incorrectAnswers.contains(currentQuestionIndex)) {
+          inCorrectCount++;
+        }
       });
-    } else {
-      final coin = await resultService(widget.code, correctCount);
-      resultDialog(
-        Get.context!,
-        correctCount,
-        defineController.quiz.length,
-        coin,
-      );
     }
   }
 
@@ -64,12 +93,10 @@ class _DefineScreenState extends State<DefineScreen> {
   Widget build(BuildContext context) {
     Map<String, dynamic> currentQuestion =
         defineController.quiz[currentQuestionIndex];
-    String type = defineController.quiz[currentQuestionIndex]['type'];
-    String correctImage = defineController.quiz[currentQuestionIndex]['image'];
-    String correctText = defineController.quiz[currentQuestionIndex]['answer'];
-    String note = defineController.quiz[currentQuestionIndex]['note'];
-    List<String> options = List<String>.from(currentQuestion['options']);
-    options.shuffle(Random());
+    String type = currentQuestion['type'];
+    String correctImage = currentQuestion['image'];
+    String correctText = currentQuestion['answer'];
+    String note = currentQuestion['note'];
 
     return Scaffold(
       appBar: const CustomAppBar(),
@@ -141,69 +168,72 @@ class _DefineScreenState extends State<DefineScreen> {
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: gapHalf),
                 child: Row(
-                  children: [
-                    // 보기 1번
-                    Expanded(
-                      flex: 1,
-                      child: GestureDetector(
-                        onTap: () {
-                          checkAnswer(options[0]);
-                        },
-                        child: Padding(
-                          padding: EdgeInsets.only(right: gapQuarter),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: mBoxLightBlue,
-                              borderRadius: BorderRadius.circular(15.sp),
-                            ),
-                            child: Center(
-                              child: Text(
-                                options[0],
-                                style: TextStyle(
-                                    color: mFontMain,
-                                    fontSize: 50.sp,
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: type == "3" || type == "4"
-                                        ? 'NotoSansKR-SemiBold'
-                                        : 'G-Sans'),
+                  children: List.generate(
+                    2,
+                    (index) {
+                      return Expanded(
+                        flex: 1,
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              selectedIndex = index;
+                            });
+                            checkAnswer(options[index]);
+                          },
+                          child: Padding(
+                            padding: EdgeInsets.only(left: gapQuarter),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: mBoxLightBlue,
+                                borderRadius: BorderRadius.circular(15.sp),
+                              ),
+                              child: LayoutBuilder(
+                                builder: (context, constraints) {
+                                  return Stack(
+                                    children: [
+                                      Center(
+                                        child: Text(
+                                          options[index],
+                                          style: TextStyle(
+                                            color: mFontMain,
+                                            fontSize: 50.sp,
+                                            fontWeight: FontWeight.bold,
+                                            fontFamily:
+                                                type == "3" || type == "4"
+                                                    ? 'NotoSansKR-SemiBold'
+                                                    : 'G-Sans',
+                                          ),
+                                        ),
+                                      ),
+                                      if (selectedIndex == index)
+                                        isCorrect
+                                            ? Center(
+                                                child: Icon(
+                                                  Icons.circle_outlined,
+                                                  size: constraints.maxHeight,
+                                                  color: Colors.green,
+                                                ),
+                                              )
+                                            : isWrong
+                                                ? Center(
+                                                    child: Icon(
+                                                      Icons.close,
+                                                      size:
+                                                          constraints.maxHeight,
+                                                      color: Colors.red,
+                                                    ),
+                                                  )
+                                                : SizedBox(),
+                                    ],
+                                  );
+                                },
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ),
-                    // 보기 2번
-                    Expanded(
-                      flex: 1,
-                      child: GestureDetector(
-                        onTap: () {
-                          checkAnswer(options[1]);
-                        },
-                        child: Padding(
-                          padding: EdgeInsets.only(left: gapQuarter),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: mBoxLightBlue,
-                              borderRadius: BorderRadius.circular(15.sp),
-                            ),
-                            child: Center(
-                              child: Text(
-                                options[1],
-                                style: TextStyle(
-                                  color: mFontMain,
-                                  fontSize: 50.sp,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: type == "3" || type == "4"
-                                      ? 'NotoSansKR-SemiBold'
-                                      : 'G-Sans',
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
@@ -242,7 +272,7 @@ class _DefineScreenState extends State<DefineScreen> {
         child: Text(
           correctText,
           style: TextStyle(
-              color: mFontMain, fontSize: 75.sp, fontWeight: FontWeight.w900),
+              color: mFontMain, fontSize: 75.sp, fontWeight: FontWeight.w900,fontFamily: 'G-sans'),
         ),
       ),
     );

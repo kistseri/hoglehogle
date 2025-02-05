@@ -10,7 +10,7 @@ import 'package:hoho_hanja/widgets/dialog/dialog.dart';
 import 'package:logger/logger.dart';
 
 // 따라쓰기
-Future<void> tracingService(String phase, index, code, openPage) async {
+Future<void> tracingService(String phase, index, code, openPage, isLocked) async {
   final connectivityController = Get.put(ConnectivityController());
 
   if (connectivityController.isConnected.value) {
@@ -41,7 +41,7 @@ Future<void> tracingService(String phase, index, code, openPage) async {
 
           Get.to(() => TracingWrite(
                 code: code,
-                openPage: openPage,
+                openPage: isLocked ? resultList.length : openPage,
               ));
         }
         // 응답 데이터가 오류일 때("9999": 오류)

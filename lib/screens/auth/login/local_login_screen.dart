@@ -259,10 +259,35 @@ class _LocalLoginScreenState extends State<LocalLoginScreen> {
                                 ),
                                 GestureDetector(
                                   onTap: () {
-                                    loginService(
-                                      setLoginDTO(),
-                                      autoLoginCheckController.isChecked.value,
-                                    );
+                                    if (loginController
+                                        .emailController.text.isEmpty) {
+                                      Get.defaultDialog(
+                                        title: '로그인 실패',
+                                        middleText: '이메일을 입력해주세요.',
+                                        textConfirm: '확인',
+                                        buttonColor: primaryColor,
+                                        onConfirm: () {
+                                          Get.back();
+                                        },
+                                      );
+                                    } else if (loginController
+                                        .passwordController.text.isEmpty) {
+                                      Get.defaultDialog(
+                                        title: '로그인 실패',
+                                        middleText: '비밀번호를 입력해주세요.',
+                                        textConfirm: '확인',
+                                        buttonColor: primaryColor,
+                                        onConfirm: () {
+                                          Get.back();
+                                        },
+                                      );
+                                    } else {
+                                      loginService(
+                                        setLoginDTO(),
+                                        autoLoginCheckController
+                                            .isChecked.value,
+                                      );
+                                    }
                                   },
                                   child: Container(
                                     width: double.infinity,

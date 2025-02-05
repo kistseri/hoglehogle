@@ -13,10 +13,12 @@ import 'package:hoho_hanja/services/matching/matching_service.dart';
 import 'package:hoho_hanja/services/tracing/tracing_body_service.dart';
 import 'package:hoho_hanja/utils/connect_info.dart';
 import 'package:hoho_hanja/widgets/dialog/unlock_dilog.dart';
+import 'package:logger/logger.dart';
 
 class HomeMain extends StatelessWidget {
   final String grade;
   final contentsData = Get.put(ContentsDataController());
+  final wordCount = 0;
 
   HomeMain({
     super.key,
@@ -67,19 +69,10 @@ class HomeMain extends StatelessWidget {
                     onTap: () async {
                       await connectInfo(contentsCodes['tracing']);
                       await tracingBodyService(
-                          grade,
-                          isContentLocked(grade)
-                              ? 8
-                              : getOpenPage(contentsCodes['tracing']));
-                      // Get.to(
-                      //   () => TracingScreen(
-                      //     phase: grade,
-                      //     code: contentsCodes['tracing'] ?? '',
-                      //     openPage: isContentLocked(grade)
-                      //         ? 8
-                      //         : getOpenPage(contentsCodes['tracing']),
-                      //   ),
-                      // );
+                        grade,
+                        getOpenPage(contentsCodes['tracing']),
+                        isContentLocked(grade),
+                      );
                     },
                     child: Container(
                       height: 110.h,

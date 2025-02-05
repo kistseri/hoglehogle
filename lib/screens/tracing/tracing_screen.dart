@@ -6,11 +6,14 @@ class TracingScreen extends StatelessWidget {
   final String phase;
   final String code;
   final int openPage;
+  final bool isLocked;
+
   const TracingScreen({
     super.key,
     required this.phase,
     required this.code,
     required this.openPage,
+    required this.isLocked,
   });
 
   @override
@@ -18,7 +21,12 @@ class TracingScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFFFFEF0),
       appBar: const CustomAppBar(),
-      body: TracingBody(phase: phase, code: code, openPage: openPage),
+      body: TracingBody(
+        phase: phase,
+        code: code,
+        openPage: openPage,
+        isLocked: isLocked,
+      ),
     );
   }
 }

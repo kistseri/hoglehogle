@@ -1,11 +1,41 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hoho_hanja/data/models/tracing_data.dart';
 import 'package:hoho_hanja/screens/tracing/tracing_widgets/tracing_painter.dart';
 import 'package:hoho_hanja/utils/get_svg_path.dart';
 import 'package:logger/logger.dart';
 import 'package:path_drawing/path_drawing.dart';
+
+class StrokePath {
+  final Path path;
+  final String strokeClass;
+
+  StrokePath({required this.path, required this.strokeClass});
+}
+
+/// st1을 기준으로 그룹화하는 함수
+List<List<StrokePath>> groupPathsBySt1(List<StrokePath> strokes) {
+  List<List<StrokePath>> groups = [];
+  List<StrokePath> currentGroup = [];
+  for (var stroke in strokes) {
+    if (stroke.strokeClass == 'st1') {
+      // 새로운 그룹의 시작
+      if (currentGroup.isNotEmpty) {
+        groups.add(currentGroup);
+      }
+      currentGroup = [stroke];
+    } else {
+      // st1이 아닌 경우 현재 그룹에 추가
+      currentGroup.add(stroke);
+    }
+  }
+  if (currentGroup.isNotEmpty) {
+    groups.add(currentGroup);
+  }
+  return groups;
+}
 
 class TracingWord extends StatefulWidget {
   final TracingDataController tracingController;
@@ -32,8 +62,9 @@ class _TracingWordState extends State<TracingWord> {
   double _top = 100;
   double _left = 100;
   List<Path>? firstPaths;
-  List<Path> remainingPaths = [];
-  int currentPathIndex = 0;
+  List<StrokePath> remainingStrokePaths = [];
+  List<List<Path>> groupedPaths = [];
+  int currentGroupIndex = 0;
   Set<int> completedPaths = {};
 
   @override
@@ -67,6 +98,85 @@ class _TracingWordState extends State<TracingWord> {
     });
   }
 
+  //assets에서 SVG가져오기
+  // Future<void> _loadSvgPathFromAssets(Size size, int currentIndex) async {
+  //   try {
+  //     final svgData = await rootBundle.loadString('assets/images/mouth.svg');
+  //
+  //     final st0PathData = SvgPathParser.getPathsByClassFromData(svgData, 'st0');
+  //     if (st0PathData.isNotEmpty) {
+  //       setState(() {
+  //         const svgSize = Size(200, 248);
+  //         final scaleX = size.width / svgSize.width;
+  //         final scaleY = size.height / svgSize.height;
+  //
+  //         firstPaths = st0PathData.map((pathData) {
+  //           final path = parseSvgPathData(pathData);
+  //           return path
+  //               .transform(Matrix4.diagonal3Values(scaleX, scaleY, 1).storage);
+  //         }).toList();
+  //       });
+  //     } else {
+  //       Logger().d("class='st0' 속성을 가진 path 데이터를 찾을 수 없습니다.");
+  //     }
+  //
+  //     List<List<Path>> groupPaths(List<Path> paths, int groupSize) {
+  //       List<List<Path>> groups = [];
+  //       for (int i = 0; i < paths.length; i += groupSize) {
+  //         int endIndex =
+  //             (i + groupSize) > paths.length ? paths.length : (i + groupSize);
+  //         groups.add(paths.sublist(i, endIndex));
+  //       }
+  //       return groups;
+  //     }
+  //
+  //     final allElements = SvgPathParser.getAllElementsFromData(svgData);
+  //
+  //     setState(() {
+  //       remainingStrokePaths = allElements
+  //           .where((element) {
+  //             final classAttr = (element['class'])?.trim() ?? '';
+  //             return classAttr.contains('st1') ||
+  //                 classAttr.contains('st2') ||
+  //                 classAttr.contains('st3');
+  //           })
+  //           .map((element) {
+  //             String? dAttribute;
+  //             if (element['type'] == 'path') {
+  //               dAttribute = element['d'];
+  //             } else if (element['type'] == 'line') {
+  //               dAttribute =
+  //                   'M${element['x1']},${element['y1']} L${element['x2']},${element['y2']}';
+  //             }
+  //             if (dAttribute != null) {
+  //               final path = parseSvgPathData(dAttribute).transform(
+  //                   Matrix4.diagonal3Values(
+  //                           size.width / 200, size.height / 248, 1)
+  //                       .storage);
+  //               final strokeClass = (element['class'] as String?)?.trim() ?? '';
+  //               return StrokePath(path: path, strokeClass: strokeClass);
+  //             }
+  //             return null;
+  //           })
+  //           .where((s) => s != null)
+  //           .cast<StrokePath>()
+  //           .toList();
+  //
+  //       List<List<StrokePath>> groups = groupPathsBySt1(remainingStrokePaths);
+  //
+  //       groupedPaths =
+  //           groups.map((group) => group.map((s) => s.path).toList()).toList();
+  //
+  //       if (remainingStrokePaths.isNotEmpty) {
+  //         _updatePointerPositionForGroup(currentGroupIndex);
+  //       }
+  //     });
+  //   } catch (e) {
+  //     Logger().e("SVG 데이터를 불러오는 중 오류 발생: $e");
+  //   }
+  // }
+
+  // 서버에서 SVG가져오기
   Future<void> _loadSvgPathFromServer(Size size, int currentIndex) async {
     try {
       final response = await Dio()
@@ -74,15 +184,16 @@ class _TracingWordState extends State<TracingWord> {
 
       if (response.statusCode == 200) {
         final svgData = response.data;
-        final pathDataList =
+
+        final st0PathData =
             SvgPathParser.getPathsByClassFromData(svgData, 'st0');
-        if (pathDataList.isNotEmpty) {
+        if (st0PathData.isNotEmpty) {
           setState(() {
             const svgSize = Size(200, 248);
             final scaleX = size.width / svgSize.width;
             final scaleY = size.height / svgSize.height;
 
-            firstPaths = pathDataList.map((pathData) {
+            firstPaths = st0PathData.map((pathData) {
               final path = parseSvgPathData(pathData);
               return path.transform(
                   Matrix4.diagonal3Values(scaleX, scaleY, 1).storage);
@@ -92,10 +203,15 @@ class _TracingWordState extends State<TracingWord> {
           Logger().d("class='st0' 속성을 가진 path 데이터를 찾을 수 없습니다.");
         }
 
-        final remainingPathData = SvgPathParser.getAllElementsFromData(svgData);
+        final allElements = SvgPathParser.getAllElementsFromData(svgData);
         setState(() {
-          remainingPaths = remainingPathData
-              .where((element) => element['class'] == 'st1')
+          remainingStrokePaths = allElements
+              .where((element) {
+                final classAttr = (element['class'] as String?)?.trim() ?? '';
+                return classAttr.contains('st1') ||
+                    classAttr.contains('st2') ||
+                    classAttr.contains('st3');
+              })
               .map((element) {
                 String? dAttribute;
                 if (element['type'] == 'path') {
@@ -104,19 +220,28 @@ class _TracingWordState extends State<TracingWord> {
                   dAttribute =
                       'M${element['x1']},${element['y1']} L${element['x2']},${element['y2']}';
                 }
-                return dAttribute != null
-                    ? parseSvgPathData(dAttribute).transform(
-                        Matrix4.diagonal3Values(
-                                size.width / 200, size.height / 248, 1)
-                            .storage)
-                    : null;
+                if (dAttribute != null) {
+                  final path = parseSvgPathData(dAttribute).transform(
+                      Matrix4.diagonal3Values(
+                              size.width / 200, size.height / 248, 1)
+                          .storage);
+                  final strokeClass =
+                      (element['class'] as String?)?.trim() ?? '';
+                  return StrokePath(path: path, strokeClass: strokeClass);
+                }
+                return null;
               })
-              .where((path) => path != null)
-              .cast<Path>()
+              .where((s) => s != null)
+              .cast<StrokePath>()
               .toList();
 
-          if (remainingPaths.isNotEmpty) {
-            _updatePointerPosition();
+          List<List<StrokePath>> groups = groupPathsBySt1(remainingStrokePaths);
+
+          groupedPaths =
+              groups.map((group) => group.map((s) => s.path).toList()).toList();
+
+          if (remainingStrokePaths.isNotEmpty) {
+            _updatePointerPositionForGroup(currentGroupIndex);
           }
         });
       } else {
@@ -127,10 +252,10 @@ class _TracingWordState extends State<TracingWord> {
     }
   }
 
-  void _updatePointerPosition() {
-    if (currentPathIndex < remainingPaths.length) {
-      final pathMetric =
-          remainingPaths[currentPathIndex].computeMetrics().first;
+  void _updatePointerPositionForGroup(int groupIndex) {
+    if (groupIndex < groupedPaths.length &&
+        groupedPaths[groupIndex].isNotEmpty) {
+      final pathMetric = groupedPaths[groupIndex][0].computeMetrics().first;
       final startPoint = pathMetric.getTangentForOffset(0)?.position;
       if (startPoint != null) {
         setState(() {
@@ -141,13 +266,36 @@ class _TracingWordState extends State<TracingWord> {
     }
   }
 
+  bool _isCurrentGroupCompleted(List<Offset> drawnLine, List<Path> group) {
+    for (final path in group) {
+      bool pathCompleted = false;
+      for (final metric in path.computeMetrics()) {
+        for (double t = 0; t < metric.length; t += 1) {
+          final tangent = metric.getTangentForOffset(t);
+          if (tangent != null) {
+            for (final offset in drawnLine) {
+              if ((tangent.position - offset).distance < 5.0) {
+                pathCompleted = true;
+                break;
+              }
+            }
+          }
+          if (pathCompleted) break;
+        }
+        if (pathCompleted) break;
+      }
+      if (!pathCompleted) return false;
+    }
+    return true;
+  }
+
   void resetTracing() {
     setState(() {
       _lines.clear();
       _currentLine.clear();
-      currentPathIndex = 0;
+      currentGroupIndex = 0;
       completedPaths.clear();
-      _updatePointerPosition();
+      _updatePointerPositionForGroup(currentGroupIndex);
     });
   }
 
@@ -174,43 +322,25 @@ class _TracingWordState extends State<TracingWord> {
       } else if (endDetails != null) {
         _lines.add(List.from(_currentLine));
 
-        if (_isCurrentPathCompleted(_currentLine)) {
-          completedPaths.add(currentPathIndex);
-          currentPathIndex++;
+        if (_isCurrentGroupCompleted(
+            _currentLine, groupedPaths[currentGroupIndex])) {
+          completedPaths.add(currentGroupIndex);
+          currentGroupIndex++;
+
           _lines.removeLast();
 
-          if (currentPathIndex >= remainingPaths.length) {
+          if (currentGroupIndex >= groupedPaths.length) {
             widget.onComplete();
           } else {
-            _updatePointerPosition();
+            _updatePointerPositionForGroup(currentGroupIndex);
           }
         } else {
           _lines.removeLast();
         }
+
         _currentLine.clear();
       }
     });
-  }
-
-  bool _isCurrentPathCompleted(List<Offset> drawnLine) {
-    if (firstPaths == null || currentPathIndex >= firstPaths!.length) {
-      return false;
-    }
-
-    final path = firstPaths![currentPathIndex];
-    final pathMetrics = path.computeMetrics().toList();
-
-    for (final metric in pathMetrics) {
-      for (final offset in drawnLine) {
-        for (double t = 0; t < metric.length; t += 1) {
-          final tangent = metric.getTangentForOffset(t);
-          if (tangent != null && (tangent.position - offset).distance < 5.0) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
   }
 
   @override
@@ -231,11 +361,15 @@ class _TracingWordState extends State<TracingWord> {
               CustomPaint(
                 key: customGloblaKey,
                 size: Size.infinite,
-                painter: TracingPainter(_lines, _currentLine,
-                    clipPath: firstPaths,
-                    remainingPaths: remainingPaths,
-                    currentPathIndex: currentPathIndex,
-                    completedPaths: completedPaths),
+                painter: TracingPainter(
+                  _lines,
+                  _currentLine,
+                  clipPath: firstPaths,
+                  groupedPaths: groupedPaths,
+                  currentPathIndex: currentGroupIndex,
+                  completedPaths: completedPaths,
+                  isSt0Completed: currentGroupIndex >= groupedPaths.length,
+                ),
               ),
               Positioned(
                 top: _top,

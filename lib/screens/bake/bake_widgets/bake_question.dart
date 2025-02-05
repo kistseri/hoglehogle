@@ -4,6 +4,7 @@ import 'package:hoho_hanja/_core/colors.dart';
 
 class BakeQuestion extends StatelessWidget {
   final String question;
+
   const BakeQuestion({super.key, required this.question});
 
   @override
@@ -29,6 +30,7 @@ class BakeQuestion extends StatelessWidget {
               fontWeight: FontWeight.bold,
               color: mFontBrown,
             ),
+            textAlign: TextAlign.center,
             maxLines: 2,
             softWrap: true,
             overflow: TextOverflow.ellipsis,
@@ -41,7 +43,7 @@ class BakeQuestion extends StatelessWidget {
   String insertLineBreak(String text, int breakpoint) {
     if (text.length > 12) {
       int firstSpace = text.indexOf(' ');
-      int secondSpace = text.indexOf(' ', firstSpace + 1);
+      int secondSpace = text.indexOf(' ', firstSpace + 4);
 
       if (secondSpace != -1) {
         return text.replaceRange(secondSpace, secondSpace + 1, '\n');

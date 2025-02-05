@@ -60,6 +60,7 @@ class _BakeScreenState extends State<BakeScreen> {
           BakeQuestion(question: bakeData.bakeDataList[index].quize),
           // 보기 나오는 공간
           BakeMain(
+            code: widget.code,
             bakeData: bakeData,
             index: index,
             updateIndex: updateIndex,

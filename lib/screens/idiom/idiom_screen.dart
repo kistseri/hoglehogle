@@ -22,43 +22,71 @@ class IdiomScreen extends StatefulWidget {
 
 class _IdiomScreenState extends State<IdiomScreen> {
   final idiomController = Get.put(IdiomDataController());
-  List<String> options = [];
+  int currentQuestionIndex = 0;
   int correctCount = 0;
-  int index = 0;
+  int inCorrectCount = 0;
+  List<String> options = [];
+
+  bool isCorrect = false;
+  bool isWrong = false;
+  int? selectedIndex;
 
   @override
   void initState() {
-    music.playBackgroundMusic('idiom');
     super.initState();
+    music.playBackgroundMusic('idiom');
+    loadQuestion();
+  }
+
+  void loadQuestion() {
+    options = List<String>.from(
+        idiomController.idiom[currentQuestionIndex]['options']);
+    options.shuffle(Random());
   }
 
   void checkAnswer(String selectedAnswer) async {
-    String correctAnswer = idiomController.idiom[index]['options'][0];
-    setState(() {
-      if (correctAnswer == selectedAnswer) {
-        effect.correctSound();
-        correctCount++;
-      } else {
-        effect.wrongSound();
-      }
-    });
-    if (index < idiomController.idiom.length - 1) {
+    String correctAnswer =
+        idiomController.idiom[currentQuestionIndex]['options'][0];
+
+    if (selectedAnswer == correctAnswer) {
+      effect.correctSound();
+      correctCount++;
       setState(() {
-        index++;
+        isCorrect = true;
+        isWrong = false;
       });
+      await Future.delayed(Duration(milliseconds: 1000));
+
+      if (currentQuestionIndex < idiomController.idiom.length - 1) {
+        setState(() {
+          currentQuestionIndex++;
+          isCorrect = false;
+          isWrong = false;
+          loadQuestion();
+        });
+      } else {
+        final coin =
+            await resultService(widget.code, correctCount - inCorrectCount);
+        resultDialog(
+          Get.context!,
+          correctCount - inCorrectCount,
+          idiomController.idiom.length,
+          coin,
+        );
+      }
     } else {
-      final coin = await resultService(widget.code, correctCount);
-      resultDialog(
-          Get.context!, correctCount, idiomController.idiom.length, coin);
+      effect.wrongSound();
+      setState(() {
+        isWrong = true;
+        isCorrect = false;
+        inCorrectCount++;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    List<String> options =
-        List<String>.from(idiomController.idiom[index]['options']);
-    options.shuffle(Random());
 
     return Scaffold(
       backgroundColor: mBoxLilac,
@@ -97,7 +125,7 @@ class _IdiomScreenState extends State<IdiomScreen> {
                       RichText(
                         text: TextSpan(children: [
                           TextSpan(
-                            text: '${index + 1}',
+                            text: '${currentQuestionIndex + 1}',
                             style: TextStyle(
                               color: primaryColor,
                               fontSize: 20.sp,
@@ -117,7 +145,7 @@ class _IdiomScreenState extends State<IdiomScreen> {
                     ],
                   ),
                   Text(
-                    idiomController.idiomDataList[index].quize1,
+                    idiomController.idiomDataList[currentQuestionIndex].quize1,
                     style: TextStyle(
                         color: const Color(0xFF391E65),
                         fontSize: 40.sp,
@@ -129,28 +157,39 @@ class _IdiomScreenState extends State<IdiomScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       _buildHanjaButton(
-                          idiomController.idiomDataList[index].hanja1,
-                          idiomController.idiomDataList[index].randomNum == 1),
+                          idiomController
+                              .idiomDataList[currentQuestionIndex].hanja1,
+                          idiomController.idiomDataList[currentQuestionIndex]
+                                  .randomNum ==
+                              1),
                       _buildHanjaButton(
-                          idiomController.idiomDataList[index].hanja2,
-                          idiomController.idiomDataList[index].randomNum == 2),
+                          idiomController
+                              .idiomDataList[currentQuestionIndex].hanja2,
+                          idiomController.idiomDataList[currentQuestionIndex]
+                                  .randomNum ==
+                              2),
                       _buildHanjaButton(
-                          idiomController.idiomDataList[index].hanja3,
-                          idiomController.idiomDataList[index].randomNum == 3),
+                          idiomController
+                              .idiomDataList[currentQuestionIndex].hanja3,
+                          idiomController.idiomDataList[currentQuestionIndex]
+                                  .randomNum ==
+                              3),
                       _buildHanjaButton(
-                          idiomController.idiomDataList[index].hanja4,
-                          idiomController.idiomDataList[index].randomNum == 4),
+                          idiomController
+                              .idiomDataList[currentQuestionIndex].hanja4,
+                          idiomController.idiomDataList[currentQuestionIndex]
+                                  .randomNum ==
+                              4),
                     ],
                   ),
                   SizedBox(height: gapHalf),
                   Divider(),
-                  Padding(
-                    padding: EdgeInsets.all(gapHalf),
-                    child: Text(
-                      quizWrap(idiomController.idiomDataList[index].quize2),
-                      style: TextStyle(fontSize: 20.sp),
-                      textAlign: TextAlign.center,
-                    ),
+                  Text(
+                    quizWrap(idiomController
+                        .idiomDataList[currentQuestionIndex].quize2),
+                    // '일이삼사오육칠팔구십일이삼사오육칠',
+                    style: TextStyle(fontSize: 20.sp),
+                    textAlign: TextAlign.center,
                   ),
                 ],
               ),
@@ -171,10 +210,63 @@ class _IdiomScreenState extends State<IdiomScreen> {
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _buildAnswerButton(options[0]),
-            _buildAnswerButton(options[1]),
-          ],
+          children: List.generate(
+            2,
+            (index) {
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    selectedIndex = index;
+                  });
+                  checkAnswer(options[index]);
+                },
+                child: Container(
+                  width: 100.w,
+                  height: 100.h,
+                  decoration: BoxDecoration(
+                    color: mBoxYellow,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return Stack(
+                        children: [
+                          Center(
+                            child: Text(
+                              options[index],
+                              style: TextStyle(
+                                  color: mFontMain,
+                                  fontSize: 50.sp,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'G-Sans'),
+                            ),
+                          ),
+                          if (selectedIndex == index)
+                            isCorrect
+                                ? Center(
+                                    child: Icon(
+                                      Icons.circle_outlined,
+                                      size: constraints.maxWidth,
+                                      color: Colors.green,
+                                    ),
+                                  )
+                                : isWrong
+                                    ? Center(
+                                        child: Icon(
+                                          Icons.close,
+                                          size: constraints.maxWidth,
+                                          color: Colors.red,
+                                        ),
+                                      )
+                                    : SizedBox(),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
         ),
       ),
     );
@@ -202,64 +294,65 @@ class _IdiomScreenState extends State<IdiomScreen> {
     );
   }
 
-  Widget _buildAnswerButton(String hanja) {
-    return GestureDetector(
-      onTap: () {
-        checkAnswer(hanja);
-      },
-      child: Container(
-        width: 100.w,
-        height: 100.h,
-        decoration: BoxDecoration(
-          color: mBoxYellow,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Center(
-          child: Text(
-            hanja,
-            style: TextStyle(
-                color: mFontMain,
-                fontSize: 50.sp,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'G-Sans'),
-          ),
-        ),
-      ),
-    );
-  }
+  String quizWrap(String quiz) {
+    if (quiz.length <= 16) return quiz;
 
-  String quizWrap(String quiz2) {
-    int count = quiz2.replaceAll(' ', '').length;
+    List<String> sentences = quiz.split('. ');
+    StringBuffer formattedText = StringBuffer();
 
-    if (count >= 12) {
-      int dotIndex = quiz2.lastIndexOf('.');
+    for (int i = 0; i < sentences.length; i++) {
+      String sentence = sentences[i].trim();
+      if (sentence.isEmpty) continue;
 
-      if (dotIndex != -1) {
-        for (int i = dotIndex + 1; i < quiz2.length; i++) {
-          if (quiz2[i] == ' ') {
-            quiz2 = quiz2.substring(0, i) + '\n' + quiz2.substring(i + 1);
-            return quiz2;
-          }
-        }
-      } else {
-        int charCount = 0;
-
-        for (int i = 0; i < quiz2.length; i++) {
-          if (quiz2[i] != ' ') {
-            charCount++;
-          }
-          if (charCount == 12) {
-            for (int j = i + 1; j < quiz2.length; j++) {
-              if (quiz2[j] == ' ') {
-                quiz2 = quiz2.substring(0, j) + '\n' + quiz2.substring(j + 1);
-                return quiz2;
-              }
-            }
-          }
-        }
+      if (sentence.length > 16) {
+        sentence = splitLongSentence(sentence);
+      }
+      formattedText.write(sentence);
+      if (i < sentences.length - 1) {
+        formattedText.write('\n');
       }
     }
-    return quiz2;
+    return formattedText.toString();
+  }
+
+  String splitLongSentence(String text) {
+    List<String> words = text.split(' ');
+    StringBuffer newText = StringBuffer();
+    int lineLength = 0;
+    for (int i = 0; i < words.length; i++) {
+      String word = words[i];
+      if (lineLength + word.length > 16) {
+        if (newText.isNotEmpty && isPostposition(word)) {
+          newText.write(' ');
+        } else {
+          newText.write('\n');
+          lineLength = 0;
+        }
+      } else if (i != 0) {
+        newText.write(' ');
+        lineLength++;
+      }
+      newText.write(word);
+      lineLength += word.length;
+    }
+
+    return newText.toString();
+  }
+
+  bool isPostposition(String word) {
+    List<String> postpositions = [
+      '은',
+      '는',
+      '이',
+      '가',
+      '을',
+      '를',
+      '의',
+      '에',
+      '도',
+      '와'
+    ];
+    return postpositions.contains(word);
   }
 
   @override

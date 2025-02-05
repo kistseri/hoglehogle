@@ -12,6 +12,7 @@ import 'package:hoho_hanja/utils/result_service.dart';
 import 'package:hoho_hanja/widgets/dialog/result_dialog.dart';
 
 class BakeMain extends StatefulWidget {
+  final String code;
   final BakeDataController bakeData;
   final int index;
   final ValueChanged<int> updateIndex;
@@ -19,6 +20,7 @@ class BakeMain extends StatefulWidget {
 
   const BakeMain({
     super.key,
+    required this.code,
     required this.bakeData,
     required this.index,
     required this.updateIndex,
@@ -40,6 +42,7 @@ class _BakeMainState extends State<BakeMain> {
   Timer? _timer;
   int questionIndex = 0;
   int lineIndex = 1;
+  int correctCount = 0;
   List<AssetImage> selectedImage = [];
   List<List<String>> answers = [];
   bool isTouchable = true;
@@ -117,6 +120,7 @@ class _BakeMainState extends State<BakeMain> {
     if (selectedAnswer ==
         widget.bakeData.bakeQuetsion[widget.index]['correct']) {
       effect.correctSound();
+      correctCount++;
       if (widget.index == widget.bakeData.bakeDataList.length - 1) {
         gameOver();
       } else {
@@ -158,10 +162,10 @@ class _BakeMainState extends State<BakeMain> {
 
   void gameOver() async {
     _timer?.cancel();
-    String coin = await resultService("25", questionIndex + 1);
+    String coin = await resultService(widget.code, correctCount);
     resultDialog(
       Get.context!,
-      questionIndex + 1,
+      correctCount,
       widget.bakeData.bakeDataList.length,
       coin, //코인
     );

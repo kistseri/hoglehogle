@@ -21,7 +21,7 @@ class SvgPathParser {
         .findAllElements('path')
         .map((element) {
           final elementClass = element.getAttribute('class') ?? '';
-          if (elementClass != 'st3' && elementClass != 'st0') {
+          if (elementClass != 'st0') {
             return {
               'type': 'path',
               'd': element.getAttribute('d') ?? '',
