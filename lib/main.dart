@@ -20,6 +20,8 @@ import 'package:path_provider/path_provider.dart';
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 final SoundEffects effect = SoundEffects();
 final BackgroundMusicController music = Get.put(BackgroundMusicController());
+final double screenWidth = MediaQuery.of(Get.context!).size.width;
+final double screenHeight = MediaQuery.of(Get.context!).size.height;
 
 Future<void> main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();

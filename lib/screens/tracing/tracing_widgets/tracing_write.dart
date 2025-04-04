@@ -9,6 +9,7 @@ import 'package:hoho_hanja/screens/tracing/tracing_widgets/tracing_word.dart';
 import 'package:hoho_hanja/utils/result_service.dart';
 import 'package:hoho_hanja/widgets/appbar/custom_appbar.dart';
 import 'package:hoho_hanja/widgets/dialog/result_dialog.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:logger/logger.dart';
 
 class TracingWrite extends StatefulWidget {
@@ -31,6 +32,7 @@ class _TracingWriteState extends State<TracingWrite> {
 
   int currentIndex = 0;
   late final int totalIndex;
+  late AudioPlayer _audioPlayer;
   int completedPathCount = 0;
 
   String meaning = '';
@@ -41,6 +43,7 @@ class _TracingWriteState extends State<TracingWrite> {
     super.initState();
     totalIndex = widget.openPage;
     music.playBackgroundMusic('tracing');
+    _audioPlayer = AudioPlayer();
     _updateNote();
   }
 
@@ -81,11 +84,23 @@ class _TracingWriteState extends State<TracingWrite> {
     }
   }
 
+  Future<void> _playSound(String url) async {
+    try {
+      await _audioPlayer.setUrl(url);
+      _audioPlayer.play();
+    } catch (e) {
+      Logger().e("Error playing sound: $e");
+    }
+  }
+
   void _completeWord() async {
+    await _playSound(tracingController.tracingDataList![currentIndex].voice);
     if (currentIndex < totalIndex - 1 &&
         currentIndex < tracingController.tracingDataList!.length - 1) {
+      // music.completeWordMusic('https://hohoeduimg.speedgabia.com/write/voice/s01/word1.mp3');
       setState(() {
-        effect.correctSound();
+        // effect.correctSound();
+
         _onResetTracing();
         currentIndex++;
         completedPathCount++;
@@ -93,7 +108,11 @@ class _TracingWriteState extends State<TracingWrite> {
       });
     } else {
       String result = await resultService(widget.code, completedPathCount + 1);
-      resultDialog(Get.context!, completedPathCount + 1, totalIndex, result);
+      Future.delayed(
+        Duration(seconds: 1),
+        () => resultDialog(
+            Get.context!, completedPathCount + 1, totalIndex, result),
+      );
     }
   }
 

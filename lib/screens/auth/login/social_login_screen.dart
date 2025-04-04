@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hoho_hanja/_core/colors.dart';
+import 'package:hoho_hanja/main.dart';
 import 'package:hoho_hanja/screens/auth/login/login_widgets/social_login.dart';
+import 'package:logger/logger.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -37,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               Expanded(
-                flex: 75,
+                flex: screenHeight >= 1000 ? 45 : 75,
                 child: Container(
                   decoration: BoxDecoration(
                     color: mBackWhite,

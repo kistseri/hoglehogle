@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:hoho_hanja/_core/colors.dart';
 import 'package:hoho_hanja/_core/size.dart';
 import 'package:hoho_hanja/data/DTO/requestDTO/loginDTO.dart';
+import 'package:hoho_hanja/main.dart';
 import 'package:hoho_hanja/screens/auth/find/email_find_screen.dart';
 import 'package:hoho_hanja/screens/auth/find/password_find_screen.dart';
 import 'package:hoho_hanja/screens/auth/join/join_screen.dart';
@@ -134,7 +135,7 @@ class _LocalLoginScreenState extends State<LocalLoginScreen> {
                   ),
                 ),
                 Expanded(
-                  flex: 75,
+                  flex: screenHeight >= 1000 ? 45 : 75,
                   child: Container(
                     decoration: BoxDecoration(
                         color: mBackWhite,
@@ -154,7 +155,9 @@ class _LocalLoginScreenState extends State<LocalLoginScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                SizedBox(height: 40.h),
+                                Visibility(
+                                    visible: screenHeight < 1000,
+                                    child: SizedBox(height: 40.h)),
                                 // 이메일 TextField
                                 SizedBox(
                                   height: 50.h,
@@ -302,7 +305,9 @@ class _LocalLoginScreenState extends State<LocalLoginScreen> {
                                       child: Center(
                                         child: Text(
                                           '로그인',
-                                          style: TextStyle(color: Colors.white),
+                                          style: TextStyle(
+                                              fontSize: 20.sp,
+                                              color: Colors.white),
                                         ),
                                       ),
                                     ),

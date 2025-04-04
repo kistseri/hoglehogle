@@ -101,7 +101,7 @@ class _TracingWordState extends State<TracingWord> {
   //assets에서 SVG가져오기
   // Future<void> _loadSvgPathFromAssets(Size size, int currentIndex) async {
   //   try {
-  //     final svgData = await rootBundle.loadString('assets/images/mouth.svg');
+  //     final svgData = await rootBundle.loadString('assets/images/long.svg');
   //
   //     final st0PathData = SvgPathParser.getPathsByClassFromData(svgData, 'st0');
   //     if (st0PathData.isNotEmpty) {
@@ -336,6 +336,7 @@ class _TracingWordState extends State<TracingWord> {
           }
         } else {
           _lines.removeLast();
+          _updatePointerPositionForGroup(currentGroupIndex);
         }
 
         _currentLine.clear();

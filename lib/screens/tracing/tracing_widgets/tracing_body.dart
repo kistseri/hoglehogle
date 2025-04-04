@@ -28,12 +28,16 @@ class TracingBody extends StatelessWidget {
         padding: EdgeInsets.all(16.sp),
         child: Column(
           children: [
-            Text(
-              '획순 따라쓰기',
-              style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.bold),
+            Expanded(
+              flex: 1,
+              child: Text(
+                '획순 따라쓰기',
+                style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.bold),
+              ),
             ),
             SizedBox(height: 20.h),
             Expanded(
+              flex: 11,
               child: GridView.builder(
                 itemCount: tracingBodyData.tracingMenuDataList!.length,
                 physics: tracingBodyData.tracingMenuDataList!.length <= 8
