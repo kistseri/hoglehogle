@@ -3,8 +3,8 @@ import 'package:get/get.dart';
 import 'package:hoho_hanja/_core/colors.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-void versionDialog(String platform) {
-  Get.defaultDialog(
+Future<void> versionDialog(String platform) async{
+  await Get.defaultDialog(
     title: '버전 불일치',
     middleText: '최신 버전으로 업데이트 하시겠습니까?',
     textConfirm: '확인',

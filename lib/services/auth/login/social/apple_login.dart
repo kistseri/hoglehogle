@@ -21,6 +21,7 @@ Future<void> appleLogin() async {
 
     String result = await emailCheckService(credential.email ?? '');
     if (result == "0000") {
+      Logger().d(credential.userIdentifier);
       LoginData loginData = LoginData(
           id: credential.email ?? '', nickName: credential.givenName ?? '');
       final LoginDataController loginDataController =

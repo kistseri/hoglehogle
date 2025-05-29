@@ -99,8 +99,14 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    autoLogin = checkAndPerformAutoLogin();
-    versionCheck();
+    initAsync();
+  }
+
+  Future<void> initAsync() async {
+    final isVersionOk = await versionCheck();
+    if (isVersionOk) {
+      autoLogin = checkAndPerformAutoLogin();
+    }
   }
 
   @override

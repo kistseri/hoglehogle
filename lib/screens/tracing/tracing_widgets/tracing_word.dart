@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -13,28 +15,6 @@ class StrokePath {
   final String strokeClass;
 
   StrokePath({required this.path, required this.strokeClass});
-}
-
-/// st1을 기준으로 그룹화하는 함수
-List<List<StrokePath>> groupPathsBySt1(List<StrokePath> strokes) {
-  List<List<StrokePath>> groups = [];
-  List<StrokePath> currentGroup = [];
-  for (var stroke in strokes) {
-    if (stroke.strokeClass == 'st1') {
-      // 새로운 그룹의 시작
-      if (currentGroup.isNotEmpty) {
-        groups.add(currentGroup);
-      }
-      currentGroup = [stroke];
-    } else {
-      // st1이 아닌 경우 현재 그룹에 추가
-      currentGroup.add(stroke);
-    }
-  }
-  if (currentGroup.isNotEmpty) {
-    groups.add(currentGroup);
-  }
-  return groups;
 }
 
 class TracingWord extends StatefulWidget {
@@ -56,16 +36,19 @@ class TracingWord extends StatefulWidget {
 }
 
 class _TracingWordState extends State<TracingWord> {
-  final customGloblaKey = GlobalKey();
+  final customGlobalKey = GlobalKey();
   List<List<Offset>> _lines = [];
   List<Offset> _currentLine = [];
   double _top = 100;
   double _left = 100;
   List<Path>? firstPaths;
+  List<Path>? pointerPaths;
   List<StrokePath> remainingStrokePaths = [];
-  List<List<Path>> groupedPaths = [];
-  int currentGroupIndex = 0;
+  double scratchPercent = 0.0;
   Set<int> completedPaths = {};
+
+  int? _lastIndex;
+  int _currentPathIndex = 0;
 
   @override
   void initState() {
@@ -84,12 +67,18 @@ class _TracingWordState extends State<TracingWord> {
   }
 
   void _onReset() {
-    resetTracing();
+    setState(() {
+      _lines.clear();
+      _currentLine.clear();
+      completedPaths.clear();
+      _currentPathIndex = 0;
+      _updatePointer();
+    });
   }
 
   void _updatePointerPositionWithinBounds(Offset localPosition) {
     RenderBox renderBox =
-        customGloblaKey.currentContext!.findRenderObject() as RenderBox;
+        customGlobalKey.currentContext!.findRenderObject() as RenderBox;
     final size = renderBox.size;
 
     setState(() {
@@ -181,206 +170,205 @@ class _TracingWordState extends State<TracingWord> {
     try {
       final response = await Dio()
           .get(widget.tracingController.tracingDataList![currentIndex].svg);
-
       if (response.statusCode == 200) {
         final svgData = response.data;
-
         final st0PathData =
             SvgPathParser.getPathsByClassFromData(svgData, 'st0');
+        final st1PathData =
+            SvgPathParser.getPathsByClassFromData(svgData, 'st1');
         if (st0PathData.isNotEmpty) {
           setState(() {
             const svgSize = Size(200, 248);
             final scaleX = size.width / svgSize.width;
             final scaleY = size.height / svgSize.height;
-
             firstPaths = st0PathData.map((pathData) {
               final path = parseSvgPathData(pathData);
               return path.transform(
                   Matrix4.diagonal3Values(scaleX, scaleY, 1).storage);
             }).toList();
           });
-        } else {
-          Logger().d("class='st0' 속성을 가진 path 데이터를 찾을 수 없습니다.");
         }
-
+        if (st1PathData.isNotEmpty) {
+          setState(() {
+            const svgSize = Size(200, 248);
+            final scaleX = size.width / svgSize.width;
+            final scaleY = size.height / svgSize.height;
+            pointerPaths = st1PathData
+                .map((d) => parseSvgPathData(d).transform(
+                    Matrix4.diagonal3Values(scaleX, scaleY, 1).storage))
+                .toList();
+            _updatePointer(); // 포인터 초기 위치 세팅
+          });
+        }
         final allElements = SvgPathParser.getAllElementsFromData(svgData);
-        setState(() {
-          remainingStrokePaths = allElements
-              .where((element) {
-                final classAttr = (element['class'] as String?)?.trim() ?? '';
-                return classAttr.contains('st1') ||
-                    classAttr.contains('st2') ||
-                    classAttr.contains('st3');
-              })
-              .map((element) {
-                String? dAttribute;
-                if (element['type'] == 'path') {
-                  dAttribute = element['d'];
-                } else if (element['type'] == 'line') {
-                  dAttribute =
-                      'M${element['x1']},${element['y1']} L${element['x2']},${element['y2']}';
-                }
-                if (dAttribute != null) {
-                  final path = parseSvgPathData(dAttribute).transform(
-                      Matrix4.diagonal3Values(
-                              size.width / 200, size.height / 248, 1)
-                          .storage);
-                  final strokeClass =
-                      (element['class'] as String?)?.trim() ?? '';
-                  return StrokePath(path: path, strokeClass: strokeClass);
-                }
-                return null;
-              })
-              .where((s) => s != null)
-              .cast<StrokePath>()
-              .toList();
-
-          List<List<StrokePath>> groups = groupPathsBySt1(remainingStrokePaths);
-
-          groupedPaths =
-              groups.map((group) => group.map((s) => s.path).toList()).toList();
-
-          if (remainingStrokePaths.isNotEmpty) {
-            _updatePointerPositionForGroup(currentGroupIndex);
-          }
-        });
-      } else {
-        Logger().e("SVG 데이터를 서버로부터 가져오는 데 실패했습니다.");
+        remainingStrokePaths = allElements
+            .where((e) => ['st1', 'st2', 'st3'].contains(e['class']))
+            .map((e) {
+          String? d = e['type'] == 'path'
+              ? e['d']
+              : 'M${e['x1']},${e['y1']} L${e['x2']},${e['y2']}';
+          final path = parseSvgPathData(d!).transform(
+              Matrix4.diagonal3Values(size.width / 200, size.height / 248, 1)
+                  .storage);
+          return StrokePath(path: path, strokeClass: e['class']!);
+        }).toList();
+        _updatePointer();
       }
     } catch (e) {
-      Logger().e("SVG 데이터를 불러오는 중 오류 발생: $e");
+      Logger().e("SVG load error: $e");
     }
   }
 
-  void _updatePointerPositionForGroup(int groupIndex) {
-    if (groupIndex < groupedPaths.length &&
-        groupedPaths[groupIndex].isNotEmpty) {
-      final pathMetric = groupedPaths[groupIndex][0].computeMetrics().first;
-      final startPoint = pathMetric.getTangentForOffset(0)?.position;
-      if (startPoint != null) {
+  Future<void> _calculateScratchPercentAccurate(Size size) async {
+    if (firstPaths == null || firstPaths!.length <= _currentPathIndex) return;
+
+    final recorder = PictureRecorder();
+    final canvas = Canvas(recorder);
+    final path = firstPaths![_currentPathIndex];
+
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Paint()..color = Colors.white,
+    );
+    canvas.save();
+    canvas.clipPath(path);
+
+    final paint = Paint()
+      ..color = Colors.black
+      ..strokeWidth = 60.sp
+      ..strokeCap = StrokeCap.round;
+
+    for (var line in _lines) {
+      for (int i = 0; i < line.length - 1; i++) {
+        canvas.drawLine(line[i], line[i + 1], paint);
+      }
+    }
+    canvas.restore();
+
+    final picture = recorder.endRecording();
+    final image =
+        await picture.toImage(size.width.toInt(), size.height.toInt());
+    final byteData = await image.toByteData(format: ImageByteFormat.rawRgba);
+    if (byteData == null) return;
+
+    final bytes = byteData.buffer.asUint8List();
+    int total = 0, filled = 0;
+
+    for (int y = 0; y < size.height.toInt(); y++) {
+      for (int x = 0; x < size.width.toInt(); x++) {
+        final index = (y * size.width.toInt() + x) * 4;
+        final r = bytes[index];
+        final g = bytes[index + 1];
+        final b = bytes[index + 2];
+
+        final point = Offset(x.toDouble(), y.toDouble());
+        if (path.contains(point)) {
+          total++;
+          if (!(r == 255 && g == 255 && b == 255)) filled++;
+        }
+      }
+    }
+
+    final percent = filled / total;
+
+    setState(() {
+      scratchPercent = percent;
+    });
+
+    if (percent >= 0.8 && !completedPaths.contains(_currentPathIndex)) {
+      completedPaths.add(_currentPathIndex);
+
+      if (_currentPathIndex < firstPaths!.length - 1) {
         setState(() {
-          _top = startPoint.dy - 25;
-          _left = startPoint.dx - 25;
+          _currentPathIndex++;
+          _lines.clear();
+          _currentLine.clear();
+          scratchPercent = 0;
+          _updatePointer();
+        });
+      } else {
+        widget.onComplete();
+      }
+    }
+  }
+
+  void _updatePointer() {
+    if (pointerPaths != null && _currentPathIndex < pointerPaths!.length) {
+      final path = pointerPaths![_currentPathIndex];
+      final metric = path.computeMetrics().first;
+      final start = metric.getTangentForOffset(0)?.position;
+
+      if (start != null) {
+        setState(() {
+          _left = start.dx - 25;
+          _top = start.dy - 25;
         });
       }
     }
-  }
-
-  bool _isCurrentGroupCompleted(List<Offset> drawnLine, List<Path> group) {
-    for (final path in group) {
-      bool pathCompleted = false;
-      for (final metric in path.computeMetrics()) {
-        for (double t = 0; t < metric.length; t += 1) {
-          final tangent = metric.getTangentForOffset(t);
-          if (tangent != null) {
-            for (final offset in drawnLine) {
-              if ((tangent.position - offset).distance < 5.0) {
-                pathCompleted = true;
-                break;
-              }
-            }
-          }
-          if (pathCompleted) break;
-        }
-        if (pathCompleted) break;
-      }
-      if (!pathCompleted) return false;
-    }
-    return true;
-  }
-
-  void resetTracing() {
-    setState(() {
-      _lines.clear();
-      _currentLine.clear();
-      currentGroupIndex = 0;
-      completedPaths.clear();
-      _updatePointerPositionForGroup(currentGroupIndex);
-    });
-  }
-
-  void _handlePan(DragUpdateDetails? updateDetails,
-      {DragStartDetails? startDetails, DragEndDetails? endDetails}) {
-    RenderBox renderBox =
-        customGloblaKey.currentContext!.findRenderObject() as RenderBox;
-    final localPosition = updateDetails?.localPosition ??
-        startDetails?.localPosition ??
-        endDetails?.localPosition;
-
-    if (localPosition != null) {
-      _updatePointerPositionWithinBounds(localPosition);
-    }
-    setState(() {
-      if (startDetails != null) {
-        _currentLine = [startDetails.localPosition];
-        _top = startDetails.localPosition.dy - 25;
-        _left = startDetails.localPosition.dx - 25;
-      } else if (updateDetails != null) {
-        _currentLine.add(updateDetails.localPosition);
-        _top = updateDetails.localPosition.dy - 25;
-        _left = updateDetails.localPosition.dx - 25;
-      } else if (endDetails != null) {
-        _lines.add(List.from(_currentLine));
-
-        if (_isCurrentGroupCompleted(
-            _currentLine, groupedPaths[currentGroupIndex])) {
-          completedPaths.add(currentGroupIndex);
-          currentGroupIndex++;
-
-          _lines.removeLast();
-
-          if (currentGroupIndex >= groupedPaths.length) {
-            widget.onComplete();
-          } else {
-            _updatePointerPositionForGroup(currentGroupIndex);
-          }
-        } else {
-          _lines.removeLast();
-          _updatePointerPositionForGroup(currentGroupIndex);
-        }
-
-        _currentLine.clear();
-      }
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (firstPaths == null) {
+        if (firstPaths == null || _lastIndex != widget.currentIndex) {
+          _lastIndex = widget.currentIndex;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            setState(() {
+              firstPaths = null;
+              _lines.clear();
+              _currentLine.clear();
+              completedPaths.clear();
+              _currentPathIndex = 0;
+              scratchPercent = 0.0;
+            });
+          });
+
           _loadSvgPathFromServer(
               Size(constraints.maxWidth, constraints.maxHeight),
               widget.currentIndex);
         }
         return GestureDetector(
-          onPanStart: (details) => _handlePan(null, startDetails: details),
-          onPanUpdate: (details) => _handlePan(details),
-          onPanEnd: (details) => _handlePan(null, endDetails: details),
+          onPanUpdate: (d) {
+            RenderBox box =
+                customGlobalKey.currentContext!.findRenderObject() as RenderBox;
+            final pos = box.globalToLocal(d.globalPosition);
+
+            setState(() {
+              _currentLine.add(pos);
+              _top = pos.dy - 25;
+              _left = pos.dx - 25;
+            });
+          },
+          onPanEnd: (_) {
+            setState(() {
+              _lines.add(_currentLine);
+              _currentLine = [];
+            });
+            _calculateScratchPercentAccurate(constraints.biggest);
+          },
           child: Stack(
             children: [
               CustomPaint(
-                key: customGloblaKey,
+                key: customGlobalKey,
                 size: Size.infinite,
                 painter: TracingPainter(
                   _lines,
                   _currentLine,
                   clipPath: firstPaths,
-                  groupedPaths: groupedPaths,
-                  currentPathIndex: currentGroupIndex,
                   completedPaths: completedPaths,
-                  isSt0Completed: currentGroupIndex >= groupedPaths.length,
+                  scratchPercent: scratchPercent,
+                  groupedPaths: [],
+                  currentPathIndex: _currentPathIndex,
                 ),
               ),
               Positioned(
                 top: _top,
                 left: _left,
                 child: SizedBox(
-                  height: 50.h,
                   width: 50.w,
-                  child: Image.asset(
-                    'assets/images/icon/pointer.png',
-                  ),
+                  height: 50.h,
+                  child: Image.asset('assets/images/icon/pointer.png'),
                 ),
               ),
             ],

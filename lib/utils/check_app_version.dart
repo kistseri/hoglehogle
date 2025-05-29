@@ -9,42 +9,36 @@ import 'package:logger/logger.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 // 앱 버전 체크
-Future<void> versionCheck() async {
+Future<bool> versionCheck() async {
   final connectivityController = Get.put(ConnectivityController());
   if (connectivityController.isConnected.value) {
     String url = dotenv.get('APP_VERSION_URL');
 
-    // HTTP POST 요청
-    final response = await dio.post(url);
-
     try {
-      // 응답을 성공적으로 받았을 때
+      final response = await dio.post(url);
+
       if (response.statusCode == 200) {
         final List<dynamic> resultList = response.data;
+        final packageInfo = await PackageInfo.fromPlatform();
 
-        // 응답 결과가 있는 경우
         if (resultList[0]['result'] == "0000") {
-          final packageInfo = await PackageInfo.fromPlatform();
-          if (Platform.isAndroid) {
-            if (resultList[0]['Androidver'] != packageInfo.version) {
-              versionDialog("AOS");
-            }
+          if (Platform.isAndroid &&
+              resultList[0]['Androidver'] != packageInfo.version) {
+            await versionDialog("AOS");
+            return false; // 버전 불일치
           }
-          if (Platform.isIOS) {
-            if (resultList[0]['ISOver'] != packageInfo.version) {
-              versionDialog("IOS");
-            }
+
+          if (Platform.isIOS &&
+              resultList[0]['ISOver'] != packageInfo.version) {
+            await versionDialog("IOS");
+            return false; // 버전 불일치
           }
-        }
-        // 응답 데이터가 오류일 때("9999": 오류)
-        else {
-          Logger().d('${resultList[0]['message']}');
         }
       }
-    }
-    // 예외처리
-    catch (e) {
+    } catch (e) {
       Logger().d('e = $e');
     }
-  } else {}
+  }
+
+  return true; // 버전 이상 없음 or 네트워크 없음
 }

@@ -46,7 +46,7 @@ class RankCard extends StatelessWidget {
               ),
             ),
             child: Padding(
-              padding: EdgeInsets.all(16.r),
+              padding: EdgeInsets.symmetric(vertical: 16.r),
               child: Column(
                 children: [
                   Center(
@@ -70,7 +70,6 @@ class RankCard extends StatelessWidget {
                   ),
                   SizedBox(
                     height: 30,
-                    width: 200,
                     child: Padding(
                       padding: EdgeInsets.symmetric(vertical: 4.h),
                       child: Marquee(
@@ -78,7 +77,7 @@ class RankCard extends StatelessWidget {
                         style: TextStyle(color: mFontWhite),
                         scrollAxis: Axis.horizontal,
                         velocity: 10.0,
-blankSpace: 30.0,
+                        blankSpace: 30.0,
                       ),
                     ),
                   ),

@@ -7,6 +7,7 @@ import 'package:hoho_hanja/screens/rank/rank_screen.dart';
 import 'package:hoho_hanja/screens/setting/setting_screen.dart';
 import 'package:hoho_hanja/services/myroom/my_room_service.dart';
 import 'package:hoho_hanja/services/rank/rank_service.dart';
+import 'package:hoho_hanja/utils/get_main_notice.dart';
 import 'package:hoho_hanja/widgets/appbar/custom_appbar.dart';
 import 'package:hoho_hanja/widgets/appbar/home_app_bar.dart';
 import 'package:hoho_hanja/widgets/appbar/rank_appbar.dart';
@@ -39,6 +40,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
+    mainNotice();
     WidgetsBinding.instance.addObserver(this);
     music.playBackgroundMusic('main');
     contentsLock(homeController.homeValue.value);

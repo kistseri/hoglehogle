@@ -17,7 +17,8 @@ class CouponButton extends StatefulWidget {
 }
 
 class _CouponButtonState extends State<CouponButton> {
-  final SettingDataController settingController = Get.find<SettingDataController>();
+  final SettingDataController settingController =
+      Get.find<SettingDataController>();
   final LoginDataController loginDataController =
       Get.find<LoginDataController>();
 
@@ -26,85 +27,74 @@ class _CouponButtonState extends State<CouponButton> {
     final bool isAos = Theme.of(context).platform == TargetPlatform.android;
     final id = loginDataController.loginData.value!.id;
     final couponText = settingController.isVisible.value;
-    final isCouponInsert = couponText == 'Y' ? false : true;
+    final isCouponInsert = couponText == 'N' ? true : false;
 
-    return isAos
-        ? GestureDetector(
-            onTap: () {
-              setState(() {
-                showCouponDialog(context);
-              });
-            },
-            child: Container(
-              decoration: BoxDecoration(
-                color: Color(0xFF9AC4C9),
-                borderRadius: BorderRadius.circular(10.r),
-              ),
-              child: Center(
-                child: Padding(
-                  padding: EdgeInsets.all(gapHalf),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.confirmation_number_outlined,
-                          color: mFontWhite),
-                      Text(
-                        '쿠폰번호 입력',
-                        style: TextStyle(
-                          color: mFontWhite,
-                          fontSize: 16.sp,
-                        ),
-                      ),
-                    ],
+    return GestureDetector(
+      onTap: () async {
+        if (isAos) {
+          setState(() {
+            showCouponDialog(context);
+          });
+        } else {
+          if (isCouponInsert) {
+            setState(() {
+              showCouponDialog(context);
+            });
+          } else {
+            Uri url;
+            url = Uri.parse("https://hohoedu.co.kr");
+            if (await canLaunchUrl(url)) {
+              await launchUrl(
+                url,
+                mode: LaunchMode.externalApplication,
+              );
+            } else {
+              throw "Could not launch $url";
+            }
+          }
+        }
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Color(0xFF9AC4C9),
+          borderRadius: BorderRadius.circular(10.r),
+        ),
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(gapHalf),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (isCouponInsert)
+                  Icon(Icons.confirmation_number_outlined, color: mFontWhite),
+                Text(
+                  isCouponInsert ? '쿠폰 입력하기' : '홈페이지 바로가기',
+                  style: TextStyle(
+                    color: mFontWhite,
+                    fontSize: 16.sp,
                   ),
                 ),
-              ),
+              ],
             ),
-          )
-        : GestureDetector(
-            onTap: () async {
-              // 기본 URL 설정
-              Uri url;
-              if (isCouponInsert) {
-                url = Uri.parse(
-                    "http://ststallpass.cafe24.com/coupon?username=$id");
-              } else {
-                // 기본 URL
-                url = Uri.parse("https://hohoedu.co.kr");
-              }
-              // URL 브라우저에서 열기
-              if (await canLaunchUrl(url)) {
-                await launchUrl(url);
-              } else {
-                throw "Could not launch $url";
-              }
-            },
-            child: Container(
-              decoration: BoxDecoration(
-                color: Color(0xFF9AC4C9),
-                borderRadius: BorderRadius.circular(10.r),
-              ),
-              child: Center(
-                child: Padding(
-                  padding: EdgeInsets.all(gapHalf),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      if (isCouponInsert)
-                        Icon(Icons.confirmation_number_outlined,
-                            color: mFontWhite),
-                      Text(
-                        isCouponInsert ? '쿠폰 입력하기' : '홈페이지 바로가기',
-                        style: TextStyle(
-                          color: mFontWhite,
-                          fontSize: 16.sp,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          );
+          ),
+        ),
+      ),
+    );
+    // : GestureDetector(
+    // onTap: () async {
+    // // 기본 URL 설정
+    //
+    // if (isCouponInsert) {
+    // url = Uri.parse(
+    // "http://ststallpass.cafe24.com/coupon?username=$id");
+    // } else {
+    // // 기본 URL
+    //
+    // }
+    // // URL 브라우저에서 열기
+    //
+    // },
+    //
+    // );
   }
 }

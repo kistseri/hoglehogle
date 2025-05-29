@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:hoho_hanja/_core/colors.dart';
-import 'package:hoho_hanja/utils/contents_lock.dart';
+import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
 
-void showUnlockDialog(phase) {
+void showRankDialog(String title, String message) {
   Get.generalDialog(
     barrierDismissible: true,
     barrierLabel: '',
@@ -33,24 +33,13 @@ void showUnlockDialog(phase) {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // 제목
-                  RichText(
-                    textAlign: TextAlign.center,
-                    text: TextSpan(
-                      style: TextStyle(
-                          color: mFontMain,
-                          fontSize: 22.sp,
-                          fontWeight: FontWeight.bold),
-                      children: [
-                        TextSpan(
-                            text: '콘텐츠 잠금 해제',
-                            style: TextStyle(color: Color(0xFFE22D72))),
-                        TextSpan(text: '를 위해서는\n'),
-                        TextSpan(
-                            text: '다이아',
-                            style: TextStyle(color: Color(0xFFE22D72))),
-                        TextSpan(text: '가 필요해요!'),
-                      ],
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 24.sp,
                     ),
+                    textAlign: TextAlign.center,
                   ),
                   SizedBox(height: 16),
                   // 메시지
@@ -60,8 +49,12 @@ void showUnlockDialog(phase) {
                       constraints: BoxConstraints(
                         maxHeight: Get.height * 0.5,
                       ),
-                      child: Column(
-                        children: [Container()],
+                      child: SingleChildScrollView(
+                        child: Text(
+                          message,
+                          textAlign: TextAlign.start,
+                          style: TextStyle(fontSize: 14.sp),
+                        ),
                       ),
                     ),
                   ),
@@ -95,22 +88,6 @@ void showUnlockDialog(phase) {
     },
     transitionBuilder: (context, anim1, anim2, child) {
       return FadeTransition(opacity: anim1, child: child);
-    },
-  );
-}
-
-void unlockDialog(String title, String content) async {
-  List<String> splitContent =
-      content.split(RegExp(r'[.,]')).map((s) => s.trim()).toList();
-  Get.defaultDialog(
-    title: title,
-    middleText: '${splitContent[0]}\n${splitContent[1]}\n${splitContent[2]}',
-    middleTextStyle: const TextStyle(),
-  );
-  Future.delayed(
-    const Duration(seconds: 3),
-    () {
-      Get.back();
     },
   );
 }
