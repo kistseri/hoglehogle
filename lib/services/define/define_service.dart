@@ -47,7 +47,7 @@ Future<void> defineService(String phase, code) async {
     }
     // 예외처리
     catch (e) {
-      Logger().d('e = $e');
+      failDialog('준비중', '준비 중입니다.');
     }
   } else {
     failDialog("연결 실패", "인터넷 연결을 확인해주세요");

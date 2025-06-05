@@ -30,8 +30,8 @@ Future<dynamic> failDialog(title, description) {
     barrierDismissible: false, // 외부 터치로 다이얼로그가 닫히지 않도록 설정
     builder: (BuildContext context) {
       Future.delayed(const Duration(seconds: 3), () {
-        if (Navigator.of(context).canPop()) {
-          Navigator.of(context).pop(); // 자동으로 3초 후 다이얼로그 닫기
+        if (context.mounted) {
+          Navigator.of(context).pop();
         }
       });
       return AlertDialog(

@@ -31,10 +31,8 @@ Future<void> matchingService(String phase, int? openPage) async {
 
         // 응답 결과가 있는 경우
         if (resultValue == "0000") {
-          List<MatchingData> matchingDataList =
-              resultList.map((item) => MatchingData.fromJson(item)).toList();
-          final MatchingDataController matchingController =
-              Get.put(MatchingDataController());
+          List<MatchingData> matchingDataList = resultList.map((item) => MatchingData.fromJson(item)).toList();
+          final MatchingDataController matchingController = Get.put(MatchingDataController());
           matchingController.setMatchingDataList(matchingDataList);
 
           Get.to(() => MatchingScreen(
@@ -51,7 +49,7 @@ Future<void> matchingService(String phase, int? openPage) async {
     }
     // 예외처리
     catch (e) {
-      Logger().d('e = $e');
+      failDialog('준비중', '준비 중입니다.');
     }
   } else {
     failDialog("연결 실패", "인터넷 연결을 확인해주세요");

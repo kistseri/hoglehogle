@@ -5,7 +5,9 @@ import 'package:get/get.dart';
 import 'package:hoho_hanja/_core/http.dart';
 import 'package:hoho_hanja/data/models/contents_data.dart';
 import 'package:hoho_hanja/data/models/login_data.dart';
+import 'package:hoho_hanja/screens/purchase/purchase_screen.dart';
 import 'package:hoho_hanja/services/auth/my_goods_service.dart';
+import 'package:hoho_hanja/services/purchase/product_service.dart';
 import 'package:hoho_hanja/utils/network_check.dart';
 import 'package:hoho_hanja/widgets/dialog/dialog.dart';
 import 'package:hoho_hanja/widgets/dialog/unlock_dilog.dart';
@@ -36,11 +38,9 @@ Future<void> contentsLock(phase) async {
 
         // 응답 결과가 있는 경우
         if (resultValue == "0000") {
-          List<ContentsData> contentsDataList =
-              resultList.map((item) => ContentsData.fromJson(item)).toList();
+          List<ContentsData> contentsDataList = resultList.map((item) => ContentsData.fromJson(item)).toList();
 
-          final ContentsDataController contentsDataController =
-              Get.put(ContentsDataController());
+          final ContentsDataController contentsDataController = Get.put(ContentsDataController());
           contentsDataController.setContentsDataList(contentsDataList);
         }
         // 응답 데이터가 오류일 때("9999": 오류)
@@ -73,7 +73,6 @@ Future<void> contentsUnlock(String phase) async {
 
     // HTTP POST 요청
     final response = await dio.post(url, data: jsonEncode(requestData));
-    Logger().d(response);
     try {
       // 응답을 성공적으로 받았을 때
       if (response.statusCode == 200) {
@@ -87,14 +86,9 @@ Future<void> contentsUnlock(String phase) async {
           Get.back();
         }
         // 응답 데이터가 오류일 때("9999": 오류)
-        else {
-          unlockDialog('알림', '${resultList['message']}');
-          await Future.delayed(
-            const Duration(seconds: 2),
-            () {
-              Get.back();
-            },
-          );
+        else if(resultValue == '9999'){
+
+          await productService();
         }
       }
     }

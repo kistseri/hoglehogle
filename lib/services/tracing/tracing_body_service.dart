@@ -31,10 +31,8 @@ Future<void> tracingBodyService(String phase, openPage, isLocked) async {
 
         // 응답 결과가 있는 경우
         if (resultValue != null) {
-          List<TracingMenuData> tracingMenuDataList =
-              resultList.map((item) => TracingMenuData.fromJson(item)).toList();
-          final TracingMenuDataController tracingMenuDataController =
-              Get.put(TracingMenuDataController());
+          List<TracingMenuData> tracingMenuDataList = resultList.map((item) => TracingMenuData.fromJson(item)).toList();
+          final TracingMenuDataController tracingMenuDataController = Get.put(TracingMenuDataController());
           tracingMenuDataController.setTracingMenuData(tracingMenuDataList);
 
           Get.to(
@@ -54,7 +52,7 @@ Future<void> tracingBodyService(String phase, openPage, isLocked) async {
     }
     // 예외처리
     catch (e) {
-      Logger().d('e = $e');
+      failDialog('준비 중', '준비 중입니다.');
     }
   } else {
     failDialog("연결 실패", "인터넷 연결을 확인해주세요");

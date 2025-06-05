@@ -7,7 +7,7 @@ import 'package:hoho_hanja/screens/home/home_widgets/home_main.dart';
 class HomeBody extends StatelessWidget {
   final String grade;
 
-  HomeBody({
+  const HomeBody({
     super.key,
     required this.grade,
   });

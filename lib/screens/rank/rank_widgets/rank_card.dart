@@ -55,10 +55,8 @@ class RankCard extends StatelessWidget {
                         child: FutureBuilder<ImageProvider>(
                           future: rankerImage,
                           builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return const Center(
-                                  child: CircularProgressIndicator());
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const Center(child: CircularProgressIndicator());
                             } else {
                               return CircleAvatar(
                                 radius: 25.r,
@@ -69,16 +67,17 @@ class RankCard extends StatelessWidget {
                         )),
                   ),
                   SizedBox(
-                    height: 30,
+                    height: MediaQuery.of(context).size.height >= 1000 ? 18.h : 25.h,
                     child: Padding(
                       padding: EdgeInsets.symmetric(vertical: 4.h),
-                      child: Marquee(
-                        text: nickName,
-                        style: TextStyle(color: mFontWhite),
-                        scrollAxis: Axis.horizontal,
-                        velocity: 10.0,
-                        blankSpace: 30.0,
-                      ),
+                      child: Text(nickName),
+                      // child: Marquee(
+                      //   text: nickName,
+                      //   style: TextStyle(color: mFontWhite),
+                      //   // scrollAxis: Axis.horizontal,
+                      //   // velocity: 10.0,
+                      //   // blankSpace: 30.0,
+                      // ),
                     ),
                   ),
                   Container(
@@ -87,11 +86,10 @@ class RankCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20.r),
                     ),
                     child: Padding(
-                      padding:
-                          EdgeInsets.symmetric(vertical: 1.h, horizontal: 10.w),
+                      padding: EdgeInsets.symmetric(vertical: 1.h, horizontal: 10.w),
                       child: Text(
                         '$totalPoints점',
-                        style: TextStyle(color: mFontMain, fontSize: 10.sp),
+                        style: TextStyle(color: mFontMain, fontSize: 9.5.sp),
                       ),
                     ),
                   ),
@@ -100,8 +98,8 @@ class RankCard extends StatelessWidget {
             ),
           ),
           Positioned(
-            top: 2.h,
-            right: MediaQuery.of(context).size.width * 1 / 7,
+            top: 0,
+            left: MediaQuery.of(context).size.height >= 1000 ? 14.w : 9.w,
             child: Visibility(
               visible: rankBox == 'first',
               child: Container(

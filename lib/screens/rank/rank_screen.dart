@@ -52,8 +52,8 @@ class _RankScreenState extends State<RankScreen> {
             Align(
               alignment: Alignment.topCenter,
               child: SizedBox(
-                width: 20,
-                height: 20,
+                width: 20.w,
+                height: 20.h,
               ),
             ),
             Text(
@@ -74,8 +74,8 @@ class _RankScreenState extends State<RankScreen> {
               child: Align(
                 alignment: Alignment.topCenter,
                 child: Container(
-                  width: 20,
-                  height: 20,
+                  width: 20.w,
+                  height: 20.h,
                   decoration: BoxDecoration(
                       color: Colors.white, shape: BoxShape.circle),
                   child: Center(
