@@ -40,14 +40,12 @@ class _DefineScreenState extends State<DefineScreen> {
   }
 
   void loadQuestion() {
-    options = List<String>.from(
-        defineController.quiz[currentQuestionIndex]['options']);
+    options = List<String>.from(defineController.quiz[currentQuestionIndex]['options']);
     options.shuffle(Random());
   }
 
   void checkAnswer(String selectedAnswer) async {
-    String correctAnswer =
-        defineController.quiz[currentQuestionIndex]['options'][0];
+    String correctAnswer = defineController.quiz[currentQuestionIndex]['options'][0];
 
     if (selectedAnswer == correctAnswer) {
       effect.correctSound();
@@ -68,8 +66,7 @@ class _DefineScreenState extends State<DefineScreen> {
           loadQuestion();
         });
       } else {
-        final coin =
-            await resultService(widget.code, correctCount - inCorrectCount);
+        final coin = await resultService(widget.code, correctCount - inCorrectCount);
         resultDialog(
           Get.context!,
           correctCount - inCorrectCount,
@@ -91,8 +88,7 @@ class _DefineScreenState extends State<DefineScreen> {
 
   @override
   Widget build(BuildContext context) {
-    Map<String, dynamic> currentQuestion =
-        defineController.quiz[currentQuestionIndex];
+    Map<String, dynamic> currentQuestion = defineController.quiz[currentQuestionIndex];
     String type = currentQuestion['type'];
     String correctImage = currentQuestion['image'];
     String correctText = currentQuestion['answer'];
@@ -101,8 +97,7 @@ class _DefineScreenState extends State<DefineScreen> {
     return Scaffold(
       appBar: const CustomAppBar(),
       body: Padding(
-        padding:
-            EdgeInsets.only(bottom: gapHalf, left: gapMain, right: gapMain),
+        padding: EdgeInsets.only(bottom: gapHalf, left: gapMain, right: gapMain),
         child: Column(
           children: [
             // 문제
@@ -113,10 +108,7 @@ class _DefineScreenState extends State<DefineScreen> {
                   children: [
                     Text(
                       '단어의 뜻 찾기',
-                      style: TextStyle(
-                          color: mFontMain,
-                          fontSize: 24.sp,
-                          fontWeight: FontWeight.bold),
+                      style: TextStyle(color: mFontMain, fontSize: 24.sp, fontWeight: FontWeight.bold),
                     ),
                     Text(
                       note,
@@ -138,17 +130,11 @@ class _DefineScreenState extends State<DefineScreen> {
                     children: [
                       TextSpan(
                         text: '${currentQuestionIndex + 1}',
-                        style: TextStyle(
-                            color: Colors.green,
-                            fontSize: 26.sp,
-                            fontWeight: FontWeight.bold),
+                        style: TextStyle(color: Colors.green, fontSize: 26.sp, fontWeight: FontWeight.bold),
                       ),
                       TextSpan(
                         text: '/${defineController.quiz.length}',
-                        style: TextStyle(
-                            color: mFontMain,
-                            fontSize: 26.sp,
-                            fontWeight: FontWeight.bold),
+                        style: TextStyle(color: mFontMain, fontSize: 26.sp, fontWeight: FontWeight.bold),
                       )
                     ],
                   ),
@@ -158,9 +144,7 @@ class _DefineScreenState extends State<DefineScreen> {
             Expanded(
               flex: 8,
               child: Center(
-                child: (type == "3" || type == "4")
-                    ? textBox(correctText)
-                    : imageBox(correctImage),
+                child: (type == "3" || type == "4") ? textBox(correctText) : imageBox(correctImage),
               ),
             ),
             Expanded(
@@ -172,7 +156,6 @@ class _DefineScreenState extends State<DefineScreen> {
                     2,
                     (index) {
                       return Expanded(
-                        flex: 1,
                         child: GestureDetector(
                           onTap: () {
                             setState(() {
@@ -189,19 +172,43 @@ class _DefineScreenState extends State<DefineScreen> {
                               ),
                               child: LayoutBuilder(
                                 builder: (context, constraints) {
+                                  final baseFontSize = 50.sp;
+                                  final availableWidth = constraints.maxWidth - 8.0;
+                                  double maxTextWidth = 0;
+
+                                  for (var o in options) {
+                                    final tp = TextPainter(
+                                      text: TextSpan(
+                                        text: o,
+                                        style: TextStyle(
+                                          fontSize: baseFontSize,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: 'NotoSansKR-SemiBold',
+                                        ),
+                                      ),
+                                      textDirection: TextDirection.ltr,
+                                    )..layout();
+                                    maxTextWidth = max(maxTextWidth, tp.width);
+                                  }
+
+                                  final scale = availableWidth / maxTextWidth;
+                                  final fittedFontSize = baseFontSize * scale;
+
                                   return Stack(
                                     children: [
                                       Center(
-                                        child: Text(
-                                          options[index],
-                                          style: TextStyle(
-                                            color: mFontMain,
-                                            fontSize: 50.sp,
-                                            fontWeight: FontWeight.bold,
-                                            fontFamily:
-                                                type == "3" || type == "4"
-                                                    ? 'NotoSansKR-SemiBold'
-                                                    : 'G-Sans',
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(4.0),
+                                          child: FittedBox(
+                                            child: Text(
+                                              options[index],
+                                              softWrap: true,
+                                              style: TextStyle(
+                                                  color: mFontMain,
+                                                  fontSize: fittedFontSize >= 50.sp ? 50.sp : fittedFontSize,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontFamily: 'NotoSansKR-SemiBold'),
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -218,8 +225,7 @@ class _DefineScreenState extends State<DefineScreen> {
                                                 ? Center(
                                                     child: Icon(
                                                       Icons.close,
-                                                      size:
-                                                          constraints.maxHeight,
+                                                      size: constraints.maxHeight,
                                                       color: Colors.red,
                                                     ),
                                                   )
@@ -266,13 +272,11 @@ class _DefineScreenState extends State<DefineScreen> {
     return Container(
       width: double.infinity,
       height: double.infinity,
-      decoration: BoxDecoration(
-          color: mBoxGray, borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(color: mBoxGray, borderRadius: BorderRadius.circular(20)),
       child: Center(
         child: Text(
           correctText,
-          style: TextStyle(
-              color: mFontMain, fontSize: 75.sp, fontWeight: FontWeight.w900,fontFamily: 'G-sans'),
+          style: TextStyle(color: mFontMain, fontSize: 75.sp, fontWeight: FontWeight.w900, fontFamily: 'G-sans'),
         ),
       ),
     );
