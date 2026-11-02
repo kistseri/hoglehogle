@@ -57,6 +57,17 @@ class _JoinCheckBoxState extends State<JoinCheckBox> {
           child: JoinButton(
             text: '휴대폰 인증하기',
             movePage: () async {
+              final error = _validateInputs(joinController);
+              if (error != null) {
+                Get.snackbar(
+                  '입력 확인',
+                  error,
+                  snackPosition: SnackPosition.BOTTOM,
+                  duration: const Duration(seconds: 3),
+                );
+                return;
+              }
+
               joinReqDTO.setJoinDTO(
                   email: joinController.emailController.text,
                   password: joinController.passwordController.text,
@@ -72,6 +83,49 @@ class _JoinCheckBoxState extends State<JoinCheckBox> {
         ),
       ],
     );
+  }
+
+  // 인증번호 요청 전 입력값 검사. 문제가 있으면 안내 문구를, 정상이면 null을 반환한다.
+  String? _validateInputs(JoinTextController c) {
+    final email = c.emailController.text.trim();
+    final password = c.passwordController.text;
+    final pwdConfirm = c.pwdConfirmController.text;
+    final nickName = c.nickNameController.text.trim();
+    final phone = c.phoneNumberController.text.trim();
+
+    // 이메일 형식
+    final emailRegex = RegExp(r'^[\w.+-]+@[\w-]+\.[\w.-]+$');
+    if (email.isEmpty) {
+      return '이메일을 입력해주세요.';
+    }
+    if (!emailRegex.hasMatch(email)) {
+      return '이메일 형식이 올바르지 않습니다.';
+    }
+
+    // 비밀번호 (비밀번호 입력이 있는 가입 방식만 검사: 애플(method "4")은 제외)
+    if (widget.method != "4") {
+      if (password.isEmpty) {
+        return '비밀번호를 입력해주세요.';
+      }
+      if (password.length < 6) {
+        return '비밀번호는 6자 이상이어야 합니다.';
+      }
+      if (password != pwdConfirm) {
+        return '비밀번호와 비밀번호 확인이 일치하지 않습니다.';
+      }
+    }
+
+    // 닉네임
+    if (nickName.isEmpty) {
+      return '이름 또는 닉네임을 입력해주세요.';
+    }
+
+    // 휴대폰 번호 (10~11자리)
+    if (phone.length < 10 || phone.length > 11) {
+      return '휴대폰 번호를 정확히 입력해주세요.';
+    }
+
+    return null;
   }
 
   Widget buildCheckBox(String text, bool isChecked, Function(bool?) onChanged,
@@ -153,19 +207,21 @@ class _JoinCheckBoxState extends State<JoinCheckBox> {
                 onTap: () {
                   FocusScope.of(context).unfocus();
                   Get.back();
+                },
+                child: const Text('닫기')),
+            GestureDetector(
+                onTap: () {
+                  FocusScope.of(context).unfocus();
+                  Get.back();
                   setState(() {
                     isChecked1 = true;
                   });
                 },
-                child: Text('닫기')),
+                child: const Text('동의', style: TextStyle(color: primaryColor))),
           ],
         );
       },
-    ).then((_) {
-      setState(() {
-        isChecked1 = true;
-      });
-    });
+    );
   }
 
   void showPrivacyPolicyDialog(BuildContext context) {
@@ -193,18 +249,20 @@ class _JoinCheckBoxState extends State<JoinCheckBox> {
                 onTap: () {
                   FocusScope.of(context).unfocus();
                   Get.back();
+                },
+                child: const Text('닫기')),
+            GestureDetector(
+                onTap: () {
+                  FocusScope.of(context).unfocus();
+                  Get.back();
                   setState(() {
                     isChecked2 = true;
                   });
                 },
-                child: Text('닫기')),
+                child: const Text('동의', style: TextStyle(color: primaryColor))),
           ],
         );
       },
-    ).then((_) {
-      setState(() {
-        isChecked2 = true;
-      });
-    });
+    );
   }
 }

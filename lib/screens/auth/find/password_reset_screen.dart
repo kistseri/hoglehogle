@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import 'package:hoho_hanja/_core/colors.dart';
 import 'package:hoho_hanja/_core/constants.dart';
 import 'package:hoho_hanja/_core/size.dart';
@@ -19,6 +20,15 @@ class PasswordResetScreen extends StatefulWidget {
 class _PasswordResetScreenState extends State<PasswordResetScreen> {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController passwordConfirmController = TextEditingController();
+
+  void _showInputError(String message) {
+    Get.snackbar(
+      '입력 확인',
+      message,
+      snackPosition: SnackPosition.BOTTOM,
+      duration: const Duration(seconds: 3),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +76,23 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
               ),
               GestureDetector(
                 onTap: () {
-                  passwordResetService(widget.id, sha256_convertHash(passwordController.text));
+                  final password = passwordController.text;
+                  final passwordConfirm = passwordConfirmController.text;
+
+                  if (password.isEmpty) {
+                    _showInputError('비밀번호를 입력해주세요.');
+                    return;
+                  }
+                  if (password.length < 6) {
+                    _showInputError('비밀번호는 6자 이상이어야 합니다.');
+                    return;
+                  }
+                  if (password != passwordConfirm) {
+                    _showInputError('비밀번호와 비밀번호 확인이 일치하지 않습니다.');
+                    return;
+                  }
+
+                  passwordResetService(widget.id, sha256_convertHash(password));
                 },
                 child: Container(
                   width: double.infinity,

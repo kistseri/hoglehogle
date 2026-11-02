@@ -31,7 +31,7 @@ class JoinDTO {
       this.agree2});
 
   Map<String, dynamic> toJson() => {
-        "id": email ?? '',
+        "id": email,
         "pwd": password ?? '',
         "nickname": nickName ?? '',
         "tel1": tel1 ?? '',
@@ -40,7 +40,9 @@ class JoinDTO {
         "method": method ?? '',
         "snstoken": snsToken ?? '',
         "jwtHead": jwtHead ?? '',
-        "token": '111111111' ?? '',
+        // TODO(AU-03/SV-11): 서버에서 이 값의 용도 확인 후 실제 token 인자로 교체.
+        // 현재 서버가 이 고정값을 검증할 수 있어 임의 변경 시 가입이 막힐 위험이 있어 보류.
+        "token": '111111111',
         "agree1": agree1 ?? '',
         "agree2": agree2 ?? '',
       };
@@ -61,7 +63,12 @@ class JoinReqDTOController extends GetxController {
     String? agree1,
     String? agree2,
   }) {
-    String shaPassword = sha256_convertHash(password ?? "");
+    // 비밀번호가 없는 소셜 가입(예: 애플)은 빈 값을 보낸다.
+    // 빈 문자열을 해시하면(sha256("")) 고정된 해시가 '비밀번호'로 저장되어
+    // 그 값을 아는 사람이 로그인할 수 있으므로 해시하지 않는다. (서버는 소셜 계정 비밀번호 로그인 거부)
+    String shaPassword = (password == null || password.isEmpty)
+        ? ''
+        : sha256_convertHash(password);
 
     final phoneNumbers = splitPhoneNumber(phoneNumber ?? "");
 
