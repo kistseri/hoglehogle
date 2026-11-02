@@ -35,7 +35,6 @@ class TracingBody extends StatelessWidget {
                 style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.bold),
               ),
             ),
-            SizedBox(height: 20.h),
             Expanded(
               flex: 11,
               child: GridView.builder(
@@ -68,6 +67,8 @@ class TracingBody extends StatelessWidget {
   Widget tracingElements(int index) {
     final String hanja = tracingBodyData.tracingMenuDataList![index].hanja;
     int lineCount = addLineBreaks(hanja).split('\n').length;
+    final tracingItem = tracingBodyData.tracingMenuDataList![index];
+    final isSubjectEmpty = tracingItem.subject.isEmpty;
 
     return Container(
       decoration: BoxDecoration(
@@ -76,39 +77,62 @@ class TracingBody extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: isSubjectEmpty ? MainAxisAlignment.center : MainAxisAlignment.start,
         children: [
-          Padding(
-            padding: EdgeInsets.only(top: 10.h, left: 10.w),
-            child: Container(
-              decoration: BoxDecoration(
+          if (isSubjectEmpty)
+            Align(
+              alignment: Alignment.center,
+              child: Padding(
+                padding: EdgeInsets.only(bottom: 8.sp, left: 10.w, right: 10.w),
+                child: Container(
+                  width: 40.w,
+                  height: 40.h,
+                  decoration: BoxDecoration(color: gridInsideColors[index], shape: BoxShape.circle),
+                  child: Center(
+                    child: Text(
+                      tracingItem.gubun,
+                      style: TextStyle(color: mFontWhite, fontSize: 14.sp),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
+            )
+          else ...[
+            Padding(
+              padding: EdgeInsets.only(top: 10.h, left: 10.w),
+              child: Container(
+                decoration: BoxDecoration(
                   color: gridInsideColors[index],
-                  borderRadius: BorderRadius.circular(20.r)),
-              child: SizedBox(
-                height: 25.h,
-                width: 25.w,
-                child: Center(
-                  child: Text(
-                    tracingBodyData.tracingMenuDataList![index].gubun,
-                    style: TextStyle(color: mFontWhite),
-                    textAlign: TextAlign.center,
+                  borderRadius: BorderRadius.circular(20.r),
+                ),
+                child: SizedBox(
+                  height: 25.h,
+                  width: 25.w,
+                  child: Center(
+                    child: Text(
+                      tracingItem.gubun,
+                      style: TextStyle(color: mFontWhite),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          Padding(
-            padding: EdgeInsets.only(bottom: 8.sp),
-            child: Center(
-              child: Text(
-                tracingBodyData.tracingMenuDataList![index].subject,
-                style: TextStyle(
-                  color: gridElement[index],
-                  fontSize: 18.sp,
-                  fontFamily: 'BMJUA',
+            Padding(
+              padding: EdgeInsets.only(bottom: 8.sp),
+              child: Center(
+                child: Text(
+                  tracingItem.subject,
+                  style: TextStyle(
+                    color: gridElement[index],
+                    fontSize: 18.sp,
+                    fontFamily: 'BMJUA',
+                  ),
                 ),
               ),
             ),
-          ),
+          ],
           Center(
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.sp),
@@ -116,14 +140,15 @@ class TracingBody extends StatelessWidget {
                 height: 25.h + (lineCount - 1) * 15.h,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                    color: gridInsideColors[index],
-                    borderRadius: BorderRadius.circular(20.r)),
+                  color: gridInsideColors[index],
+                  borderRadius: BorderRadius.circular(20.r),
+                ),
                 child: Center(
                   child: Text(
                     addLineBreaks(hanja),
                     style: TextStyle(
                       color: mFontWhite,
-                      fontSize: 10.sp,
+                      fontSize: 12.sp,
                     ),
                     textAlign: TextAlign.center,
                   ),

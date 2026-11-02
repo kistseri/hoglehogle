@@ -5,6 +5,7 @@ import 'package:hoho_hanja/_core/icon.dart';
 class CustomBottom extends StatefulWidget {
   final Function(int) onTabChanged;
   final int selectedIndex;
+
   // final VoidCallback onSettingPressed;
 
   const CustomBottom({
@@ -18,8 +19,7 @@ class CustomBottom extends StatefulWidget {
   State<CustomBottom> createState() => _CustomBottomState();
 }
 
-class _CustomBottomState extends State<CustomBottom>
-    with SingleTickerProviderStateMixin {
+class _CustomBottomState extends State<CustomBottom> with SingleTickerProviderStateMixin {
   late TabController tabController;
 
   @override
@@ -61,8 +61,9 @@ class _CustomBottomState extends State<CustomBottom>
         boxShadow: [
           BoxShadow(
             color: Colors.black26,
-            blurRadius: 10.0,
-            offset: Offset(0, 4),
+            blurRadius: 8.0,
+            spreadRadius: -3.0,
+            offset: Offset(0, -4),
           ),
         ],
       ),
@@ -75,22 +76,10 @@ class _CustomBottomState extends State<CustomBottom>
           indicator: BoxDecoration(),
           controller: tabController,
           tabs: [
-            Tab(
-                icon: widget.selectedIndex == 0
-                    ? ativeRank(28.0.w, 28.0.h)
-                    : rank(28.0.w, 28.0.h)),
-            Tab(
-                icon: widget.selectedIndex == 1
-                    ? ativeMyRoom(28.0.w, 28.0.h)
-                    : myRoom(28.0.w, 28.0.h)),
-            Tab(
-                icon: widget.selectedIndex == 2
-                    ? ativeHome(28.0.w, 28.0.h)
-                    : home(28.0.w, 28.0.h)),
-            Tab(
-                icon: widget.selectedIndex == 3
-                    ? activeSetting(28.0.w, 28.0.h)
-                    : setting(28.0.w, 28.0.h)),
+            Tab(icon: widget.selectedIndex == 0 ? ativeRank(28.0.w, 28.0.h) : rank(28.0.w, 28.0.h)),
+            Tab(icon: widget.selectedIndex == 1 ? ativeMyRoom(28.0.w, 28.0.h) : myRoom(28.0.w, 28.0.h)),
+            Tab(icon: widget.selectedIndex == 2 ? ativeHome(28.0.w, 28.0.h) : home(28.0.w, 28.0.h)),
+            Tab(icon: widget.selectedIndex == 3 ? activeSetting(28.0.w, 28.0.h) : setting(28.0.w, 28.0.h)),
           ],
         ),
       ),

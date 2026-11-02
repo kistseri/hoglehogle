@@ -26,17 +26,6 @@ class _RankScreenState extends State<RankScreen> {
     rankService();
   }
 
-  Future<ImageProvider> createImage(int index) async {
-    final rankData = rankController.rankDataList![index];
-    return await getCombinedImageProvider([
-      rankData.characterImage,
-      rankData.hatImage ?? '',
-      rankData.clothesImage ?? '',
-      rankData.eyeImage ?? '',
-      rankData.backgroundImage ?? '',
-    ].whereType<String>().toList());
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,10 +47,7 @@ class _RankScreenState extends State<RankScreen> {
             ),
             Text(
               ' 월간 랭킹 ',
-              style: TextStyle(
-                  color: mFontWhite,
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.bold),
+              style: TextStyle(color: mFontWhite, fontSize: 20.sp, fontWeight: FontWeight.bold),
             ),
             GestureDetector(
               onTap: () {
@@ -76,15 +62,11 @@ class _RankScreenState extends State<RankScreen> {
                 child: Container(
                   width: 20.w,
                   height: 20.h,
-                  decoration: BoxDecoration(
-                      color: Colors.white, shape: BoxShape.circle),
+                  decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle),
                   child: Center(
                     child: Text(
                       '?',
-                      style: TextStyle(
-                          color: mFontMain,
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.bold),
+                      style: TextStyle(color: mFontMain, fontSize: 12.sp, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -108,7 +90,7 @@ class _RankScreenState extends State<RankScreen> {
             nickName: rankController.rankDataList![0].nickName,
             totalPoints: rankController.rankDataList![0].totalPoints,
             rankBox: 'first',
-            rankerImage: createImage(0),
+            rankData: rankController.rankDataList![0],
           ),
           RankCard(
             rank: '2',
@@ -119,7 +101,7 @@ class _RankScreenState extends State<RankScreen> {
             nickName: rankController.rankDataList![1].nickName,
             totalPoints: rankController.rankDataList![1].totalPoints,
             rankBox: 'second',
-            rankerImage: createImage(1),
+            rankData: rankController.rankDataList![1],
           ),
           RankCard(
             rank: '3',
@@ -130,7 +112,7 @@ class _RankScreenState extends State<RankScreen> {
             nickName: rankController.rankDataList![2].nickName,
             totalPoints: rankController.rankDataList![2].totalPoints,
             rankBox: 'third',
-            rankerImage: createImage(2),
+            rankData: rankController.rankDataList![2],
           ),
         ],
       ),

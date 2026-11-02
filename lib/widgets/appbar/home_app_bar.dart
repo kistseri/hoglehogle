@@ -10,17 +10,18 @@ import 'package:hoho_hanja/_core/style.dart';
 import 'package:hoho_hanja/data/models/goods_data.dart';
 import 'package:hoho_hanja/data/models/login_data.dart';
 import 'package:hoho_hanja/screens/home/home_screen.dart';
+import 'package:hoho_hanja/screens/myroom/myroom_wigets/my_room_circle.dart';
 import 'package:hoho_hanja/screens/myroom/myroom_wigets/my_room_item.dart';
 import 'package:hoho_hanja/screens/purchase/purchase_screen.dart';
 import 'package:hoho_hanja/services/auth/my_goods_service.dart';
 import 'package:hoho_hanja/services/purchase/product_service.dart';
-import 'package:hoho_hanja/utils/load_profile_image.dart';
 import 'package:hoho_hanja/widgets/grade_dropdown_item.dart';
 
 class HomeAppBar extends StatefulWidget implements PreferredSizeWidget {
   final ValueChanged<String> onValueChanged;
+  final VoidCallback onAvatarPressed;
 
-  const HomeAppBar({super.key, required this.onValueChanged});
+  const HomeAppBar({super.key, required this.onValueChanged, required this.onAvatarPressed});
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -31,7 +32,6 @@ class HomeAppBar extends StatefulWidget implements PreferredSizeWidget {
 
 class _HomeAppBarState extends State<HomeAppBar> {
   final goodsController = Get.put(GoodsDataController());
-  final itemController = Get.put(MyroomItemController());
   final loginController = Get.put(LoginDataController());
   final homeController = Get.find<HomeController>();
 
@@ -40,11 +40,15 @@ class _HomeAppBarState extends State<HomeAppBar> {
   @override
   void initState() {
     super.initState();
-    myGoodsService();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      myGoodsService();
+    });
   }
+  bool _isDropdownOpen = false;
 
   @override
   Widget build(BuildContext context) {
+
     return AppBar(
       automaticallyImplyLeading: false,
       backgroundColor: mBoxGreen,
@@ -67,8 +71,13 @@ class _HomeAppBarState extends State<HomeAppBar> {
             ),
             DropdownButton(
               value: int.parse(homeController.homeValue.value),
+              onTap: () {
+                if (_isDropdownOpen) return;
+                setState(() => _isDropdownOpen = true);
+              },
               onChanged: (int? value) {
-                if(value != null){
+                setState(() => _isDropdownOpen = false);
+                if (value != null) {
                   homeController.homeValueUpdate(value.toString());
                   widget.onValueChanged(value.toString());
                 }
@@ -94,9 +103,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
       ),
       actions: [
         Padding(
-          padding: MediaQuery.of(context).size.width >= 500
-              ? EdgeInsets.all(8.r)
-              : EdgeInsets.all(16.r),
+          padding: MediaQuery.of(context).size.width >= 500 ? EdgeInsets.all(8.r) : EdgeInsets.all(16.r),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -140,27 +147,9 @@ class _HomeAppBarState extends State<HomeAppBar> {
             ],
           ),
         ),
-        ValueListenableBuilder(
-          valueListenable: Hive.box('selectedItemBox').listenable(),
-          builder: (context, Box box, _) {
-            final imageProvidrs = loadProfileImageFromBox(
-                box, loginController.loginData.value!.id);
-            return FutureBuilder(
-              future: loadProfileImage(loginController.loginData.value!.id)
-                  .then((imageProviders) =>
-                      getProfileImageProvider(imageProviders)),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.done &&
-                    snapshot.hasData) {
-                  return CircleAvatar(backgroundImage: snapshot.data!);
-                } else {
-                  return const CircleAvatar(
-                    backgroundColor: mBackWhite,
-                  );
-                }
-              },
-            );
-          },
+        GestureDetector(
+          onTap: widget.onAvatarPressed,
+          child: const MyRoomCircleAvatar(size: 40),
         ),
         SizedBox(width: 16.w),
       ],
@@ -174,12 +163,10 @@ class _HomeAppBarState extends State<HomeAppBar> {
     }
 
     return {
-      'character':
-          getImageProvider(box.get('${userId}_character'), isAsset: true),
+      'character': getImageProvider(box.get('${userId}_character'), isAsset: true),
       'hatImage': getImageProvider(box.get('${userId}_hatImage')),
       'clothingImage': getImageProvider(box.get('${userId}_clothingImage')),
-      'accessoriesImage':
-          getImageProvider(box.get('${userId}_accessoriesImage')),
+      'accessoriesImage': getImageProvider(box.get('${userId}_accessoriesImage')),
       'backgroundImage': getImageProvider(box.get('${userId}_backgroundImage')),
     };
   }

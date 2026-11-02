@@ -9,19 +9,20 @@ import 'package:hoho_hanja/utils/network_check.dart';
 import 'package:hoho_hanja/widgets/dialog/dialog.dart';
 import 'package:logger/logger.dart';
 
-Future<void> selectedItemService(categoryId, itemId) async {
+Future<void> selectedItemService(List<Map<String, dynamic>> items, String character) async {
   final connectivityController = Get.put(ConnectivityController());
   final loginController = Get.find<LoginDataController>();
 
   if (connectivityController.isConnected.value) {
-    String url = dotenv.get('SELECTED_ITEM_URL');
+    String url = dotenv.get('SELECTED_ITEM_COPY_URL');
     String id = loginController.loginData.value!.id;
 
     final Map<String, dynamic> requestData = {
-      'id': id,
-      'categoryid': categoryId.value,
-      'itemid': itemId.value,
+      'user_id': id,
+      'char_index': character,
+      'items': items,
     };
+
 
     // HTTP POST 요청
     final response = await dio.post(url, data: jsonEncode(requestData));
@@ -32,7 +33,6 @@ Future<void> selectedItemService(categoryId, itemId) async {
         final resultValue = result['result'];
         // 응답 결과가 있는 경우
         if (resultValue == "0000") {
-          await myroomService();
         }
         // 응답 데이터가 오류일 때("9999": 오류)
         else {

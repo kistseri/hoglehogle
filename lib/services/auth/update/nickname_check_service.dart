@@ -14,7 +14,7 @@ Future<String> nicknameCheckService(String type, String nickname) async {
 
   if (connectivityController.isConnected.value) {
     String url = dotenv.get('NICKNAME_CHK_URL');
-    Logger().d('호출');
+    
     final Map<String, dynamic> requestData = {
       'nickname': nickname,
     };

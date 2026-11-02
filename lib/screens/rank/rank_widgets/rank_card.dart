@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:hive/hive.dart';
 import 'package:hoho_hanja/_core/colors.dart';
+import 'package:hoho_hanja/data/models/rank_data.dart';
+import 'package:hoho_hanja/screens/rank/rank_widgets/rank_circle_avatar.dart';
 import 'package:marquee/marquee.dart';
 
 class RankCard extends StatelessWidget {
@@ -13,7 +16,7 @@ class RankCard extends StatelessWidget {
   final String nickName;
   final int totalPoints;
   final String rankBox;
-  final Future<ImageProvider> rankerImage;
+  final RankData? rankData;
 
   const RankCard({
     super.key,
@@ -26,7 +29,7 @@ class RankCard extends StatelessWidget {
     required this.nickName,
     required this.totalPoints,
     required this.rankBox,
-    required this.rankerImage,
+    this.rankData,
   });
 
   @override
@@ -51,33 +54,19 @@ class RankCard extends StatelessWidget {
                 children: [
                   Center(
                     child: SizedBox(
-                        width: 50.w,
-                        child: FutureBuilder<ImageProvider>(
-                          future: rankerImage,
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) {
-                              return const Center(child: CircularProgressIndicator());
-                            } else {
-                              return CircleAvatar(
-                                radius: 25.r,
-                                backgroundImage: snapshot.data,
-                              );
-                            }
-                          },
-                        )),
+                      width: 50.h,
+                      height: 50.h,
+                      child: RankCircleAvatar(
+                        size: 50.h,
+                        data: rankData!,
+                      ),
+                    ),
                   ),
                   SizedBox(
                     height: MediaQuery.of(context).size.height >= 1000 ? 18.h : 25.h,
                     child: Padding(
                       padding: EdgeInsets.symmetric(vertical: 4.h),
-                      child: Text(nickName),
-                      // child: Marquee(
-                      //   text: nickName,
-                      //   style: TextStyle(color: mFontWhite),
-                      //   // scrollAxis: Axis.horizontal,
-                      //   // velocity: 10.0,
-                      //   // blankSpace: 30.0,
-                      // ),
+                      child: FittedBox(child: Text(nickName)),
                     ),
                   ),
                   Container(
@@ -115,7 +104,7 @@ class RankCard extends StatelessWidget {
           ),
           Positioned(
             top: 0,
-            right: MediaQuery.of(context).size.width >= 500 ? 10 : 0,
+            right: MediaQuery.of(context).size.width >= 500 ? 25 : 0,
             child: Container(
               width: 30.w,
               height: 30.h,

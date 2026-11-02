@@ -25,8 +25,7 @@ class MyroomData {
 
 class MyroomDataController extends GetxController {
   final RxList<MyroomData> _myroomDataList = <MyroomData>[].obs;
-  final RxMap<String, List<MyroomData>> myroomDataByCategory =
-      <String, List<MyroomData>>{}.obs;
+  final RxMap<String, List<MyroomData>> myroomDataByCategory = <String, List<MyroomData>>{}.obs;
 
   void setMyroomData(List<MyroomData> myroomDataList) {
     _myroomDataList.assignAll(myroomDataList);
@@ -36,9 +35,15 @@ class MyroomDataController extends GetxController {
   List<MyroomData>? get myroomDataList => _myroomDataList;
 
   void _categorizeDataByCategory() {
+
+    const categoryIds = ['10', '20', '30', '40'];
     myroomDataByCategory.clear();
+    for (var id in categoryIds) {
+      myroomDataByCategory[id] = [];
+    }
+
     for (var data in _myroomDataList) {
-      myroomDataByCategory.putIfAbsent(data.categoryId, () => []).add(data);
+      myroomDataByCategory[data.categoryId]?.add(data);
     }
   }
 

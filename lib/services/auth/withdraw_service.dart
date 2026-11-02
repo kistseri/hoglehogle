@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:hoho_hanja/_core/http.dart';
 import 'package:hoho_hanja/data/models/login_data.dart';
@@ -13,6 +14,8 @@ import 'package:logger/logger.dart';
 Future<void> withdrawService() async {
   final connectivityController = Get.put(ConnectivityController());
   final loginDataController = Get.put(LoginDataController());
+  final storage = Get.put(const FlutterSecureStorage());
+  final userInfo = await storage.read(key: "login");
 
   if (connectivityController.isConnected.value) {
     String url = dotenv.get('WITHDRAW_URL');
@@ -32,6 +35,9 @@ Future<void> withdrawService() async {
 
         // 응답 결과가 있는 경우
         if (resultValue == "0000") {
+          if (userInfo != null) {
+            await storage.delete(key: "login");
+          }
           withdrawDialog();
         }
         // 응답 데이터가 오류일 때("9999": 오류)

@@ -1,6 +1,9 @@
 # Created by https://www.toptal.com/developers/gitignore/api/flutter,windows,dart,intellij
 # Edit at https://www.toptal.com/developers/gitignore?templates=flutter,windows,dart,intellij
 
+# 내부 점검·수정·서버요청 문서 (git 추적 제외)
+/docs/
+
 ### Dart ###
 # See https://www.dartlang.org/guides/libraries/private-files
 
@@ -233,3 +236,6 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/flutter,windows,dart,intellij
+# 대용량 로그·OS 생성 파일 (커밋 금지)
+applog.txt
+.DS_Store

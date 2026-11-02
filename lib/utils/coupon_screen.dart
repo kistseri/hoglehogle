@@ -10,10 +10,14 @@ import 'package:logger/logger.dart';
 Future<void> settingScreen() async {
   String url = dotenv.get('COUPON_SCREEN_URL');
 
-  // HTTP POST 요청
-  final response = await dio.post(url);
+  // 서버 호출이 실패해도 Get.find 가 깨지지 않도록 먼저 등록
+  final SettingDataController settingDataController =
+      Get.put(SettingDataController());
 
   try {
+    // HTTP POST 요청 (실패해도 앱 구동은 계속되도록 try 안에서 호출)
+    final response = await dio.post(url);
+
     // 응답을 성공적으로 받았을 때
     if (response.statusCode == 200) {
       final Map<String, dynamic> resultList = json.decode(response.data);
@@ -21,8 +25,6 @@ Future<void> settingScreen() async {
       if (resultList['result'] == "0000") {
         final yn = resultList['yn'];
         Logger().d('yn = $yn');
-        final SettingDataController settingDataController =
-            Get.put(SettingDataController());
         settingDataController.settinData(yn);
       }
       // 응답 데이터가 오류일 때("9999": 오류)

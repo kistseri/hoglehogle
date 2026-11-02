@@ -17,7 +17,7 @@ Future<void> myroomService() async {
       Get.put(MyroomDataController());
 
   if (connectivityController.isConnected.value) {
-    String url = dotenv.get('MYROOM_URL');
+    String url = dotenv.get('MYROOM_COPY_URL');
     String id = loginController.loginData.value!.id;
 
     final Map<String, dynamic> requestData = {

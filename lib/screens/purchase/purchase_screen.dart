@@ -9,6 +9,7 @@ import 'package:hoho_hanja/services/purchase/verify_receipt_service.dart';
 import 'package:hoho_hanja/widgets/dialog/show_parental_dialog.dart';
 import 'package:hoho_hanja/widgets/parental_gate.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:in_app_purchase_storekit/store_kit_wrappers.dart';
 import 'package:intl/intl.dart';
 
 import 'package:hoho_hanja/_core/colors.dart';
@@ -17,6 +18,7 @@ import 'package:hoho_hanja/data/models/product_data.dart';
 import 'package:hoho_hanja/screens/purchase/purchase_widgets/purchase_header.dart';
 import 'package:hoho_hanja/screens/purchase/purchase_widgets/toggle_button.dart';
 import 'package:hoho_hanja/widgets/appbar/custom_appbar.dart';
+import 'package:logger/logger.dart';
 
 class PurchaseScreen extends StatefulWidget {
   const PurchaseScreen({super.key});
@@ -36,44 +38,35 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
   String currentProblem = '';
   dynamic currentSolution;
 
-  void generateNewProblem() {
-    final problemData = ParentalGate.generateComplexMathProblem();
-    setState(() {
-      currentProblem = problemData['problem'];
-      currentSolution = problemData['solution'];
-    });
-  }
-
   @override
   void initState() {
     super.initState();
-    generateNewProblem();
     _initializePurchaseFlow();
   }
 
   Future<void> _initializePurchaseFlow() async {
+    if (Platform.isIOS) {
+      final transactions = await SKPaymentQueueWrapper().transactions();
+      for (var tx in transactions) {
+        Logger().d("iOS 미완료 결제 정리: ${tx.transactionIdentifier}");
+        await SKPaymentQueueWrapper().finishTransaction(tx);
+      }
+    }
     await _fetchProducts();
-    _purchaseUpdatedSubscription = _inAppPurchase.purchaseStream
-        .listen(_handlePurchaseUpdate, onError: (error) {
+    _purchaseUpdatedSubscription = _inAppPurchase.purchaseStream.listen(_handlePurchaseUpdate, onError: (error) {
+      Logger().d(error);
     });
   }
 
   Future<void> _fetchProducts() async {
-    Set<String> ids =
-        productController.productData!.map((item) => item.productName).toSet();
+    Set<String> ids = productController.productData!.map((item) => item.productName).toSet();
 
-    ProductDetailsResponse response =
-        await _inAppPurchase.queryProductDetails(ids);
+    ProductDetailsResponse response = await _inAppPurchase.queryProductDetails(ids);
 
-    final Map<String, ProductDetails> productDetailsMap = {
-      for (var product in response.productDetails) product.id: product
-    };
+    final Map<String, ProductDetails> productDetailsMap = {for (var product in response.productDetails) product.id: product};
 
-    final List<ProductDetails> orderedProducts = ids
-        .map((id) => productDetailsMap[id])
-        .where((product) => product != null)
-        .cast<ProductDetails>()
-        .toList();
+    final List<ProductDetails> orderedProducts =
+        ids.map((id) => productDetailsMap[id]).where((product) => product != null).cast<ProductDetails>().toList();
 
     if (!mounted) return;
     setState(() {
@@ -101,88 +94,82 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
     }
   }
 
-  Future<void> _handlePurchaseUpdate(
-      List<PurchaseDetails> purchaseDetailsList) async {
+  Future<void> _handlePurchaseUpdate(List<PurchaseDetails> purchaseDetailsList) async {
     for (var purchaseDetails in purchaseDetailsList) {
+      Logger().d(purchaseDetails.status);
+      switch (purchaseDetails.status) {
+        case PurchaseStatus.pending:
+          setState(() => _isPendingTransaction = true);
+          Get.snackbar(
+            '결제 대기',
+            '대표 계정의 승인을 기다리고 있습니다.',
+            snackPosition: SnackPosition.BOTTOM,
+          );
+          break;
 
-      // if (Platform.isIOS) {
-        switch (purchaseDetails.status) {
-          case PurchaseStatus.pending:
-            setState(() {
-              _isPendingTransaction = true;
-            });
-            Get.snackbar(
-              '결제 대기',
-              '대표 계정의 승인을 기다리고 있습니다.',
-              snackPosition: SnackPosition.BOTTOM,
-            );
-            break;
+        case PurchaseStatus.purchased:
+        case PurchaseStatus.restored:
+          Logger().d("구매 완료/복원: ${purchaseDetails.productID}");
+          final isVerified = await _verifyPurchase(purchaseDetails);
+          await _inAppPurchase.completePurchase(purchaseDetails);
+          if (isVerified) {
+            Logger().d("결제 처리 완료: ${purchaseDetails.productID}");
+            Get.snackbar('구매 완료', '다이아 구매가 완료되었습니다.');
+          } else {
+            Logger().w("결제 검증 실패: ${purchaseDetails.productID}");
+            Get.snackbar('결제 실패', '영수증 검증에 실패했습니다.');
+          }
+          setState(() => _isPendingTransaction = false);
+          break;
 
-          case PurchaseStatus.purchased:
-            // 구매 완료 - 영수증 검증
-            bool isVerified = await _verifyPurchase(purchaseDetails);
-            if (isVerified && purchaseDetails.pendingCompletePurchase) {
-              await _completePurchase(purchaseDetails);
-            }
-            break;
+        case PurchaseStatus.error:
+          Logger().e("결제 오류: ${purchaseDetails.error}");
+          Get.snackbar(
+            '결제 실패',
+            '오류가 발생했습니다: ${purchaseDetails.error?.message}',
+            snackPosition: SnackPosition.BOTTOM,
+          );
+          setState(() => _isPendingTransaction = false);
+          break;
 
-          case PurchaseStatus.error:
-            // 오류 발생 - 사용자에게 알림
-            Get.snackbar(
-              '결제 실패',
-              '오류가 발생했습니다: ${purchaseDetails.error?.message}',
-              snackPosition: SnackPosition.BOTTOM,
-            );
-            break;
-
-          default:
-            break;
-        }
-      // }
-      // if(Platform.isAndroid)  {
-      //   bool isVerified = await _verifyPurchase(purchaseDetails);
-      //   if(isVerified && purchaseDetails.pendingCompletePurchase){
-      //     await _completePurchase(purchaseDetails);
-      //   }
-      // }
-      // 모든 상태에서 pendingCompletePurchase 처리
-      if (purchaseDetails.pendingCompletePurchase) {
-        await _inAppPurchase.completePurchase(purchaseDetails);
-        setState(() {
-          _isPendingTransaction = false;
-        });
+        default:
+          setState(() => _isPendingTransaction = false);
+          break;
       }
     }
   }
 
   Future<bool> _verifyPurchase(PurchaseDetails purchaseDetails) async {
-    String platform = Theme.of(context).platform == TargetPlatform.android
-        ? 'google'
-        : 'apple';
-
-    final matchingProduct = products.firstWhere(
-      (product) => product.id == purchaseDetails.productID,
-      orElse: () => throw Exception(
-          'Product not found for ID: ${purchaseDetails.productID}'),
-    );
-
-    await verifyReceiptService(
-      purchaseDetails,
-      matchingProduct.rawPrice.toInt(),
-      platform,
-    );
-
-    return true;
-  }
-
-  Future<void> _completePurchase(PurchaseDetails purchaseDetails) async {
     try {
-      await _inAppPurchase.completePurchase(purchaseDetails);
-    } catch (error) {
-    } finally {
-      setState(() {
-        _isPendingTransaction = false;
-      });
+      final platform = Platform.isAndroid ? 'google' : 'apple';
+      final matchingProduct = products.firstWhere(
+        (product) => product.id == purchaseDetails.productID,
+        orElse: () => throw Exception(
+          'Product not found: ${purchaseDetails.productID}',
+        ),
+      );
+      final statusToSend = (purchaseDetails.status == PurchaseStatus.restored)
+          ? 'purchased'
+          : purchaseDetails.status.toString().split('.').last;
+
+      bool result = false;
+      if (platform == 'google') {
+        result = await verifyGoogleReceipt(
+          purchaseDetails,
+          matchingProduct.price,
+        );
+      } else if (platform == 'apple') {
+        result = await verifyAppleReceipt(
+          purchaseDetails,
+          matchingProduct.price,
+        );
+
+      }
+      print('===============result: $result ===============');
+      return result;
+    } catch (e, st) {
+      Logger().e("영수증 검증 중 오류 $e, $st");
+      return false;
     }
   }
 
@@ -229,8 +216,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
                                     child: Text(
                                       '다이아 ${productController.productData![index].dia}개',
                                       style: TextStyle(
-                                        color: Color(int.parse(productController
-                                            .productData![index].color)),
+                                        color: Color(int.parse(productController.productData![index].color)),
                                         fontSize: 18.sp,
                                         fontWeight: FontWeight.bold,
                                         fontFamily: 'BMJUA',
@@ -246,14 +232,11 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
                                     padding: EdgeInsets.all(gapQuarter),
                                     child: Container(
                                       decoration: BoxDecoration(
-                                        color: Color(int.parse(productController
-                                            .productData![index].color)),
-                                        borderRadius:
-                                            BorderRadius.circular(15.r),
+                                        color: Color(int.parse(productController.productData![index].color)),
+                                        borderRadius: BorderRadius.circular(15.r),
                                       ),
                                       child: Padding(
-                                        padding: EdgeInsets.symmetric(
-                                            horizontal: 24.sp, vertical: 4.sp),
+                                        padding: EdgeInsets.symmetric(horizontal: 24.sp, vertical: 4.sp),
                                         child: Text(
                                           '${_formatPrice(productController.productData![index].price)}원',
                                           style: TextStyle(
@@ -291,8 +274,9 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
       barrierDismissible: true,
       onConfirm: () async {
         Get.back();
-        if (Theme.of(context).platform == TargetPlatform.iOS) {
-          showParentalDialog(currentProblem, currentSolution, () async {
+        if (!Platform.isAndroid) {
+          showParentalDialog(context, () async {
+            Logger().d('클릭');
             await _buyProduct(product);
           });
         } else {

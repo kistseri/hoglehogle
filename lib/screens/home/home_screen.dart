@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hoho_hanja/main.dart';
@@ -14,6 +16,7 @@ import 'package:hoho_hanja/widgets/appbar/rank_appbar.dart';
 import 'package:hoho_hanja/widgets/custom_bottom.dart';
 import 'package:logger/logger.dart';
 
+import '../../services/myroom/load_item_service.dart';
 import '../../utils/contents_lock.dart';
 
 class HomeController extends GetxController {
@@ -31,21 +34,21 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>
-    with WidgetsBindingObserver, RouteAware {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver, RouteAware {
   int _selectedIndex = 2;
-  final HomeController homeController =
-      Get.put(HomeController(), permanent: true);
+  final HomeController homeController = Get.put(HomeController(), permanent: true);
 
   @override
   void initState() {
     super.initState();
     mainNotice();
+
     WidgetsBinding.instance.addObserver(this);
     music.playBackgroundMusic('main');
     contentsLock(homeController.homeValue.value);
     rankService();
     myroomService();
+    loadItemService();
   }
 
   @override
@@ -113,9 +116,17 @@ class _HomeScreenState extends State<HomeScreen>
 
   PreferredSizeWidget? _buildAppBar() {
     if (_selectedIndex == 2) {
-      return HomeAppBar(onValueChanged: _onHomeAppBarValueChanged);
+      return HomeAppBar(
+        onValueChanged: _onHomeAppBarValueChanged,
+        onAvatarPressed: () {
+          _onTabChanged(1);
+        },
+      );
     } else if (_selectedIndex == 0) {
-      return RankAppBar(onPressed: () => _onTabChanged(2));
+      return RankAppBar(
+        onPressed: () => _onTabChanged(2),
+        onAvatarPressed: () => _onTabChanged(1),
+      );
     } else if (_selectedIndex == 1) {
       return null;
     } else {
@@ -128,7 +139,7 @@ class _HomeScreenState extends State<HomeScreen>
       case 0:
         return const RankScreen();
       case 1:
-        return const MyRoomScreen();
+        return MyRoomScreen(onPressed: () => _onTabChanged(2));
       case 3:
         return const SettingScreen();
       default:
@@ -152,10 +163,18 @@ class _HomeScreenState extends State<HomeScreen>
         appBar: _buildAppBar(),
         body: _buildBody(),
         bottomNavigationBar: _selectedIndex == 2
-            ? CustomBottom(
-                onTabChanged: _onTabChanged,
-                selectedIndex: _selectedIndex,
-              )
+            ? Platform.isAndroid
+                ? SafeArea(
+                    bottom: true,
+                    child: CustomBottom(
+                      onTabChanged: _onTabChanged,
+                      selectedIndex: _selectedIndex,
+                    ),
+                  )
+                : CustomBottom(
+                    onTabChanged: _onTabChanged,
+                    selectedIndex: _selectedIndex,
+                  )
             : null,
       ),
     );

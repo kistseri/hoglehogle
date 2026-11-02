@@ -8,11 +8,13 @@ import 'package:hoho_hanja/data/DTO/requestDTO/loginDTO.dart';
 import 'package:hoho_hanja/data/models/login_data.dart';
 import 'package:hoho_hanja/screens/auth/login/local_login_screen.dart';
 import 'package:hoho_hanja/screens/home/home_screen.dart';
+import 'package:hoho_hanja/screens/myroom/myroom_wigets/my_room_item.dart';
 import 'package:hoho_hanja/services/auth/my_goods_service.dart';
-import 'package:hoho_hanja/utils/load_profile_image.dart';
 import 'package:hoho_hanja/utils/network_check.dart';
 import 'package:hoho_hanja/widgets/dialog/dialog.dart';
 import 'package:logger/logger.dart';
+
+import '../../myroom/load_item_service.dart';
 
 // 로그인 요청
 Future<void> loginService(LoginDTO loginDTO, bool isAutoLoginChecked) async {
@@ -38,20 +40,16 @@ Future<void> loginService(LoginDTO loginDTO, bool isAutoLoginChecked) async {
           // 응답 결과가 있는 경우
           if (resultValue == "0000") {
             LoginData loginData = LoginData.fromJson(resultList);
-            final LoginDataController loginDataController =
-                Get.put(LoginDataController(), permanent: true);
+            final LoginDataController loginDataController = Get.put(LoginDataController(), permanent: true);
             loginDataController.setLoginData(loginData);
 
             if (isAutoLoginChecked) {
-              await storage.write(
-                  key: 'login',
-                  value:
-                      'id ${loginDTO.email} password ${loginDTO.shaPassword}');
+              await storage.write(key: 'login', value: 'id ${loginDTO.email} password ${loginDTO.shaPassword}');
             }
             // await getToken();
 
             await myGoodsService();
-            await loadProfileImage(loginDataController.loginData.value!.id);
+            // await loadProfileImage(loginDataController.loginData.value!.id);
             Get.offAll(() => const HomeScreen());
           }
           // 응답 데이터가 오류일 때("9999": 오류)

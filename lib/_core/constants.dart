@@ -24,62 +24,14 @@ List<String> getSocialPlatforms() {
 }
 
 final List<Map<String, dynamic>> iconData = [
-  {
-    'icon': Icons.circle,
-    'color': Colors.amber,
-    'size': 30.sp,
-    'top': 135.h,
-    'left': 35.w
-  },
-  {
-    'icon': Icons.circle,
-    'color': Colors.amber,
-    'size': 15.sp,
-    'top': 165.h,
-    'left': 20.w
-  },
-  {
-    'icon': Icons.circle,
-    'color': Colors.lightGreen,
-    'size': 7.5.sp,
-    'top': 400.h,
-    'left': 15.w
-  },
-  {
-    'icon': Icons.star,
-    'color': Colors.white,
-    'size': 10.sp,
-    'top': 520.h,
-    'left': 35.w
-  },
-  {
-    'icon': Icons.star,
-    'color': Colors.amber,
-    'size': 20.sp,
-    'top': 160.h,
-    'left': 300.w
-  },
-  {
-    'icon': Icons.circle,
-    'color': Colors.lightGreen,
-    'size': 10.sp,
-    'top': 180.h,
-    'left': 325.w
-  },
-  {
-    'icon': Icons.star,
-    'color': Colors.white,
-    'size': 25.sp,
-    'top': 520.h,
-    'left': 300.w
-  },
-  {
-    'icon': Icons.circle,
-    'color': Colors.amber,
-    'size': 10.sp,
-    'top': 505.h,
-    'left': 325.w
-  },
+  {'icon': Icons.circle, 'color': Colors.amber, 'size': 30.sp, 'top': 135.h, 'left': 35.w},
+  {'icon': Icons.circle, 'color': Colors.amber, 'size': 15.sp, 'top': 165.h, 'left': 20.w},
+  {'icon': Icons.circle, 'color': Colors.lightGreen, 'size': 7.5.sp, 'top': 400.h, 'left': 15.w},
+  {'icon': Icons.star, 'color': Colors.white, 'size': 10.sp, 'top': 520.h, 'left': 35.w},
+  {'icon': Icons.star, 'color': Colors.amber, 'size': 20.sp, 'top': 160.h, 'left': 300.w},
+  {'icon': Icons.circle, 'color': Colors.lightGreen, 'size': 10.sp, 'top': 180.h, 'left': 325.w},
+  {'icon': Icons.star, 'color': Colors.white, 'size': 25.sp, 'top': 520.h, 'left': 300.w},
+  {'icon': Icons.circle, 'color': Colors.amber, 'size': 10.sp, 'top': 505.h, 'left': 325.w},
 ];
 
 const List<Color> gridColors = [
@@ -182,9 +134,9 @@ const List<String> myroomTab = [
   'assets/images/myroom/myroom_menu4.png',
 ];
 
-const List<AssetImage> charcater = [
-  AssetImage('assets/images/myroom/tiger.png'),
-  AssetImage('assets/images/myroom/bear.png'),
-  // AssetImage('assets/images/myroom/squirrel.png'),
-  // AssetImage('assets/images/myroom/rabbit.png'),
+const List<AssetImage> characterList = [
+  AssetImage('assets/images/myroom/character/tiger.png'),
+  AssetImage('assets/images/myroom/character/rabbit.png'),
+  AssetImage('assets/images/myroom/character/bear.png'),
+  AssetImage('assets/images/myroom/character/squirrel2.png'),
 ];

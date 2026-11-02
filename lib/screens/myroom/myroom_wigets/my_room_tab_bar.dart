@@ -3,10 +3,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:hoho_hanja/_core/constants.dart';
 import 'package:hoho_hanja/_core/size.dart';
+import 'package:hoho_hanja/main.dart';
+import 'package:logger/logger.dart';
 
 class CustomTabBarWidget extends StatefulWidget {
   final List<String> categories;
   final Function(String) onTabSelected;
+
   const CustomTabBarWidget({
     super.key,
     required this.categories,
@@ -34,16 +37,18 @@ class _CustomTabBarWidgetState extends State<CustomTabBarWidget> {
     double size = MediaQuery.of(context).size.width;
     int tabCount = 4;
 
+    Logger().d(screenHeight) ;
+
     return Stack(
       alignment: Alignment.topLeft,
       children: [
         Container(height: 40.h, color: Colors.transparent),
         Positioned(
-          top: 0,
+          top: screenHeight >= 1000 ? 125.h : 0,
+          bottom: 0,
+          left: 0,
           child: Container(
-            decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20.r),
-                color: Colors.transparent),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(20.r), color: Colors.transparent),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: List.generate(

@@ -4,7 +4,6 @@ import 'package:hoho_hanja/screens/auth/join/join_screen.dart';
 import 'package:hoho_hanja/screens/home/home_screen.dart';
 import 'package:hoho_hanja/services/auth/login/social/email_check_service.dart';
 import 'package:hoho_hanja/services/auth/my_goods_service.dart';
-import 'package:hoho_hanja/utils/load_profile_image.dart';
 import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart';
 import 'package:logger/logger.dart';
 
@@ -27,7 +26,7 @@ Future<void> kakaoLogin() async {
         loginDataController.setLoginData(loginData);
 
         await myGoodsService();
-        await loadProfileImage(loginDataController.loginData.value!.id);
+        // await loadProfileImage(loginDataController.loginData.value!.id);
 
         Get.offAll(() => const HomeScreen());
       } else {
@@ -53,7 +52,7 @@ Future<void> kakaoLogin() async {
         loginDataController.setLoginData(loginData);
 
         await myGoodsService();
-        await loadProfileImage(loginDataController.loginData.value!.id);
+        // await loadProfileImage(loginDataController.loginData.value!.id);
 
         Get.offAll(() => const HomeScreen());
       } else {

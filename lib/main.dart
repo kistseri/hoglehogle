@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:app_version_update/app_version_update.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -6,6 +9,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:hoho_hanja/_core/http.dart';
 import 'package:hoho_hanja/_core/style.dart';
 import 'package:hoho_hanja/screens/auth/login/social_login_screen.dart';
 import 'package:hoho_hanja/screens/home/home_screen.dart';
@@ -14,7 +18,9 @@ import 'package:hoho_hanja/utils/check_app_version.dart';
 import 'package:hoho_hanja/utils/coupon_screen.dart';
 import 'package:hoho_hanja/utils/network_check.dart';
 import 'package:hoho_hanja/utils/sound.dart';
+import 'package:hoho_hanja/widgets/dialog/version_dialog.dart';
 import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
@@ -36,10 +42,11 @@ Future<void> main() async {
   // 스토리지 초기화
   Get.put(const FlutterSecureStorage());
 
+  // 구형 안드로이드 인증서(Sectigo Root R46) 신뢰 설정
+  await setupDioCertificates();
+
   // 네트워크연결 초기화
   Get.put(ConnectivityController());
-
-  await versionCheck();
   await settingScreen();
 
   //화면 세로방향 고정
@@ -67,7 +74,7 @@ Future<void> main() async {
       splitScreenMode: true,
       builder: (context, child) {
         return GetMaterialApp(
-          // initialBinding: BindingsBuilder(() async {}),
+          initialBinding: BindingsBuilder(() {}),
           theme: lightTheme,
           darkTheme: darkTheme,
           themeMode: ThemeMode.light,
@@ -94,23 +101,71 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  late Future<Widget> autoLogin;
+  late Future<bool> _versionFuture;
 
   @override
   void initState() {
     super.initState();
-    initAsync();
+    _versionFuture = verifyVersion();
   }
 
-  Future<void> initAsync() async {
-    final isVersionOk = await versionCheck();
-    if (isVersionOk) {
-      autoLogin = checkAndPerformAutoLogin();
+  Future<bool> verifyVersion() async {
+    String appleId = '6738404467';
+    String playStoreId = 'com.hohoedu.hoglehogle';
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+
+    final result = await AppVersionUpdate.checkForUpdates(
+      appleId: appleId,
+      playStoreId: playStoreId,
+      country: 'kr',
+    );
+
+    if (result.canUpdate == true) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        versionDialog(Platform.isAndroid ? 'AOS' : 'IOS');
+      });
+      return false;
     }
+
+    return true;
   }
 
   @override
   Widget build(BuildContext context) {
-    return const LoginScreen();
+    return FutureBuilder(
+      future: _versionFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(
+                child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Spacer(),
+                Expanded(child: Center(child: CircularProgressIndicator())),
+                Expanded(child: Text('버전을 확인하고 있습니다.')),
+              ],
+            )),
+          );
+        } else if (snapshot.hasError) {
+          return Scaffold(
+            body: Center(
+              child: Text('버전 확인 중 오류 발생: ${snapshot.error}'),
+            ),
+          );
+        } else {
+          bool versionOk = snapshot.data ?? false;
+          if (versionOk) {
+            return FutureBuilder(
+                future: checkAndPerformAutoLogin(),
+                builder: (context, snapshot) {
+                  return const LoginScreen();
+                });
+          } else {
+            return const LoginScreen();
+          }
+        }
+      },
+    );
   }
 }

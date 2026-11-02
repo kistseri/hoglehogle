@@ -10,13 +10,16 @@ import 'package:hoho_hanja/_core/style.dart';
 import 'package:hoho_hanja/data/models/goods_data.dart';
 import 'package:hoho_hanja/data/models/login_data.dart';
 import 'package:hoho_hanja/main.dart';
+import 'package:hoho_hanja/screens/myroom/myroom_wigets/my_room_circle.dart';
+import 'package:hoho_hanja/screens/myroom/myroom_wigets/my_room_item.dart';
 import 'package:hoho_hanja/services/auth/my_goods_service.dart';
-import 'package:hoho_hanja/utils/load_profile_image.dart';
+import 'package:logger/logger.dart';
 
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final VoidCallback? onPressed;
+  final VoidCallback? onAvatarPressed;
 
-  const CustomAppBar({super.key, this.onPressed});
+  const CustomAppBar({super.key, this.onPressed, this.onAvatarPressed});
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -28,6 +31,7 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
 class _CustomAppBarState extends State<CustomAppBar> {
   final goodsController = Get.put(GoodsDataController());
   final loginController = Get.put(LoginDataController());
+  final myRoomController = Get.find<MyroomItemController>();
 
   @override
   void initState() {
@@ -54,6 +58,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
           ),
         ),
         onPressed: () {
+          Logger().d('뒤로가기');
           effect.tapSound();
           if (widget.onPressed != null) {
             widget.onPressed!();
@@ -65,9 +70,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
       systemOverlayStyle: SystemUiOverlayStyle.dark,
       actions: [
         Padding(
-          padding: MediaQuery.of(context).size.width >= 500
-              ? EdgeInsets.all(8.r)
-              : EdgeInsets.all(16.r),
+          padding: MediaQuery.of(context).size.width >= 500 ? EdgeInsets.all(8.r) : EdgeInsets.all(16.r),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -101,47 +104,13 @@ class _CustomAppBarState extends State<CustomAppBar> {
             ],
           ),
         ),
-        ValueListenableBuilder(
-          valueListenable: Hive.box('selectedItemBox').listenable(),
-          builder: (context, Box box, _) {
-            final imageProvidrs = loadProfileImageFromBox(
-                box, loginController.loginData.value!.id);
-            return FutureBuilder(
-              future: loadProfileImage(loginController.loginData.value!.id)
-                  .then((imageProviders) =>
-                      getProfileImageProvider(imageProviders)),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.done &&
-                    snapshot.hasData) {
-                  return CircleAvatar(backgroundImage: snapshot.data!);
-                } else {
-                  return const CircleAvatar(
-                    backgroundColor: mBackWhite,
-                  );
-                }
-              },
-            );
-          },
-        ),
+        GestureDetector(
+            onTap: widget.onAvatarPressed,
+            child: MyRoomCircleAvatar(
+              size: 40,
+            )),
         SizedBox(width: 16.w),
       ],
     );
-  }
-
-  Map<String, ImageProvider?> loadProfileImageFromBox(Box box, String userId) {
-    ImageProvider? getImageProvider(String? url, {bool isAsset = false}) {
-      if (url == null || url.isEmpty) return null;
-      return isAsset ? AssetImage(url) : NetworkImage(url);
-    }
-
-    return {
-      'character':
-          getImageProvider(box.get('${userId}_character'), isAsset: true),
-      'hatImage': getImageProvider(box.get('${userId}_hatImage')),
-      'clothingImage': getImageProvider(box.get('${userId}_clothingImage')),
-      'accessoriesImage':
-          getImageProvider(box.get('${userId}_accessoriesImage')),
-      'backgroundImage': getImageProvider(box.get('${userId}_backgroundImage')),
-    };
   }
 }

@@ -14,7 +14,7 @@ Future<void> rankService() async {
   final connectivityController = Get.put(ConnectivityController());
 
   if (connectivityController.isConnected.value) {
-    String url = dotenv.get('RANK_URL');
+    String url = dotenv.get('RANK_COPY_URL');
     final ym = GetCurrentYM.ym;
 
     final Map<String, dynamic> requestData = {

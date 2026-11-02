@@ -13,7 +13,7 @@ class WithdrawButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        showWithdrawDialog();
+        showWithdrawDialog(context);
       },
       child: Container(
         decoration: BoxDecoration(

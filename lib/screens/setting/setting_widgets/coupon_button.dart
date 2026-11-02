@@ -17,10 +17,8 @@ class CouponButton extends StatefulWidget {
 }
 
 class _CouponButtonState extends State<CouponButton> {
-  final SettingDataController settingController =
-      Get.find<SettingDataController>();
-  final LoginDataController loginDataController =
-      Get.find<LoginDataController>();
+  final SettingDataController settingController = Get.find<SettingDataController>();
+  final LoginDataController loginDataController = Get.find<LoginDataController>();
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +26,6 @@ class _CouponButtonState extends State<CouponButton> {
     final id = loginDataController.loginData.value!.id;
     final couponText = settingController.isVisible.value;
     final isCouponInsert = couponText == 'N' ? true : false;
-
     return GestureDetector(
       onTap: () async {
         if (isAos) {
@@ -65,8 +62,7 @@ class _CouponButtonState extends State<CouponButton> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                if (isCouponInsert)
-                  Icon(Icons.confirmation_number_outlined, color: mFontWhite),
+                if (isCouponInsert) Icon(Icons.confirmation_number_outlined, color: mFontWhite),
                 Text(
                   isCouponInsert ? '쿠폰 입력하기' : '홈페이지 바로가기',
                   style: TextStyle(

@@ -4,7 +4,6 @@ import 'package:hoho_hanja/screens/auth/join/join_screen.dart';
 import 'package:hoho_hanja/screens/home/home_screen.dart';
 import 'package:hoho_hanja/services/auth/login/social/email_check_service.dart';
 import 'package:hoho_hanja/services/auth/my_goods_service.dart';
-import 'package:hoho_hanja/utils/load_profile_image.dart';
 import 'package:logger/logger.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
@@ -29,7 +28,7 @@ Future<void> appleLogin() async {
       loginDataController.setLoginData(loginData);
 
       await myGoodsService();
-      await loadProfileImage(loginDataController.loginData.value!.id);
+      // await loadProfileImage(loginDataController.loginData.value!.id);
 
       Get.offAll(() => const HomeScreen());
     } else {

@@ -37,7 +37,9 @@ Future<void> purchaseService(PurchaseDetails purchaseDetails, price) async {
       'transaction_id': purchaseDetails.purchaseID,
       'transaction_date': purchaseDetails.transactionDate,
       'platform': purchaseDetails.verificationData.source,
-      'status': purchaseDetails.status.name,
+      'status': purchaseDetails.status == PurchaseStatus.restored
+          ? 'purchased'
+          : purchaseDetails.status.name,
     };
 
     Logger().d('json = ${jsonEncode(requestData)}');
