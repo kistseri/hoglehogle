@@ -1,7 +1,7 @@
 name: hoho_hanja
 description: "A new Flutter project."
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
-version: 1.0.23+40
+version: 1.0.24+41
 
 environment:
   sdk: ^3.5.3
