@@ -21,8 +21,7 @@ Future<void> kakaoLogin() async {
           return;
         }
         // 카카오톡 로그인 실패(미설치 상태 변화, 계정 연결 안 됨 등) → 계정 로그인으로 전환.
-        await UserApi.instance
-            .loginWithKakaoAccount(prompts: [Prompt.login]);
+        await UserApi.instance.loginWithKakaoAccount(prompts: [Prompt.login]);
       }
     } else {
       await UserApi.instance.loginWithKakaoAccount(prompts: [Prompt.login]);
@@ -61,8 +60,7 @@ Future<void> _handleKakaoUser() async {
 
   if (result == "0000") {
     final loginData = LoginData(id: email, nickName: nickName);
-    final loginDataController =
-        Get.put(LoginDataController(), permanent: true);
+    final loginDataController = Get.put(LoginDataController(), permanent: true);
     loginDataController.setLoginData(loginData);
 
     await myGoodsService();

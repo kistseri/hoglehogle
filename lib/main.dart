@@ -34,7 +34,8 @@ Future<void> main() async {
   await dotenv.load(fileName: ".env");
 
   // 카카오 소셜 로그인
-  KakaoSdk.init(nativeAppKey: dotenv.get('KAKAO_APP_KEY'));
+  // kakao_flutter_sdk 2.x 부터 init 은 Future 이므로 await 필요
+  await KakaoSdk.init(nativeAppKey: dotenv.get('KAKAO_APP_KEY'));
 
   // 스토리지 초기화
   Get.put(const FlutterSecureStorage());
