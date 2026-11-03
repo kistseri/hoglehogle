@@ -30,8 +30,14 @@ Future<dynamic> failDialog(title, description) {
     barrierDismissible: false, // 외부 터치로 다이얼로그가 닫히지 않도록 설정
     builder: (BuildContext context) {
       Future.delayed(const Duration(seconds: 3), () {
-        if (context.mounted) {
+        if (!context.mounted) return;
+        // 이미 닫혔으면 그대로, 그사이 위에 다른 화면이 열렸으면 그 화면 말고 이 창만 닫음
+        final route = ModalRoute.of(context);
+        if (route == null || !route.isActive) return;
+        if (route.isCurrent) {
           Navigator.of(context).pop();
+        } else {
+          Navigator.of(context).removeRoute(route);
         }
       });
       return AlertDialog(
@@ -51,9 +57,10 @@ Future<dynamic> failDialog(title, description) {
         actions: <Widget>[
           Center(
             child: TextButton(
-              child: const Text(
+              // 제목·내용처럼 화면 크기에 맞춤 (태블릿에서 너무 작게 보이지 않도록)
+              child: Text(
                 "확인",
-                style: TextStyle(color: Colors.red),
+                style: TextStyle(color: Colors.red, fontSize: 15.sp),
               ),
               onPressed: () {
                 Navigator.of(context).pop(); // 다이얼로그 닫기

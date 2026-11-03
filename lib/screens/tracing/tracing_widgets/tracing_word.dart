@@ -1,21 +1,15 @@
-import 'dart:ui';
+import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:dio/dio.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:hoho_hanja/_core/colors.dart';
+import 'package:hoho_hanja/_core/http.dart';
 import 'package:hoho_hanja/data/models/tracing_data.dart';
 import 'package:hoho_hanja/screens/tracing/tracing_widgets/tracing_painter.dart';
 import 'package:hoho_hanja/utils/get_svg_path.dart';
 import 'package:logger/logger.dart';
-import 'package:path_drawing/path_drawing.dart';
-
-class StrokePath {
-  final Path path;
-  final String strokeClass;
-
-  StrokePath({required this.path, required this.strokeClass});
-}
 
 class TracingWord extends StatefulWidget {
   final TracingDataController tracingController;
@@ -36,341 +30,298 @@ class TracingWord extends StatefulWidget {
 }
 
 class _TracingWordState extends State<TracingWord> {
-  final customGlobalKey = GlobalKey();
-  List<List<Offset>> _lines = [];
-  List<Offset> _currentLine = [];
-  double _top = 100;
-  double _left = 100;
-  List<Path>? firstPaths;
-  List<Path>? pointerPaths;
-  List<StrokePath> remainingStrokePaths = [];
-  double scratchPercent = 0.0;
-  Set<int> completedPaths = {};
+  // 펜 두께·포인터 크기 (SVG 좌표, 글자 크기에 비례)
+  static const double _penWidth = 40;
+  static const double _pointerSize = 34;
 
-  int? _lastIndex;
-  int _currentPathIndex = 0;
+  // 획을 이만큼 칠하면 완료
+  static const double _completeRatio = 0.8;
+
+  // 채점용 이미지 가로 픽셀 (기기와 관계없이 같은 기준으로 채점)
+  static const int _scoreWidth = 256;
+
+  TracingShapes? _shapes;
+  bool _failed = false;
+
+  // 선·포인터는 SVG 좌표로 저장
+  final List<List<Offset>> _lines = [];
+  List<Offset> _currentLine = [];
+  Offset? _pointer;
+  final Set<int> _completed = {};
+  int _strokeIndex = 0;
+
+  // 늦게 도착한 SVG 응답·채점 결과를 버리기 위한 번호
+  int _loadToken = 0;
+  int _scoreToken = 0;
+
+  // SVG → 화면 변환 (build에서 영역 크기로 계산)
+  double _scale = 1;
+  Offset _origin = Offset.zero;
 
   @override
   void initState() {
     super.initState();
     widget.resetNotifier.addListener(_onReset);
+    _startLoad();
   }
 
   @override
   void didUpdateWidget(covariant TracingWord oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.resetNotifier != widget.resetNotifier) {
+      oldWidget.resetNotifier.removeListener(_onReset);
+      widget.resetNotifier.addListener(_onReset);
+    }
     if (oldWidget.currentIndex != widget.currentIndex) {
-      setState(() {
-        firstPaths = null;
-      });
+      _startLoad();
     }
   }
 
   void _onReset() {
-    setState(() {
-      _lines.clear();
-      _currentLine.clear();
-      completedPaths.clear();
-      _currentPathIndex = 0;
-      _updatePointer();
-    });
+    setState(_clearWord);
   }
 
-  void _updatePointerPositionWithinBounds(Offset localPosition) {
-    RenderBox renderBox =
-        customGlobalKey.currentContext!.findRenderObject() as RenderBox;
-    final size = renderBox.size;
-
-    setState(() {
-      _left = localPosition.dx.clamp(0.0, size.width - 50.w);
-      _top = localPosition.dy.clamp(0.0, size.height - 50.h);
-    });
+  // 글자를 처음 상태로 (선·완료 획을 지우고 첫 획부터)
+  void _clearWord() {
+    _scoreToken++;
+    _lines.clear();
+    _currentLine = [];
+    _completed.clear();
+    _strokeIndex = 0;
+    _pointer = _startOf(0);
   }
 
-  //assets에서 SVG가져오기
-  // Future<void> _loadSvgPathFromAssets(Size size, int currentIndex) async {
-  //   try {
-  //     final svgData = await rootBundle.loadString('assets/images/long.svg');
-  //
-  //     final st0PathData = SvgPathParser.getPathsByClassFromData(svgData, 'st0');
-  //     if (st0PathData.isNotEmpty) {
-  //       setState(() {
-  //         const svgSize = Size(200, 248);
-  //         final scaleX = size.width / svgSize.width;
-  //         final scaleY = size.height / svgSize.height;
-  //
-  //         firstPaths = st0PathData.map((pathData) {
-  //           final path = parseSvgPathData(pathData);
-  //           return path
-  //               .transform(Matrix4.diagonal3Values(scaleX, scaleY, 1).storage);
-  //         }).toList();
-  //       });
-  //     } else {
-  //       Logger().d("class='st0' 속성을 가진 path 데이터를 찾을 수 없습니다.");
-  //     }
-  //
-  //     List<List<Path>> groupPaths(List<Path> paths, int groupSize) {
-  //       List<List<Path>> groups = [];
-  //       for (int i = 0; i < paths.length; i += groupSize) {
-  //         int endIndex =
-  //             (i + groupSize) > paths.length ? paths.length : (i + groupSize);
-  //         groups.add(paths.sublist(i, endIndex));
-  //       }
-  //       return groups;
-  //     }
-  //
-  //     final allElements = SvgPathParser.getAllElementsFromData(svgData);
-  //
-  //     setState(() {
-  //       remainingStrokePaths = allElements
-  //           .where((element) {
-  //             final classAttr = (element['class'])?.trim() ?? '';
-  //             return classAttr.contains('st1') ||
-  //                 classAttr.contains('st2') ||
-  //                 classAttr.contains('st3');
-  //           })
-  //           .map((element) {
-  //             String? dAttribute;
-  //             if (element['type'] == 'path') {
-  //               dAttribute = element['d'];
-  //             } else if (element['type'] == 'line') {
-  //               dAttribute =
-  //                   'M${element['x1']},${element['y1']} L${element['x2']},${element['y2']}';
-  //             }
-  //             if (dAttribute != null) {
-  //               final path = parseSvgPathData(dAttribute).transform(
-  //                   Matrix4.diagonal3Values(
-  //                           size.width / 200, size.height / 248, 1)
-  //                       .storage);
-  //               final strokeClass = (element['class'] as String?)?.trim() ?? '';
-  //               return StrokePath(path: path, strokeClass: strokeClass);
-  //             }
-  //             return null;
-  //           })
-  //           .where((s) => s != null)
-  //           .cast<StrokePath>()
-  //           .toList();
-  //
-  //       List<List<StrokePath>> groups = groupPathsBySt1(remainingStrokePaths);
-  //
-  //       groupedPaths =
-  //           groups.map((group) => group.map((s) => s.path).toList()).toList();
-  //
-  //       if (remainingStrokePaths.isNotEmpty) {
-  //         _updatePointerPositionForGroup(currentGroupIndex);
-  //       }
-  //     });
-  //   } catch (e) {
-  //     Logger().e("SVG 데이터를 불러오는 중 오류 발생: $e");
-  //   }
-  // }
+  Offset? _startOf(int index) {
+    final starts = _shapes?.starts ?? const <Offset>[];
+    return index < starts.length ? starts[index] : null;
+  }
 
-  // 서버에서 SVG가져오기
-  Future<void> _loadSvgPathFromServer(Size size, int currentIndex) async {
+  bool get _isDone =>
+      _shapes != null && _completed.length >= _shapes!.strokes.length;
+
+  // 글자가 바뀌거나 다시 시도할 때만 SVG를 불러옴
+  void _startLoad() {
+    _loadToken++;
+    _shapes = null;
+    _clearWord();
+
+    final list = widget.tracingController.tracingDataList ?? const [];
+    final index = widget.currentIndex;
+    _failed = index < 0 || index >= list.length;
+    if (!_failed) _loadSvg(_loadToken, list[index].svg);
+  }
+
+  Future<void> _loadSvg(int token, String url) async {
     try {
-      final response = await Dio()
-          .get(widget.tracingController.tracingDataList![currentIndex].svg);
-      if (response.statusCode == 200) {
-        final svgData = response.data;
-        final st0PathData =
-            SvgPathParser.getPathsByClassFromData(svgData, 'st0');
-        final st1PathData =
-            SvgPathParser.getPathsByClassFromData(svgData, 'st1');
-        if (st0PathData.isNotEmpty) {
-          setState(() {
-            const svgSize = Size(200, 248);
-            final scaleX = size.width / svgSize.width;
-            final scaleY = size.height / svgSize.height;
-            firstPaths = st0PathData.map((pathData) {
-              final path = parseSvgPathData(pathData);
-              return path.transform(
-                  Matrix4.diagonal3Values(scaleX, scaleY, 1).storage);
-            }).toList();
-          });
-        }
-        if (st1PathData.isNotEmpty) {
-          setState(() {
-            const svgSize = Size(200, 248);
-            final scaleX = size.width / svgSize.width;
-            final scaleY = size.height / svgSize.height;
-            pointerPaths = st1PathData
-                .map((d) => parseSvgPathData(d).transform(
-                    Matrix4.diagonal3Values(scaleX, scaleY, 1).storage))
-                .toList();
-            _updatePointer(); // 포인터 초기 위치 세팅
-          });
-        }
-        final allElements = SvgPathParser.getAllElementsFromData(svgData);
-        remainingStrokePaths = allElements
-            .where((e) => ['st1', 'st2', 'st3'].contains(e['class']))
-            .map((e) {
-          String? d = e['type'] == 'path'
-              ? e['d']
-              : 'M${e['x1']},${e['y1']} L${e['x2']},${e['y2']}';
-          final path = parseSvgPathData(d!).transform(
-              Matrix4.diagonal3Values(size.width / 200, size.height / 248, 1)
-                  .storage);
-          return StrokePath(path: path, strokeClass: e['class']!);
-        }).toList();
-        _updatePointer();
+      final response = await dio.get<String>(
+        url,
+        options: Options(responseType: ResponseType.plain),
+      );
+      final shapes = SvgPathParser.parseTracing(response.data ?? '');
+      if (shapes.strokes.isEmpty) {
+        throw const FormatException('획 데이터 없음');
       }
+
+      // 그사이 다른 글자로 넘어갔으면 버림
+      if (!mounted || token != _loadToken) return;
+      setState(() {
+        _shapes = shapes;
+        _clearWord();
+      });
     } catch (e) {
       Logger().e("SVG load error: $e");
+      if (!mounted || token != _loadToken) return;
+      setState(() => _failed = true);
     }
   }
 
-  Future<void> _calculateScratchPercentAccurate(Size size) async {
-    if (firstPaths == null || firstPaths!.length <= _currentPathIndex) return;
-
-    final recorder = PictureRecorder();
-    final canvas = Canvas(recorder);
-    final path = firstPaths![_currentPathIndex];
-
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      Paint()..color = Colors.white,
+  // SVG를 영역 가운데에 원래 비율대로 맞춤
+  void _fit(Size size, Rect viewBox) {
+    _scale = math.min(
+        size.width / viewBox.width, size.height / viewBox.height);
+    _origin = Offset(
+      (size.width - viewBox.width * _scale) / 2 - viewBox.left * _scale,
+      (size.height - viewBox.height * _scale) / 2 - viewBox.top * _scale,
     );
-    canvas.save();
-    canvas.clipPath(path);
+  }
 
-    final paint = Paint()
-      ..color = Colors.black
-      ..strokeWidth = 60.sp
+  Offset _toSvg(Offset local) => (local - _origin) / _scale;
+
+  Offset _toScreen(Offset svg) => svg * _scale + _origin;
+
+  void _onPanStart(DragStartDetails details) {
+    if (_shapes == null || _isDone) return;
+    final pos = _toSvg(details.localPosition);
+    setState(() {
+      _currentLine = [pos];
+      _pointer = pos;
+    });
+  }
+
+  void _onPanUpdate(DragUpdateDetails details) {
+    if (_shapes == null || _isDone) return;
+    final pos = _toSvg(details.localPosition);
+    setState(() {
+      _currentLine.add(pos);
+      _pointer = pos;
+    });
+  }
+
+  void _onPanEnd() {
+    if (_currentLine.isEmpty) return;
+    setState(() {
+      _lines.add(_currentLine);
+      _currentLine = [];
+    });
+    _checkStroke();
+  }
+
+  // 지금 획을 80% 넘게 칠했으면 다음 획으로
+  Future<void> _checkStroke() async {
+    final shapes = _shapes;
+    final index = _strokeIndex;
+    final token = _scoreToken;
+    if (shapes == null ||
+        index >= shapes.strokes.length ||
+        _completed.contains(index)) {
+      return;
+    }
+
+    final ratio =
+        await _fillRatio(shapes.viewBox, shapes.strokes[index], List.of(_lines));
+
+    // 계산하는 사이 다시 쓰기·글자 이동·다음 획으로 넘어갔으면 버림
+    if (!mounted ||
+        token != _scoreToken ||
+        index != _strokeIndex ||
+        _completed.contains(index) ||
+        ratio < _completeRatio) {
+      return;
+    }
+
+    final isLast = index == shapes.strokes.length - 1;
+    setState(() {
+      _completed.add(index);
+      _lines.clear();
+      _currentLine = [];
+      if (!isLast) {
+        _strokeIndex++;
+        _pointer = _startOf(_strokeIndex) ?? _pointer;
+      }
+    });
+    if (isLast) widget.onComplete();
+  }
+
+  // 획(빨강)과 그 안에 그은 선(노랑)을 작은 이미지로 그려 칠한 비율 계산
+  Future<double> _fillRatio(
+      Rect viewBox, Path stroke, List<List<Offset>> lines) async {
+    final k = _scoreWidth / viewBox.width;
+    final height = (viewBox.height * k).ceil();
+
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    canvas.scale(k);
+    canvas.translate(-viewBox.left, -viewBox.top);
+    canvas.drawPath(stroke, Paint()..color = const Color(0xFFFF0000));
+    canvas.clipPath(stroke);
+
+    final pen = Paint()
+      ..color = const Color(0xFFFFFF00)
+      ..strokeWidth = _penWidth
       ..strokeCap = StrokeCap.round;
-
-    for (var line in _lines) {
+    for (final line in lines) {
       for (int i = 0; i < line.length - 1; i++) {
-        canvas.drawLine(line[i], line[i + 1], paint);
+        canvas.drawLine(line[i], line[i + 1], pen);
       }
     }
-    canvas.restore();
 
     final picture = recorder.endRecording();
-    final image =
-        await picture.toImage(size.width.toInt(), size.height.toInt());
-    final byteData = await image.toByteData(format: ImageByteFormat.rawRgba);
-    if (byteData == null) return;
+    final image = await picture.toImage(_scoreWidth, height);
+    picture.dispose();
+    final byteData = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
+    image.dispose();
+    if (byteData == null) return 0;
 
     final bytes = byteData.buffer.asUint8List();
     int total = 0, filled = 0;
-
-    for (int y = 0; y < size.height.toInt(); y++) {
-      for (int x = 0; x < size.width.toInt(); x++) {
-        final index = (y * size.width.toInt() + x) * 4;
-        final r = bytes[index];
-        final g = bytes[index + 1];
-        final b = bytes[index + 2];
-
-        final point = Offset(x.toDouble(), y.toDouble());
-        if (path.contains(point)) {
-          total++;
-          if (!(r == 255 && g == 255 && b == 255)) filled++;
-        }
-      }
+    for (int i = 0; i < bytes.length; i += 4) {
+      if (bytes[i] < 128) continue; // 획 밖
+      total++;
+      if (bytes[i + 1] >= 128) filled++;
     }
 
-    final percent = filled / total;
-
-    setState(() {
-      scratchPercent = percent;
-    });
-
-    if (percent >= 0.8 && !completedPaths.contains(_currentPathIndex)) {
-      completedPaths.add(_currentPathIndex);
-
-      if (_currentPathIndex < firstPaths!.length - 1) {
-        setState(() {
-          _currentPathIndex++;
-          _lines.clear();
-          _currentLine.clear();
-          scratchPercent = 0;
-          _updatePointer();
-        });
-      } else {
-        widget.onComplete();
-      }
-    }
-  }
-
-  void _updatePointer() {
-    if (pointerPaths != null && _currentPathIndex < pointerPaths!.length) {
-      final path = pointerPaths![_currentPathIndex];
-      final metric = path.computeMetrics().first;
-      final start = metric.getTangentForOffset(0)?.position;
-
-      if (start != null) {
-        setState(() {
-          _left = start.dx - 25;
-          _top = start.dy - 25;
-        });
-      }
-    }
+    // 칠할 곳이 없는 획은 완료로 처리
+    return total == 0 ? 1 : filled / total;
   }
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (firstPaths == null || _lastIndex != widget.currentIndex) {
-          _lastIndex = widget.currentIndex;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            setState(() {
-              firstPaths = null;
-              _lines.clear();
-              _currentLine.clear();
-              completedPaths.clear();
-              _currentPathIndex = 0;
-              scratchPercent = 0.0;
-            });
-          });
+        final shapes = _shapes;
+        _fit(constraints.biggest, shapes?.viewBox ?? SvgPathParser.defaultViewBox);
+        // 포인터·안내 크기도 글자 배율에 맞춤
+        final pointerSize = _pointerSize * _scale;
 
-          _loadSvgPathFromServer(
-              Size(constraints.maxWidth, constraints.maxHeight),
-              widget.currentIndex);
+        if (_failed) {
+          return Center(
+            child: GestureDetector(
+              onTap: () => setState(_startLoad),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.refresh, size: pointerSize, color: mFontWhite),
+                  Padding(
+                    padding: EdgeInsets.only(top: 5 * _scale),
+                    child: Text(
+                      '글자를 불러오지 못했어요.\n눌러서 다시 시도해주세요.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: mFontMain, fontSize: 11 * _scale),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
         }
-        return GestureDetector(
-          onPanUpdate: (d) {
-            RenderBox box =
-                customGlobalKey.currentContext!.findRenderObject() as RenderBox;
-            final pos = box.globalToLocal(d.globalPosition);
 
-            setState(() {
-              _currentLine.add(pos);
-              _top = pos.dy - 25;
-              _left = pos.dx - 25;
-            });
-          },
-          onPanEnd: (_) {
-            setState(() {
-              _lines.add(_currentLine);
-              _currentLine = [];
-            });
-            _calculateScratchPercentAccurate(constraints.biggest);
-          },
+        if (shapes == null) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final pointer = _pointer == null ? null : _toScreen(_pointer!);
+
+        return GestureDetector(
+          // 손가락을 댄 곳부터 선이 그려지도록
+          dragStartBehavior: DragStartBehavior.down,
+          onPanStart: _onPanStart,
+          onPanUpdate: _onPanUpdate,
+          onPanEnd: (_) => _onPanEnd(),
+          onPanCancel: _onPanEnd,
           child: Stack(
             children: [
               CustomPaint(
-                key: customGlobalKey,
                 size: Size.infinite,
                 painter: TracingPainter(
-                  _lines,
-                  _currentLine,
-                  clipPath: firstPaths,
-                  completedPaths: completedPaths,
-                  scratchPercent: scratchPercent,
-                  groupedPaths: [],
-                  currentPathIndex: _currentPathIndex,
+                  strokes: shapes.strokes,
+                  completedPaths: _completed,
+                  currentPathIndex: _strokeIndex,
+                  lines: _lines,
+                  currentLine: _currentLine,
+                  transform: Matrix4.diagonal3Values(_scale, _scale, 1)
+                    ..setTranslationRaw(_origin.dx, _origin.dy, 0),
+                  penWidth: _penWidth,
                 ),
               ),
-              Positioned(
-                top: _top,
-                left: _left,
-                child: SizedBox(
-                  width: 50.w,
-                  height: 50.h,
-                  child: Image.asset('assets/images/icon/pointer.png'),
+              if (pointer != null && !_isDone)
+                Positioned(
+                  left: pointer.dx - pointerSize / 2,
+                  top: pointer.dy - pointerSize / 2,
+                  child: SizedBox.square(
+                    dimension: pointerSize,
+                    child: Image.asset('assets/images/icon/pointer.png'),
+                  ),
                 ),
-              ),
             ],
           ),
         );

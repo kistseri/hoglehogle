@@ -102,6 +102,9 @@ flutter:
     - family: NotoSansKR-SemiBold
       fonts:
         - asset: assets/fonts/NotoSansKR-SemiBold.ttf
+    - family: NotoSansKR-Bold
+      fonts:
+        - asset: assets/fonts/NotoSansKR-Bold.ttf
     - family: BMJUA
       fonts:
         - asset: assets/fonts/BMJUA.ttf

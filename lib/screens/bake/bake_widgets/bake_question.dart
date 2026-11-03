@@ -1,46 +1,42 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hoho_hanja/_core/colors.dart';
 
+// 곰의 말풍선 문제. 크기는 놓는 쪽에서 정함
 class BakeQuestion extends StatelessWidget {
   final String question;
+  final double fontSize;
 
-  const BakeQuestion({super.key, required this.question});
+  const BakeQuestion({super.key, required this.question, required this.fontSize});
 
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      top: 100.h,
-      right: 10.w,
-      child: Container(
-        height: 75.h,
-        width: 225.w,
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/bake/bake_question.png'),
-            fit: BoxFit.contain,
-          ),
+    return Container(
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/images/bake/bake_question.png'),
+          // 놓는 쪽에서 높이를 그림 비율에 맞추므로, 넓어지면 가로로만 늘어남
+          fit: BoxFit.fill,
         ),
-        child: Center(
-          child: Text(
-            insertLineBreak(question, 8),
-            // question,
-            style: TextStyle(
-              fontSize: 20.sp,
-              fontWeight: FontWeight.bold,
-              color: mFontBrown,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            softWrap: true,
-            overflow: TextOverflow.ellipsis,
+      ),
+      child: Center(
+        child: Text(
+          insertLineBreak(question),
+          style: TextStyle(
+            fontSize: fontSize,
+            fontWeight: FontWeight.bold,
+            color: mFontBrown,
           ),
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          softWrap: true,
+          overflow: TextOverflow.ellipsis,
         ),
       ),
     );
   }
 
-  String insertLineBreak(String text, int breakpoint) {
+  // 긴 문제는 두 번째 띄어쓰기에서 줄바꿈
+  String insertLineBreak(String text) {
     if (text.length > 12) {
       int firstSpace = text.indexOf(' ');
       int secondSpace = text.indexOf(' ', firstSpace + 4);

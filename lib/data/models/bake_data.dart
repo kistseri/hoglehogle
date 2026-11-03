@@ -18,36 +18,29 @@ class BakeData {
   });
 
   BakeData.fromJson(Map<String, dynamic> json)
-      : result = json["result"],
-        number = json["ilno"],
-        quize = json["quize"],
-        answer = json["ans"],
-        wrongAnswer1 = json["wans1"],
-        wrongAnswer2 = json["wans2"];
+      : result = json["result"]?.toString() ?? '',
+        number = json["ilno"]?.toString() ?? '',
+        quize = json["quize"]?.toString() ?? '',
+        answer = json["ans"]?.toString() ?? '',
+        wrongAnswer1 = json["wans1"]?.toString() ?? '',
+        wrongAnswer2 = json["wans2"]?.toString() ?? '';
 }
 
 class BakeDataController extends GetxController {
   List<BakeData> _bakeDataList = <BakeData>[].obs;
+  List<List<String>> _options = [];
 
+  // 문제 순서와 문제별 보기 순서는 불러올 때 한 번만 섞음
   void setBakeDataList(List<BakeData> bakeDataList) {
     _bakeDataList = List.from(bakeDataList)..shuffle();
+    _options = _bakeDataList
+        .map((d) => [d.answer, d.wrongAnswer1, d.wrongAnswer2]..shuffle())
+        .toList();
     update();
   }
 
   List<BakeData> get bakeDataList => _bakeDataList;
 
-  List<Map<String, dynamic>> get bakeQuetsion => _bakeDataList.map(
-        (bakeData) {
-          List<String> options = [
-            bakeData.answer,
-            bakeData.wrongAnswer1,
-            bakeData.wrongAnswer2,
-          ];
-          options.shuffle();
-          return {
-            "options": options,
-            "correct": bakeData.answer,
-          };
-        },
-      ).toList();
+  // index번 문제의 보기 3개
+  List<String> optionsOf(int index) => _options[index];
 }
