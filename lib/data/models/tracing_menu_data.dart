@@ -14,10 +14,10 @@ class TracingMenuData {
   });
 
   TracingMenuData.fromJson(Map<String, dynamic> json)
-      : phase = json["phase"],
-        gubun = json["gubun"],
-        subject = json["subject"],
-        hanja = (json["hanja_list"] as String).replaceAll(',', ' ');
+      : phase = json["phase"]?.toString() ?? '',
+        gubun = json["gubun"]?.toString() ?? '',
+        subject = json["subject"]?.toString() ?? '',
+        hanja = (json["hanja_list"]?.toString() ?? '').replaceAll(',', ' ');
 }
 
 class TracingMenuDataController extends GetxController {

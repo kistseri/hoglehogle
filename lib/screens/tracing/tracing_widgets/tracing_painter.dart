@@ -1,116 +1,84 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hoho_hanja/_core/colors.dart';
-import 'package:path_drawing/path_drawing.dart';
 
+// 획·선은 모두 SVG 좌표로 받아서 transform으로 화면에 맞춰 그림
 class TracingPainter extends CustomPainter {
+  final List<Path> strokes;
+  final Set<int> completedPaths;
+  final int currentPathIndex;
   final List<List<Offset>> lines;
   final List<Offset> currentLine;
-  final List<Path>? clipPath;
-  final List<List<Path>> groupedPaths;
-  final int currentPathIndex;
-  final Set<int> completedPaths;
-  final bool isSt0Completed;
-  final double scratchPercent;
+  final Matrix4 transform;
+  final double penWidth;
 
-  TracingPainter(
-    this.lines,
-    this.currentLine, {
-    this.clipPath,
-    this.isSt0Completed = false,
-    required this.groupedPaths,
-    required this.currentPathIndex,
+  // 가이드 점 간격·크기 (SVG 좌표)
+  static const double dotGap = 6.0;
+  static const double dotRadius = 1.8;
+
+  TracingPainter({
+    required this.strokes,
     required this.completedPaths,
-    this.scratchPercent = 0,
+    required this.currentPathIndex,
+    required this.lines,
+    required this.currentLine,
+    required this.transform,
+    required this.penWidth,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (clipPath == null || clipPath!.isEmpty) return;
+    if (strokes.isEmpty) return;
 
+    canvas.save();
+    canvas.transform(transform.storage);
 
-
-    // 1. 전체 배경 그리기
-    for (int i = 0; i < clipPath!.length; i++) {
-      if (!completedPaths.contains(i)) {
-        final path = clipPath![i];
-        final fillPaint = Paint()
-          ..color = Colors.white
-          ..style = PaintingStyle.fill;
-        canvas.drawPath(path, fillPaint);
-      }
+    // 1. 안 쓴 획(흰색)을 먼저, 다 쓴 획(주색)을 나중에 그려 겹치는 곳은 다 쓴 획이 위로
+    final emptyPaint = Paint()..color = Colors.white;
+    final donePaint = Paint()..color = primaryColor;
+    for (int i = 0; i < strokes.length; i++) {
+      if (!completedPaths.contains(i)) canvas.drawPath(strokes[i], emptyPaint);
+    }
+    for (int i = 0; i < strokes.length; i++) {
+      if (completedPaths.contains(i)) canvas.drawPath(strokes[i], donePaint);
     }
 
-    // 2. 사용자가 그린 선
-    for (int i = 0; i < clipPath!.length; i++) {
-      if (completedPaths.contains(i)) {
-        final path = clipPath![i];
+    // 다 쓴 글자는 마지막 획도 완료라 선·점선을 그리지 않음
+    final hasCurrent = currentPathIndex < strokes.length &&
+        !completedPaths.contains(currentPathIndex);
 
-        final fillPaint = Paint()
-          ..color = primaryColor
-          ..style = PaintingStyle.fill;
-        canvas.drawPath(path, fillPaint);
-
-        canvas.save();
-        canvas.clipPath(path);
-
-        final userPaint = Paint()
-          ..color = primaryColor
-          ..strokeWidth = 60.sp
-          ..strokeCap = StrokeCap.round;
-
-        for (var line in lines) {
-          for (int j = 0; j < line.length - 1; j++) {
-            if (path.contains(line[j]) && path.contains(line[j + 1])) {
-              canvas.drawLine(line[j], line[j + 1], userPaint);
-            }
-          }
-        }
-
-        canvas.restore();
-      }
-    }
-
-    // 3. 현재 진행 중인 path만 클립해서 선 그리기 (중간)
-    if (!completedPaths.contains(currentPathIndex)) {
-      final path = clipPath![currentPathIndex];
-
+    // 2. 지금 쓰는 획 안에만 사용자 선
+    if (hasCurrent) {
       canvas.save();
-      canvas.clipPath(path);
+      canvas.clipPath(strokes[currentPathIndex]);
 
       final userPaint = Paint()
         ..color = primaryColor
-        ..strokeWidth = 60.sp
+        ..strokeWidth = penWidth
         ..strokeCap = StrokeCap.round;
 
-      for (var line in lines) {
+      for (final line in [...lines, currentLine]) {
         for (int i = 0; i < line.length - 1; i++) {
           canvas.drawLine(line[i], line[i + 1], userPaint);
         }
       }
 
-      for (int i = 0; i < currentLine.length - 1; i++) {
-        canvas.drawLine(currentLine[i], currentLine[i + 1], userPaint);
-      }
-
       canvas.restore();
     }
 
-
-    // 4. 가이드라인 (점선)
-    final pathMetrics = clipPath![currentPathIndex].computeMetrics();
-    final dotPaint = Paint()
-      ..color = Colors.red
-      ..style = PaintingStyle.fill;
-
-    for (final metric in pathMetrics) {
-      for (double t = 0; t < metric.length; t += 10.0) {
-        final pos = metric.getTangentForOffset(t)?.position;
-        if (pos != null) {
-          canvas.drawCircle(pos, 3.0, dotPaint);
+    // 3. 지금 획의 테두리 점선
+    if (hasCurrent) {
+      final dotPaint = Paint()..color = Colors.red;
+      for (final metric in strokes[currentPathIndex].computeMetrics()) {
+        for (double t = 0; t < metric.length; t += dotGap) {
+          final pos = metric.getTangentForOffset(t)?.position;
+          if (pos != null) {
+            canvas.drawCircle(pos, dotRadius, dotPaint);
+          }
         }
       }
     }
+
+    canvas.restore();
   }
 
   @override

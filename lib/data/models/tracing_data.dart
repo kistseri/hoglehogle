@@ -14,10 +14,10 @@ class TracingData {
   });
 
   TracingData.fromJson(Map<String, dynamic> json)
-      : ilno = json["ilno"],
-        note = json["note"],
-        svg = json["itemimg"],
-        voice = json["voice"];
+      : ilno = json["ilno"]?.toString() ?? '',
+        note = json["note"]?.toString() ?? '',
+        svg = json["itemimg"]?.toString() ?? '',
+        voice = json["voice"]?.toString() ?? '';
 }
 
 class TracingDataController extends GetxController {

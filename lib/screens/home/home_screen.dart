@@ -1,4 +1,3 @@
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -11,9 +10,7 @@ import 'package:hoho_hanja/services/myroom/my_room_service.dart';
 import 'package:hoho_hanja/services/rank/rank_service.dart';
 import 'package:hoho_hanja/utils/get_main_notice.dart';
 import 'package:hoho_hanja/widgets/appbar/custom_appbar.dart';
-import 'package:hoho_hanja/widgets/appbar/home_app_bar.dart';
 import 'package:hoho_hanja/widgets/appbar/rank_appbar.dart';
-import 'package:hoho_hanja/widgets/custom_bottom.dart';
 import 'package:logger/logger.dart';
 
 import '../../services/myroom/load_item_service.dart';
@@ -116,12 +113,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver, Ro
 
   PreferredSizeWidget? _buildAppBar() {
     if (_selectedIndex == 2) {
-      return HomeAppBar(
-        onValueChanged: _onHomeAppBarValueChanged,
-        onAvatarPressed: () {
-          _onTabChanged(1);
-        },
-      );
+      // 홈은 앱바·하단 탭까지 HomeBody가 시안 비율대로 직접 그림
+      return null;
     } else if (_selectedIndex == 0) {
       return RankAppBar(
         onPressed: () => _onTabChanged(2),
@@ -146,6 +139,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver, Ro
         return Obx(
           () => HomeBody(
             grade: homeController.homeValue.value,
+            onGradeChanged: (value) {
+              homeController.homeValueUpdate(value);
+              _onHomeAppBarValueChanged(value);
+            },
+            onTabChanged: _onTabChanged,
+            onAvatarPressed: () => _onTabChanged(1),
           ),
         );
     }
@@ -162,20 +161,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver, Ro
         backgroundColor: Colors.white,
         appBar: _buildAppBar(),
         body: _buildBody(),
-        bottomNavigationBar: _selectedIndex == 2
-            ? Platform.isAndroid
-                ? SafeArea(
-                    bottom: true,
-                    child: CustomBottom(
-                      onTabChanged: _onTabChanged,
-                      selectedIndex: _selectedIndex,
-                    ),
-                  )
-                : CustomBottom(
-                    onTabChanged: _onTabChanged,
-                    selectedIndex: _selectedIndex,
-                  )
-            : null,
       ),
     );
   }

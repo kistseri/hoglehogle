@@ -20,10 +20,10 @@ Future<void> connectInfo(code) async {
       'code': code,
     };
 
-    // HTTP POST 요청
-    final response = await dio.post(url, data: jsonEncode(requestData));
-
     try {
+      // HTTP POST 요청 (시간 초과·서버 오류도 아래 catch에서 처리)
+      final response = await dio.post(url, data: jsonEncode(requestData));
+
       // 응답을 성공적으로 받았을 때
       if (response.statusCode == 200) {
         final resultList = json.decode(response.data);

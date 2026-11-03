@@ -56,8 +56,8 @@ Future<Widget> checkAndPerformAutoLogin() async {
   final pwd = checkStoredUserInfoController.storedUserPassword;
   final LoginDTO loginDTO = LoginDTO(email: id, shaPassword: pwd);
 
-  // 네트워크 연결 확인
-  if (connectivityController.isConnected.value) {
+  // 네트워크 연결 확인 (시작 직후 Rx 초기값(false)에 걸리지 않도록 즉시 확인)
+  if (await connectivityController.checkConnection()) {
     // 기기에 저장된 로그인 정보가 있고, 자동 로그인 체크 된 경우
     // 자동 로그인 후 홈 화면으로 이동
     if (isUserInfoStored && isAutoLoginChecked) {

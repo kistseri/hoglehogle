@@ -1,42 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hoho_hanja/_core/colors.dart';
 
+// 지금 카드 / 전체 카드 수 (앱 글꼴을 쓰도록 RichText 대신 Text.rich)
 class MatchingCounter extends StatelessWidget {
   const MatchingCounter({
     super.key,
     required this.currentIndex,
     required this.numOfItems,
+    required this.fontSize,
   });
 
   final int currentIndex;
   final int numOfItems;
+  final double fontSize;
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      flex: 2,
-      child: Center(
-        child: RichText(
-          text: TextSpan(
-            children: [
-              TextSpan(
-                text: '${currentIndex + 1}',
-                style: TextStyle(
-                    color: Colors.green,
-                    fontSize: 26.0.sp,
-                    fontWeight: FontWeight.bold),
-              ),
-              TextSpan(
-                text: '/$numOfItems',
-                style: TextStyle(
-                    color: mFontMain,
-                    fontSize: 26.0.sp,
-                    fontWeight: FontWeight.bold),
-              )
-            ],
-          ),
-        ),
+    return Text.rich(
+      TextSpan(
+        style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.bold),
+        children: [
+          TextSpan(text: '${currentIndex + 1}', style: const TextStyle(color: Colors.green)),
+          TextSpan(text: '/$numOfItems', style: const TextStyle(color: mFontMain)),
+        ],
       ),
     );
   }

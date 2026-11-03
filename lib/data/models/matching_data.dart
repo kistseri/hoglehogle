@@ -12,9 +12,9 @@ class MatchingData {
   });
 
   MatchingData.fromJson(Map<String, dynamic> json)
-      : frontImage = json["f_phaseImg"],
-        backImage = json["b_phaseImg"],
-        sound = json["m_phasemp"];
+      : frontImage = json["f_phaseImg"]?.toString() ?? '',
+        backImage = json["b_phaseImg"]?.toString() ?? '',
+        sound = json["m_phasemp"]?.toString() ?? '';
 }
 
 class MatchingDataController extends GetxController {

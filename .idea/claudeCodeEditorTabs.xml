@@ -1,20 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ClaudeCodeEditorTabs">
-    <option name="activeSessionId" value="92c26868-6a6c-4f00-b4b2-4fbb072fb61a" />
+    <option name="activeSessionId" value="ac846bd0-a0e8-450d-aa95-91377444f227" />
     <option name="openSessionIds">
       <list>
         <option value="92c26868-6a6c-4f00-b4b2-4fbb072fb61a" />
+        <option value="451d1100-823f-417d-b719-a3e84317be9d" />
+        <option value="ac846bd0-a0e8-450d-aa95-91377444f227" />
       </list>
     </option>
     <option name="sessionPaths">
       <map>
+        <entry key="451d1100-823f-417d-b719-a3e84317be9d" value="/sessions/new" />
         <entry key="92c26868-6a6c-4f00-b4b2-4fbb072fb61a" value="/sessions/d5dbba1d-ea42-416b-b4c8-1695bf917314" />
+        <entry key="ac846bd0-a0e8-450d-aa95-91377444f227" value="/sessions/c8b5dfba-cf9c-449a-a4c3-262e30ee0593" />
       </map>
     </option>
     <option name="sessionTitles">
       <map>
+        <entry key="451d1100-823f-417d-b719-a3e84317be9d" value="Claude Code" />
         <entry key="92c26868-6a6c-4f00-b4b2-4fbb072fb61a" value="이 프로젝트에서 수정할 부분이 상당히 많은걸로 알고 있어 1주일 안에 수정해서 재배포 해야" />
+        <entry key="ac846bd0-a0e8-450d-aa95-91377444f227" value="모바일 태블릿 화면 반응형 레이아웃 수정" />
       </map>
     </option>
   </component>

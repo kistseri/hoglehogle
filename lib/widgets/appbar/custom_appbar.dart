@@ -50,7 +50,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
           padding: EdgeInsets.all(4.sp),
           decoration: BoxDecoration(
             color: mBoxGreen,
-            borderRadius: BorderRadius.circular(10.r),
+            borderRadius: BorderRadius.circular(25),
           ),
           child: Icon(
             CupertinoIcons.back,
@@ -58,7 +58,6 @@ class _CustomAppBarState extends State<CustomAppBar> {
           ),
         ),
         onPressed: () {
-          Logger().d('뒤로가기');
           effect.tapSound();
           if (widget.onPressed != null) {
             widget.onPressed!();

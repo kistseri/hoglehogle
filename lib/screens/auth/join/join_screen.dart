@@ -80,6 +80,8 @@ class _JoinScreenState extends State<JoinScreen> {
                   hintText: '이메일',
                   icon: 'assets/images/icon/login_id.png',
                   type: TextFieldType.email,
+                  // 소셜 가입(카카오/구글/애플)은 제공된 이메일을 수정할 수 없게 한다.
+                  readOnly: widget.method != "0",
                 ),
                 SizedBox(height: gapQuarter),
                 widget.method != "4"
