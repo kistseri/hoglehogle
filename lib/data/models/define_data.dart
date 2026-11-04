@@ -36,9 +36,12 @@ class DefineData {
 class DefineDataController extends GetxController {
   List<DefineData> _defineDataList = <DefineData>[].obs;
 
-  // 정답이 빈 데이터는 뺌
+  // 정답·오답이 비었거나 둘이 같은 데이터는 뺌 (빈 버튼·정답 두 개 방지)
   void setDefineDataList(List<DefineData> defineDataList) {
-    _defineDataList = defineDataList.where((d) => d.answer.trim().isNotEmpty).toList();
+    _defineDataList = defineDataList
+        .where((d) =>
+            d.answer.trim().isNotEmpty && d.wrongAnswer.trim().isNotEmpty && d.answer.trim() != d.wrongAnswer.trim())
+        .toList();
     update();
   }
 

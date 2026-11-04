@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import 'package:hoho_hanja/_core/http.dart';
 import 'package:hoho_hanja/data/models/login_data.dart';
 import 'package:hoho_hanja/utils/network_check.dart';
-import 'package:hoho_hanja/widgets/dialog/dialog.dart';
 import 'package:logger/logger.dart';
 
 // 결과값 입력
@@ -48,7 +47,8 @@ Future<String> resultService(code, count) async {
       return '예외';
     }
   } else {
-    failDialog("연결 실패", "인터넷 연결을 확인해주세요");
+    // 바로 뒤에 결과창이 뜨므로 실패 안내창을 따로 띄우지 않음 (결과창 코인이 '-' 로 표시됨)
+    Logger().w('resultService: 인터넷 연결 없음');
     return '잘못된 응답';
   }
 }

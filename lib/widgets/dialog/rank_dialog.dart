@@ -2,7 +2,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:hoho_hanja/_core/colors.dart';
 import 'package:flutter/material.dart';
-import 'package:logger/logger.dart';
 
 void showRankDialog(String title, String message) {
   Get.generalDialog(

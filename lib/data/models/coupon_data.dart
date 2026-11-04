@@ -20,7 +20,7 @@ class CouponData {
         nickName = json["nickname"];
 }
 
-class RankDataController extends GetxController {
+class CouponDataController extends GetxController {
   List<CouponData> _rankDataList = <CouponData>[].obs;
 
   void setRankData(List<CouponData> rankDataList) {

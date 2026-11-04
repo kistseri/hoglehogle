@@ -4,8 +4,11 @@ flutter_native_splash:
   fullscreen: true
   image_dark: "assets/images/splash.png"
   color_dark: "#000000"
+  # Android 12+ 는 아이콘을 작은 원 안에만 그려서 로고가 작게 보임
+  # → 시스템 스플래시는 투명 아이콘으로 비우고, 큰 로고는 Flutter SplashScreen 에서 보여줌
+  # (아이콘을 비워두면 OS 가 앱 아이콘을 대신 넣기 때문에 투명 이미지를 지정)
   android_12:
-    image: "assets/images/splash.png"
-    image_dark: "assets/images/splash.png"
+    image: "assets/native_splash/android12_blank.png"
+    image_dark: "assets/native_splash/android12_blank.png"
     color: "#FFFFFF"
     color_dark: "#000000"

@@ -1,17 +1,19 @@
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:hoho_hanja/_core/colors.dart';
 import 'package:hoho_hanja/main.dart';
 import 'package:hoho_hanja/screens/home/home_widgets/home_body.dart';
 import 'package:hoho_hanja/screens/myroom/my_room_screen.dart';
 import 'package:hoho_hanja/screens/rank/rank_screen.dart';
 import 'package:hoho_hanja/screens/setting/setting_screen.dart';
 import 'package:hoho_hanja/services/myroom/my_room_service.dart';
+import 'package:hoho_hanja/services/purchase/product_service.dart';
 import 'package:hoho_hanja/services/rank/rank_service.dart';
+import 'package:hoho_hanja/utils/design_scale.dart';
 import 'package:hoho_hanja/utils/get_main_notice.dart';
 import 'package:hoho_hanja/widgets/appbar/custom_appbar.dart';
-import 'package:hoho_hanja/widgets/appbar/rank_appbar.dart';
-import 'package:logger/logger.dart';
+import 'package:hoho_hanja/widgets/appbar/design_app_bar.dart';
 
 import '../../services/myroom/load_item_service.dart';
 import '../../utils/contents_lock.dart';
@@ -116,9 +118,24 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver, Ro
       // 홈은 앱바·하단 탭까지 HomeBody가 시안 비율대로 직접 그림
       return null;
     } else if (_selectedIndex == 0) {
-      return RankAppBar(
-        onPressed: () => _onTabChanged(2),
-        onAvatarPressed: () => _onTabChanged(1),
+      // 랭킹: 홈과 같은 시안 좌표·크기 앱바 (탭을 오가도 코인·다이아·프로필 위치가 그대로)
+      final mq = MediaQuery.of(context);
+      final sc = DesignScale.of(mq.size, mq.padding);
+      return PreferredSize(
+        preferredSize: Size.fromHeight(sc.d(DesignAppBar.height)),
+        child: AnnotatedRegion<SystemUiOverlayStyle>(
+          value: SystemUiOverlayStyle.light,
+          child: ColoredBox(
+            color: primaryColor,
+            child: DesignAppBar(
+              scale: sc,
+              onGreen: true,
+              onPressed: () => _onTabChanged(2),
+              onAvatarPressed: () => _onTabChanged(1),
+              onDiamondPressed: () async => await productService(),
+            ),
+          ),
+        ),
       );
     } else if (_selectedIndex == 1) {
       return null;
