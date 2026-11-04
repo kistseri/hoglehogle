@@ -61,7 +61,8 @@ class _HomeAppBarState extends State<HomeAppBar> {
               alignment: Alignment.center,
               child: Obx(
                 () => Text(
-                  alias[homeController.homeValue.value]!,
+                  // alias[homeController.homeValue.value]!,
+                  '여기!',
                   style: TextStyle(
                     color: mFontWhite,
                     fontSize: 15.sp,

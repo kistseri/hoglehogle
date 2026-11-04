@@ -37,8 +37,6 @@ class _CustomTabBarWidgetState extends State<CustomTabBarWidget> {
     double size = MediaQuery.of(context).size.width;
     int tabCount = 4;
 
-    Logger().d(screenHeight) ;
-
     return Stack(
       alignment: Alignment.topLeft,
       children: [

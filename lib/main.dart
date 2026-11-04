@@ -16,6 +16,7 @@ import 'package:hoho_hanja/services/auth/login/auto_login.dart';
 import 'package:hoho_hanja/utils/coupon_screen.dart';
 import 'package:hoho_hanja/utils/network_check.dart';
 import 'package:hoho_hanja/utils/sound.dart';
+import 'package:hoho_hanja/utils/splash_screen.dart';
 import 'package:hoho_hanja/widgets/dialog/version_dialog.dart';
 import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart';
 import 'package:path_provider/path_provider.dart';
@@ -58,12 +59,18 @@ Future<void> main() async {
   await Hive.initFlutter(appDocumentDir.path);
   await Hive.openBox('settingBox');
 
-  Future.delayed(
-    const Duration(seconds: 2),
-    () {
-      FlutterNativeSplash.remove();
-    },
-  );
+  // Android 는 시스템 스플래시를 바로 내리고 Flutter SplashScreen 으로 큰 로고를 보여줌
+  // (Android 12+ 시스템 스플래시는 로고가 작은 원 안에만 그려짐)
+  if (Platform.isAndroid) {
+    FlutterNativeSplash.remove();
+  } else {
+    Future.delayed(
+      const Duration(seconds: 2),
+      () {
+        FlutterNativeSplash.remove();
+      },
+    );
+  }
 
   runApp(
     ScreenUtilInit(
@@ -83,7 +90,8 @@ Future<void> main() async {
                 data: MediaQuery.of(context).copyWith(
                   textScaler: TextScaler.noScaling,
                 ),
-                child: child!);
+                // 스플래시를 Navigator 위에 덮어서 그 사이 뜨는 다이얼로그도 가림
+                child: Platform.isAndroid ? SplashScreen(child: child!) : child!);
           },
         );
       },

@@ -72,7 +72,7 @@ class _BakeScreenState extends State<BakeScreen> {
                   child: DesignAppBar(scale: sc, inset: (sc.dw - sc.maxContentWidth) / 3),
                 ),
                 // 곰
-                sc.box(60 * kx, 68, 100, 108, BakeBear(isWeep: isBearWeep)),
+                sc.box(40 * kx, 68, 100, 108, BakeBear(isWeep: isBearWeep)),
                 // 문제
                 sc.box(
                   60 * kx + 65,

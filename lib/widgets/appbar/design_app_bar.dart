@@ -19,6 +19,8 @@ class DesignAppBar extends StatefulWidget {
   final double inset; // 시안보다 늘어난 양옆 여백 (시안 단위)
   final VoidCallback? onPressed;
   final VoidCallback? onAvatarPressed;
+  final VoidCallback? onDiamondPressed; // 다이아 누르면 (홈처럼 구매 화면 등)
+  final bool onGreen; // 초록 배경 위: 뒤로가기를 흰 바탕 + 초록 아이콘으로 (초록 버튼이 배경에 묻히지 않게)
 
   const DesignAppBar({
     super.key,
@@ -26,6 +28,8 @@ class DesignAppBar extends StatefulWidget {
     this.inset = 0,
     this.onPressed,
     this.onAvatarPressed,
+    this.onDiamondPressed,
+    this.onGreen = false,
   });
 
   @override
@@ -84,10 +88,10 @@ class _DesignAppBarState extends State<DesignAppBar> {
             24,
             DecoratedBox(
               decoration: BoxDecoration(
-                color: mBoxGreen,
+                color: widget.onGreen ? mBackWhite : mBoxGreen,
                 borderRadius: BorderRadius.circular(sc.d(6)),
               ),
-              child: Icon(CupertinoIcons.back, color: mFontWhite, size: sc.d(15)),
+              child: Icon(CupertinoIcons.back, color: widget.onGreen ? mBoxGreen : mFontWhite, size: sc.d(15)),
             ),
           ),
           sc.box(4 + inset, 5, 44, 44, GestureDetector(behavior: HitTestBehavior.opaque, onTap: _onBack)),
@@ -107,6 +111,15 @@ class _DesignAppBarState extends State<DesignAppBar> {
             size: 15,
             child: Obx(() => Text(goodsController.formattedDia.value, style: _outlineStyle(15))),
           ),
+          // 다이아 누르는 영역 (홈과 같은 크기)
+          if (widget.onDiamondPressed != null)
+            sc.box(
+              sc.r(268, inset),
+              8,
+              50,
+              37,
+              GestureDetector(behavior: HitTestBehavior.opaque, onTap: widget.onDiamondPressed),
+            ),
           // 프로필
           sc.box(
             sc.r(324.5, inset),

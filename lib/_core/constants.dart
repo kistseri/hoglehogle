@@ -122,9 +122,8 @@ Map<String, String> contentsCodes = {
 enum TextFieldType { email, password, phone, normal }
 
 class GetCurrentYM {
-  static final currentYM = DateTime.now();
-  static final DateFormat formattedYM = DateFormat('yyyyMM');
-  static final String ym = formattedYM.format(currentYM);
+  // 부를 때마다 지금 날짜로 계산 (앱을 켜 둔 채 달이 바뀌어도 이번 달 기준)
+  static String get ym => DateFormat('yyyyMM').format(DateTime.now());
 }
 
 const List<String> myroomTab = [

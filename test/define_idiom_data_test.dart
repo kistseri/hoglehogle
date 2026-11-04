@@ -14,6 +14,18 @@ void main() {
     expect(c.quiz.first['note'], '');
   });
 
+  test('단어의 뜻 찾기: 오답이 비었거나 정답과 같은 문제는 뺌', () {
+    final c = DefineDataController();
+    c.setDefineDataList([
+      DefineData.fromJson({'result': '0000', 'ilno': 1, 'ans': '날 일', 'wans': '달 월'}),
+      DefineData.fromJson({'result': '0000', 'ilno': 2, 'ans': '날 일', 'wans': ''}),
+      DefineData.fromJson({'result': '0000', 'ilno': 3, 'ans': '날 일', 'wans': null}),
+      DefineData.fromJson({'result': '0000', 'ilno': 4, 'ans': '날 일', 'wans': '날 일 '}),
+    ]);
+    expect(c.quiz.length, 1);
+    expect(c.quiz.first['options'], ['날 일', '달 월']);
+  });
+
   test('한자성어: random_num이 문자열이어도 숫자로 받고, 정답 한자가 빈 문제는 뺌', () {
     final c = IdiomDataController();
     c.setIdiomDataList([

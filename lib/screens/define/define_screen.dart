@@ -1,14 +1,16 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:hoho_hanja/_core/colors.dart';
 import 'package:hoho_hanja/_core/size.dart';
 import 'package:hoho_hanja/data/models/define_data.dart';
 import 'package:hoho_hanja/main.dart';
+import 'package:hoho_hanja/utils/design_scale.dart';
 import 'package:hoho_hanja/utils/result_service.dart';
-import 'package:hoho_hanja/widgets/appbar/custom_appbar.dart';
+import 'package:hoho_hanja/widgets/appbar/design_app_bar.dart';
 import 'package:hoho_hanja/widgets/dialog/result_dialog.dart';
 
 class DefineScreen extends StatefulWidget {
@@ -43,9 +45,26 @@ class _DefineScreenState extends State<DefineScreen> {
     loadQuestion();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 첫 문제와 다음 문제 그림을 미리 받아둠
+    _precacheImage(currentQuestionIndex);
+    _precacheImage(currentQuestionIndex + 1);
+  }
+
   void loadQuestion() {
     options = List<String>.from(defineController.quiz[currentQuestionIndex]['options']);
     options.shuffle(Random());
+  }
+
+  // 그림 문제면 그림을 미리 받아서, 넘어갈 때 로딩 표시 없이 바로 보이게 (실패해도 무시 — 화면에서 다시 시도)
+  void _precacheImage(int index) {
+    if (index >= defineController.quiz.length) return;
+    final question = defineController.quiz[index];
+    final String url = question['image'];
+    if (question['type'] == "3" || question['type'] == "4" || url.isEmpty) return;
+    precacheImage(NetworkImage(url), context, onError: (_, __) {});
   }
 
   void onSelect(int index) {
@@ -80,6 +99,7 @@ class _DefineScreenState extends State<DefineScreen> {
           isWrong = false;
           loadQuestion();
         });
+        _precacheImage(currentQuestionIndex + 1);
         _isLocked = false;
       } else {
         _finished = true;
@@ -110,157 +130,193 @@ class _DefineScreenState extends State<DefineScreen> {
     String correctText = currentQuestion['answer'];
     String note = currentQuestion['note'];
 
+    final mq = MediaQuery.of(context);
+
     return Scaffold(
-      appBar: const CustomAppBar(),
-      body: Padding(
-        padding: EdgeInsets.only(bottom: gapHalf, left: gapMain, right: gapMain),
-        child: Column(
-          children: [
-            // 문제
-            Expanded(
-              flex: 2,
-              child: Center(
-                child: Column(
+      body: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.dark,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final sc = DesignScale.of(constraints.biggest, mq.padding);
+
+            return Stack(
+              children: [
+                // 앱바 (다른 게임 화면과 같은 시안 좌표·크기)
+                Positioned(
+                  left: 0,
+                  top: 0,
+                  right: 0,
+                  child: DesignAppBar(scale: sc, inset: (sc.dw - sc.maxContentWidth) / 3),
+                ),
+                Positioned(
+                  left: 0,
+                  top: sc.y(DesignAppBar.height),
+                  right: 0,
+                  bottom: mq.padding.bottom,
+                  child: _quizBody(type, correctImage, correctText, note),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _quizBody(String type, String correctImage, String correctText, String note) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: gapHalf, left: gapMain, right: gapMain),
+      child: Column(
+        children: [
+          // 문제
+          Expanded(
+            flex: 2,
+            // 키가 작은 화면에서도 칸 밖으로 넘치지 않게 줄여서 표시
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Column(
+                children: [
+                  Text(
+                    '단어의 뜻 찾기',
+                    style: TextStyle(color: mFontMain, fontSize: 24.sp, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    note,
+                    style: TextStyle(
+                      color: mFontSub,
+                      fontSize: 15.sp,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // 문제 수
+          Expanded(
+            flex: 1,
+            child: Center(
+              child: RichText(
+                text: TextSpan(
                   children: [
-                    Text(
-                      '단어의 뜻 찾기',
-                      style: TextStyle(color: mFontMain, fontSize: 24.sp, fontWeight: FontWeight.bold),
+                    TextSpan(
+                      text: '${currentQuestionIndex + 1}',
+                      style: TextStyle(color: Colors.green, fontSize: 26.sp, fontWeight: FontWeight.bold),
                     ),
-                    Text(
-                      note,
-                      style: TextStyle(
-                        color: mFontSub,
-                        fontSize: 15.sp,
-                      ),
-                    ),
+                    TextSpan(
+                      text: '/${defineController.quiz.length}',
+                      style: TextStyle(color: mFontMain, fontSize: 26.sp, fontWeight: FontWeight.bold),
+                    )
                   ],
                 ),
               ),
             ),
-            // 문제 수
-            Expanded(
-              flex: 1,
-              child: Center(
-                child: RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: '${currentQuestionIndex + 1}',
-                        style: TextStyle(color: Colors.green, fontSize: 26.sp, fontWeight: FontWeight.bold),
-                      ),
-                      TextSpan(
-                        text: '/${defineController.quiz.length}',
-                        style: TextStyle(color: mFontMain, fontSize: 26.sp, fontWeight: FontWeight.bold),
-                      )
-                    ],
-                  ),
-                ),
-              ),
+          ),
+          Expanded(
+            flex: 8,
+            child: Center(
+              child: (type == "3" || type == "4") ? textBox(correctText) : imageBox(correctImage),
             ),
-            Expanded(
-              flex: 8,
-              child: Center(
-                child: (type == "3" || type == "4") ? textBox(correctText) : imageBox(correctImage),
-              ),
-            ),
-            Expanded(
-              flex: 4,
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: gapHalf),
-                child: Row(
-                  children: List.generate(
-                    2,
-                    (index) {
-                      return Expanded(
-                        child: GestureDetector(
-                          onTap: () => onSelect(index),
-                          child: Padding(
-                            padding: EdgeInsets.only(left: gapQuarter),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: mBoxLightBlue,
-                                borderRadius: BorderRadius.circular(15.sp),
-                              ),
-                              child: LayoutBuilder(
-                                builder: (context, constraints) {
-                                  final baseFontSize = 50.sp;
-                                  final availableWidth = constraints.maxWidth - 8.0;
-                                  double maxTextWidth = 0;
+          ),
+          Expanded(
+            flex: 4,
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: gapHalf),
+              child: Row(
+                children: List.generate(
+                  2,
+                  (index) {
+                    return Expanded(
+                      child: GestureDetector(
+                        onTap: () => onSelect(index),
+                        child: Padding(
+                          // 버튼 사이 간격을 반씩 나눠서, 두 버튼 폭이 같고 위 문제 칸과 양끝이 맞게
+                          padding: index == 0
+                              ? EdgeInsets.only(right: gapQuarter / 2)
+                              : EdgeInsets.only(left: gapQuarter / 2),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: mBoxLightBlue,
+                              borderRadius: BorderRadius.circular(15.sp),
+                            ),
+                            child: LayoutBuilder(
+                              builder: (context, constraints) {
+                                final baseFontSize = 50.sp;
+                                final availableWidth = constraints.maxWidth - 8.0;
+                                double maxTextWidth = 0;
 
-                                  for (var o in options) {
-                                    final tp = TextPainter(
-                                      text: TextSpan(
-                                        text: o,
-                                        style: TextStyle(
-                                          fontSize: baseFontSize,
-                                          fontWeight: FontWeight.bold,
-                                          fontFamily: 'NotoSansKR-SemiBold',
-                                        ),
+                                for (var o in options) {
+                                  final tp = TextPainter(
+                                    text: TextSpan(
+                                      text: o,
+                                      style: TextStyle(
+                                        fontSize: baseFontSize,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: 'NotoSansKR-SemiBold',
                                       ),
-                                      textDirection: TextDirection.ltr,
-                                    )..layout();
-                                    maxTextWidth = max(maxTextWidth, tp.width);
-                                    tp.dispose();
-                                  }
+                                    ),
+                                    textDirection: TextDirection.ltr,
+                                  )..layout();
+                                  maxTextWidth = max(maxTextWidth, tp.width);
+                                  tp.dispose();
+                                }
 
-                                  final scale = availableWidth / maxTextWidth;
-                                  final fittedFontSize = baseFontSize * scale;
+                                final scale = availableWidth / maxTextWidth;
+                                final fittedFontSize = baseFontSize * scale;
 
-                                  return Stack(
-                                    children: [
-                                      Center(
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(4.0),
-                                          child: FittedBox(
-                                            child: Text(
-                                              options[index],
-                                              softWrap: true,
-                                              style: TextStyle(
-                                                  color: mFontMain,
-                                                  fontSize: fittedFontSize >= 50.sp ? 50.sp : fittedFontSize,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontFamily: 'NotoSansKR-SemiBold'),
-                                            ),
+                                return Stack(
+                                  children: [
+                                    Center(
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(4.0),
+                                        child: FittedBox(
+                                          child: Text(
+                                            options[index],
+                                            softWrap: true,
+                                            style: TextStyle(
+                                                color: mFontMain,
+                                                fontSize: fittedFontSize >= 50.sp ? 50.sp : fittedFontSize,
+                                                fontWeight: FontWeight.bold,
+                                                fontFamily: 'NotoSansKR-SemiBold'),
                                           ),
                                         ),
                                       ),
-                                      if (selectedIndex == index)
-                                        isCorrect
-                                            ? Center(
-                                                child: Icon(
-                                                  Icons.circle_outlined,
-                                                  size: constraints.maxHeight,
-                                                  color: Colors.green,
-                                                ),
-                                              )
-                                            : isWrong
-                                                ? Center(
-                                                    child: Icon(
-                                                      Icons.close,
-                                                      size: constraints.maxHeight,
-                                                      color: Colors.red,
-                                                    ),
-                                                  )
-                                                : const SizedBox(),
-                                    ],
-                                  );
-                                },
-                              ),
+                                    ),
+                                    if (selectedIndex == index)
+                                      isCorrect
+                                          ? Center(
+                                              child: Icon(
+                                                Icons.circle_outlined,
+                                                size: constraints.maxHeight,
+                                                color: Colors.green,
+                                              ),
+                                            )
+                                          : isWrong
+                                              ? Center(
+                                                  child: Icon(
+                                                    Icons.close,
+                                                    size: constraints.maxHeight,
+                                                    color: Colors.red,
+                                                  ),
+                                                )
+                                              : const SizedBox(),
+                                  ],
+                                );
+                              },
                             ),
                           ),
                         ),
-                      );
-                    },
-                  ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
-            Expanded(
-              flex: 2,
-              child: Container(),
-            )
-          ],
-        ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Container(),
+          )
+        ],
       ),
     );
   }

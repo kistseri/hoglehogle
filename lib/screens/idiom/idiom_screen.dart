@@ -1,14 +1,17 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:hoho_hanja/_core/colors.dart';
 import 'package:hoho_hanja/_core/size.dart';
 import 'package:hoho_hanja/data/models/idiom_data.dart';
 import 'package:hoho_hanja/main.dart';
+import 'package:hoho_hanja/screens/idiom/idiom_widgets/top_arc_clipper.dart';
+import 'package:hoho_hanja/utils/design_scale.dart';
 import 'package:hoho_hanja/utils/result_service.dart';
-import 'package:hoho_hanja/widgets/appbar/custom_appbar.dart';
+import 'package:hoho_hanja/widgets/appbar/design_app_bar.dart';
 import 'package:hoho_hanja/widgets/dialog/result_dialog.dart';
 
 class IdiomScreen extends StatefulWidget {
@@ -88,182 +91,192 @@ class _IdiomScreenState extends State<IdiomScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    final mq = MediaQuery.of(context);
+    final size = mq.size;
+    final sc = DesignScale.of(size, mq.padding);
 
-    return Scaffold(
-      backgroundColor: mBoxLilac,
-      appBar: const CustomAppBar(),
-      // 본문이 아래 답안 시트에 가려지지 않게: 시트 높이만큼 아래 여백을 두고 스크롤
-      body: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(16, 16, 16, size.height * 0.35 + 16),
-        child: Column(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark,
+      child: Scaffold(
+        backgroundColor: mBoxLilac,
+        // 앱바 (다른 게임 화면과 같은 시안 좌표·크기). 앱바 칸 높이 = 상태바 + 시안 높이
+        appBar: PreferredSize(
+          preferredSize: Size.fromHeight(sc.d(DesignAppBar.height)),
+          child: DesignAppBar(scale: sc, inset: (sc.dw - sc.maxContentWidth) / 3),
+        ),
+        body:
+            // 본문이 아래 답안 시트에 가려지지 않게: 시트 높이만큼 아래 여백을 두고 스크롤
+            // body: SingleChildScrollView(
+            //   padding: EdgeInsets.fromLTRB(16, 16, 16, size.height * 0.35 + 16),
+            Column(
           children: [
-            Text(
-              '한자성어 문제',
-              style: TextStyle(
-                color: mFontMain,
-                fontSize: 24.sp,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              '빈 칸에 알맞은 한자를 찾아보세요.',
-              style: TextStyle(
-                color: mFontMain,
-                fontSize: 16.sp,
-              ),
-            ),
-            SizedBox(height: gapHalf),
-            Container(
-              padding: EdgeInsets.all(16.r),
-              decoration: BoxDecoration(
-                color: mBackWhite,
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      RichText(
-                        text: TextSpan(children: [
-                          TextSpan(
-                            text: '${currentQuestionIndex + 1}',
-                            style: TextStyle(
-                              color: primaryColor,
-                              fontSize: 20.sp,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          TextSpan(
-                            text: "/${idiomController.idiomDataList.length}",
-                            style: TextStyle(
-                              color: mFontMain,
-                              fontSize: 20.sp,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ]),
-                      ),
-                    ],
-                  ),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      idiomController.idiomDataList[currentQuestionIndex].quize1,
-                      style: TextStyle(
-                          color: const Color(0xFF391E65),
-                          fontSize: 40.sp,
+            Padding(
+              padding: EdgeInsets.only(top: 16.0.r),
+              child: RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                        text: '한자성어 문제',
+                        style: TextStyle(
+                          color: mFontMain,
+                          fontSize: 24.sp,
                           fontWeight: FontWeight.bold,
-                          letterSpacing: 5),
+                        )),
+                    TextSpan(
+                      text: '\n빈 칸에 알맞은 한자를 찾아보세요.',
+                      style: TextStyle(
+                        color: mFontMain,
+                        fontSize: 16.sp,
+                      ),
                     ),
-                  ),
-                  SizedBox(height: gapHalf),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildHanjaButton(idiomController.idiomDataList[currentQuestionIndex].hanja1,
-                          idiomController.idiomDataList[currentQuestionIndex].randomNum == 1),
-                      _buildHanjaButton(idiomController.idiomDataList[currentQuestionIndex].hanja2,
-                          idiomController.idiomDataList[currentQuestionIndex].randomNum == 2),
-                      _buildHanjaButton(idiomController.idiomDataList[currentQuestionIndex].hanja3,
-                          idiomController.idiomDataList[currentQuestionIndex].randomNum == 3),
-                      _buildHanjaButton(idiomController.idiomDataList[currentQuestionIndex].hanja4,
-                          idiomController.idiomDataList[currentQuestionIndex].randomNum == 4),
-                    ],
-                  ),
-                  SizedBox(height: gapHalf),
-                  const Divider(),
-                  Text(
-                    quizWrap(idiomController.idiomDataList[currentQuestionIndex].quize2),
-                    // '일이삼사오육칠팔구십일이삼사오육칠',
-                    style: TextStyle(fontSize: 20.sp),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-            SizedBox(height: gapMain),
-          ],
-        ),
-      ),
-      bottomSheet: Container(
-        height: size.height * 0.35,
-        width: size.width,
-        decoration: const BoxDecoration(
-          color: mBackWhite,
-          borderRadius: BorderRadius.only(
-            topRight: Radius.circular(30),
-            topLeft: Radius.circular(30),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: List.generate(
-            2,
-            (index) {
-              return GestureDetector(
-                onTap: () {
-                  // 정답 후 다음 문제로 넘어가는 동안 다른 보기를 누르면 O 표시가 옮겨가지 않게
-                  if (isAnswered) return;
-                  setState(() {
-                    selectedIndex = index;
-                  });
-                  checkAnswer(options[index]);
-                },
-                child: Container(
-                  width: 100.r,
-                  height: 100.r,
-                  decoration: BoxDecoration(
-                    color: mBoxYellow,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      return Stack(
-                        children: [
-                          Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(4),
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                  options[index],
-                                  style: TextStyle(
-                                      color: mFontMain,
-                                      fontSize: 50.sp,
-                                      fontWeight: FontWeight.bold,
-                                      fontFamily: 'G-Sans'),
-                                ),
+            Padding(
+              padding: EdgeInsets.all(16.0.r),
+              child: Container(
+                padding: EdgeInsets.all(16.r),
+                decoration: BoxDecoration(
+                  color: mBackWhite,
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        RichText(
+                          text: TextSpan(children: [
+                            TextSpan(
+                              text: '${currentQuestionIndex + 1}',
+                              style: TextStyle(
+                                color: primaryColor,
+                                fontSize: 20.sp,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                          ),
-                          if (selectedIndex == index)
-                            isCorrect
-                                ? Center(
-                                    child: Icon(
-                                      Icons.circle_outlined,
-                                      size: constraints.maxWidth,
-                                      color: Colors.green,
-                                    ),
-                                  )
-                                : isWrong
-                                    ? Center(
-                                        child: Icon(
-                                          Icons.close,
-                                          size: constraints.maxWidth,
-                                          color: Colors.red,
+                            TextSpan(
+                              text: "/${idiomController.idiomDataList.length}",
+                              style: TextStyle(
+                                color: mFontMain,
+                                fontSize: 20.sp,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ]),
+                        ),
+                      ],
+                    ),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        idiomController.idiomDataList[currentQuestionIndex].quize1,
+                        style: TextStyle(color: const Color(0xFF391E65), fontSize: 40.sp, fontWeight: FontWeight.bold, letterSpacing: 5),
+                      ),
+                    ),
+                    SizedBox(height: gapHalf),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildHanjaButton(idiomController.idiomDataList[currentQuestionIndex].hanja1,
+                            idiomController.idiomDataList[currentQuestionIndex].randomNum == 1),
+                        _buildHanjaButton(idiomController.idiomDataList[currentQuestionIndex].hanja2,
+                            idiomController.idiomDataList[currentQuestionIndex].randomNum == 2),
+                        _buildHanjaButton(idiomController.idiomDataList[currentQuestionIndex].hanja3,
+                            idiomController.idiomDataList[currentQuestionIndex].randomNum == 3),
+                        _buildHanjaButton(idiomController.idiomDataList[currentQuestionIndex].hanja4,
+                            idiomController.idiomDataList[currentQuestionIndex].randomNum == 4),
+                      ],
+                    ),
+                    SizedBox(height: gapHalf),
+                    const Divider(),
+                    Text(
+                      quizWrap(idiomController.idiomDataList[currentQuestionIndex].quize2),
+                      // '일이삼사오육칠팔구십일이삼사오육칠',
+                      style: TextStyle(fontSize: 20.sp),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Expanded(
+              child: ClipPath(
+                clipper: TopArcClipper(arcHeight: 25),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: mBackWhite,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: List.generate(
+                      2,
+                      (index) {
+                        return GestureDetector(
+                          onTap: () {
+                            // 정답 후 다음 문제로 넘어가는 동안 다른 보기를 누르면 O 표시가 옮겨가지 않게
+                            if (isAnswered) return;
+                            setState(() {
+                              selectedIndex = index;
+                            });
+                            checkAnswer(options[index]);
+                          },
+                          child: Container(
+                            width: 100.r,
+                            height: 100.r,
+                            decoration: BoxDecoration(
+                              color: mBoxYellow,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: LayoutBuilder(
+                              builder: (context, constraints) {
+                                return Stack(
+                                  children: [
+                                    Center(
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(4),
+                                        child: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Text(
+                                            options[index],
+                                            style: TextStyle(color: mFontMain, fontSize: 50.sp, fontWeight: FontWeight.bold, fontFamily: 'G-Sans'),
+                                          ),
                                         ),
-                                      )
-                                    : const SizedBox(),
-                        ],
-                      );
-                    },
+                                      ),
+                                    ),
+                                    if (selectedIndex == index)
+                                      isCorrect
+                                          ? Center(
+                                              child: Icon(
+                                                Icons.circle_outlined,
+                                                size: constraints.maxWidth,
+                                                color: Colors.green,
+                                              ),
+                                            )
+                                          : isWrong
+                                              ? Center(
+                                                  child: Icon(
+                                                    Icons.close,
+                                                    size: constraints.maxWidth,
+                                                    color: Colors.red,
+                                                  ),
+                                                )
+                                              : const SizedBox(),
+                                  ],
+                                );
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
-              );
-            },
-          ),
+              ),
+            )
+          ],
         ),
       ),
     );
@@ -284,11 +297,7 @@ class _IdiomScreenState extends State<IdiomScreen> {
           fit: BoxFit.scaleDown,
           child: Text(
             isPlaceholder ? "?" : hanja,
-            style: TextStyle(
-                color: isPlaceholder ? mFontMain : mFontWhite,
-                fontSize: 30.sp,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'G-Sans'),
+            style: TextStyle(color: isPlaceholder ? mFontMain : mFontWhite, fontSize: 30.sp, fontWeight: FontWeight.bold, fontFamily: 'G-Sans'),
           ),
         ),
       ),

@@ -416,7 +416,6 @@ class _HomeBodyState extends State<HomeBody> {
               ),
 
               // ───── 앱바 ─────
-              // 급수 별칭(2~4글자) + 급수 선택: 별칭이 한 글자 늘 때마다 드롭다운이 그만큼 오른쪽으로 밀림
               Positioned(
                 left: _x(_m + 1.25),
                 top: _y(8),
@@ -432,7 +431,7 @@ class _HomeBodyState extends State<HomeBody> {
                         maxLines: 1,
                         softWrap: false,
                         overflow: TextOverflow.ellipsis,
-                        style: _style(15, color: Colors.black),
+                        style: _style(bold: true, 15, color: Colors.black),
                       ),
                     ),
                     // 급수 선택
