@@ -24,13 +24,17 @@ class _DefineScreenState extends State<DefineScreen> {
   final defineController = Get.put(DefineDataController());
   int currentQuestionIndex = 0;
   int correctCount = 0;
-  int inCorrectCount = 0;
-  List<Map<String, String>> incorrectAnswers = [];
+  final Set<int> wrongQuestions = {}; // 한 번이라도 틀린 문제 (문제당 한 번만 감점)
   List<String> options = [];
 
   bool isCorrect = false;
   bool isWrong = false;
   int? selectedIndex;
+  bool _isLocked = false; // 정답 후 다음 문제로 넘어가는 동안 입력 잠금
+  bool _finished = false; // 게임 끝 (결과는 한 번만 저장)
+
+  // 점수: 처음에 맞힌 문제 수 (0 미만으로 내려가지 않음)
+  int get score => max(0, correctCount - wrongQuestions.length);
 
   @override
   void initState() {
@@ -44,10 +48,19 @@ class _DefineScreenState extends State<DefineScreen> {
     options.shuffle(Random());
   }
 
+  void onSelect(int index) {
+    if (_isLocked || _finished) return;
+    setState(() {
+      selectedIndex = index;
+    });
+    checkAnswer(options[index]);
+  }
+
   void checkAnswer(String selectedAnswer) async {
     String correctAnswer = defineController.quiz[currentQuestionIndex]['options'][0];
 
     if (selectedAnswer == correctAnswer) {
+      _isLocked = true;
       effect.correctSound();
       correctCount++;
       setState(() {
@@ -55,7 +68,9 @@ class _DefineScreenState extends State<DefineScreen> {
         isWrong = false;
       });
 
-      await Future.delayed(Duration(milliseconds: 1000));
+      await Future.delayed(const Duration(milliseconds: 1000));
+      // 기다리는 동안 화면을 나갔으면 중단
+      if (!mounted) return;
 
       if (currentQuestionIndex < defineController.quiz.length - 1) {
         setState(() {
@@ -65,11 +80,14 @@ class _DefineScreenState extends State<DefineScreen> {
           isWrong = false;
           loadQuestion();
         });
+        _isLocked = false;
       } else {
-        final coin = await resultService(widget.code, correctCount - inCorrectCount);
+        _finished = true;
+        final coin = await resultService(widget.code, score);
+        if (!mounted) return;
         resultDialog(
-          Get.context!,
-          correctCount - inCorrectCount,
+          context,
+          score,
           defineController.quiz.length,
           coin,
         );
@@ -79,9 +97,7 @@ class _DefineScreenState extends State<DefineScreen> {
       setState(() {
         isWrong = true;
         isCorrect = false;
-        if (!incorrectAnswers.contains(currentQuestionIndex)) {
-          inCorrectCount++;
-        }
+        wrongQuestions.add(currentQuestionIndex);
       });
     }
   }
@@ -157,12 +173,7 @@ class _DefineScreenState extends State<DefineScreen> {
                     (index) {
                       return Expanded(
                         child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              selectedIndex = index;
-                            });
-                            checkAnswer(options[index]);
-                          },
+                          onTap: () => onSelect(index),
                           child: Padding(
                             padding: EdgeInsets.only(left: gapQuarter),
                             child: Container(
@@ -189,6 +200,7 @@ class _DefineScreenState extends State<DefineScreen> {
                                       textDirection: TextDirection.ltr,
                                     )..layout();
                                     maxTextWidth = max(maxTextWidth, tp.width);
+                                    tp.dispose();
                                   }
 
                                   final scale = availableWidth / maxTextWidth;
@@ -229,7 +241,7 @@ class _DefineScreenState extends State<DefineScreen> {
                                                       color: Colors.red,
                                                     ),
                                                   )
-                                                : SizedBox(),
+                                                : const SizedBox(),
                                     ],
                                   );
                                 },
@@ -254,17 +266,30 @@ class _DefineScreenState extends State<DefineScreen> {
   }
 
   Widget imageBox(String correctImage) {
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        image: DecorationImage(
-            image: NetworkImage(
-              correctImage,
-            ),
-            fit: BoxFit.fill),
+    // 비율을 유지하고, 불러오는 중·실패 시에도 빈 화면이나 오류가 나지 않게
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: SizedBox(
+        width: double.infinity,
+        height: double.infinity,
+        child: correctImage.isEmpty
+            ? _imageError()
+            : Image.network(
+                correctImage,
+                fit: BoxFit.contain,
+                loadingBuilder: (context, child, progress) =>
+                    progress == null ? child : const Center(child: CircularProgressIndicator()),
+                errorBuilder: (context, error, stackTrace) => _imageError(),
+              ),
       ),
+    );
+  }
+
+  Widget _imageError() {
+    return Container(
+      color: mBoxGray,
+      alignment: Alignment.center,
+      child: Icon(Icons.image_not_supported_outlined, size: 60.sp, color: mFontSub),
     );
   }
 
@@ -272,11 +297,16 @@ class _DefineScreenState extends State<DefineScreen> {
     return Container(
       width: double.infinity,
       height: double.infinity,
+      padding: EdgeInsets.all(gapHalf),
       decoration: BoxDecoration(color: mBoxGray, borderRadius: BorderRadius.circular(20)),
       child: Center(
-        child: Text(
-          correctText,
-          style: TextStyle(color: mFontMain, fontSize: 75.sp, fontWeight: FontWeight.w900, fontFamily: 'G-sans'),
+        // 글자가 길어도 상자 밖으로 넘치지 않게
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            correctText,
+            style: TextStyle(color: mFontMain, fontSize: 75.sp, fontWeight: FontWeight.w900, fontFamily: 'G-Sans'),
+          ),
         ),
       ),
     );

@@ -24,7 +24,7 @@ class _IdiomScreenState extends State<IdiomScreen> {
   final idiomController = Get.put(IdiomDataController());
   int currentQuestionIndex = 0;
   int correctCount = 0;
-  int inCorrectCount = 0;
+  final Set<int> wrongQuestions = {}; // 한 번이라도 틀린 문제 (같은 문제를 여러 번 틀려도 한 번만 감점)
   List<String> options = [];
 
   bool isCorrect = false;
@@ -57,7 +57,9 @@ class _IdiomScreenState extends State<IdiomScreen> {
         isCorrect = true;
         isWrong = false;
       });
-      await Future.delayed(Duration(milliseconds: 500));
+      await Future.delayed(const Duration(milliseconds: 500));
+      // 기다리는 동안 화면을 나갔으면 중단
+      if (!mounted) return;
 
       if (currentQuestionIndex < idiomController.idiom.length - 1) {
         setState(() {
@@ -68,16 +70,17 @@ class _IdiomScreenState extends State<IdiomScreen> {
           loadQuestion();
         });
       } else {
-        final score = (correctCount - inCorrectCount).clamp(0, idiomController.idiom.length);
+        final score = (correctCount - wrongQuestions.length).clamp(0, idiomController.idiom.length);
         final coin = await resultService(widget.code, score);
-        resultDialog(Get.context!, score, idiomController.idiom.length, coin);
+        if (!mounted) return;
+        resultDialog(context, score, idiomController.idiom.length, coin);
       }
     } else {
       effect.wrongSound();
       setState(() {
         isWrong = true;
         isCorrect = false;
-        inCorrectCount++;
+        wrongQuestions.add(currentQuestionIndex);
         isAnswered = false;
       });
     }
@@ -90,8 +93,9 @@ class _IdiomScreenState extends State<IdiomScreen> {
     return Scaffold(
       backgroundColor: mBoxLilac,
       appBar: const CustomAppBar(),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      // 본문이 아래 답안 시트에 가려지지 않게: 시트 높이만큼 아래 여백을 두고 스크롤
+      body: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(16, 16, 16, size.height * 0.35 + 16),
         child: Column(
           children: [
             Text(
@@ -143,9 +147,16 @@ class _IdiomScreenState extends State<IdiomScreen> {
                       ),
                     ],
                   ),
-                  Text(
-                    idiomController.idiomDataList[currentQuestionIndex].quize1,
-                    style: TextStyle(color: const Color(0xFF391E65), fontSize: 40.sp, fontWeight: FontWeight.bold, letterSpacing: 5),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      idiomController.idiomDataList[currentQuestionIndex].quize1,
+                      style: TextStyle(
+                          color: const Color(0xFF391E65),
+                          fontSize: 40.sp,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 5),
+                    ),
                   ),
                   SizedBox(height: gapHalf),
                   Row(
@@ -162,7 +173,7 @@ class _IdiomScreenState extends State<IdiomScreen> {
                     ],
                   ),
                   SizedBox(height: gapHalf),
-                  Divider(),
+                  const Divider(),
                   Text(
                     quizWrap(idiomController.idiomDataList[currentQuestionIndex].quize2),
                     // '일이삼사오육칠팔구십일이삼사오육칠',
@@ -193,14 +204,16 @@ class _IdiomScreenState extends State<IdiomScreen> {
             (index) {
               return GestureDetector(
                 onTap: () {
+                  // 정답 후 다음 문제로 넘어가는 동안 다른 보기를 누르면 O 표시가 옮겨가지 않게
+                  if (isAnswered) return;
                   setState(() {
                     selectedIndex = index;
                   });
                   checkAnswer(options[index]);
                 },
                 child: Container(
-                  width: 100.w,
-                  height: 100.h,
+                  width: 100.r,
+                  height: 100.r,
                   decoration: BoxDecoration(
                     color: mBoxYellow,
                     borderRadius: BorderRadius.circular(10),
@@ -210,9 +223,19 @@ class _IdiomScreenState extends State<IdiomScreen> {
                       return Stack(
                         children: [
                           Center(
-                            child: Text(
-                              options[index],
-                              style: TextStyle(color: mFontMain, fontSize: 50.sp, fontWeight: FontWeight.bold, fontFamily: 'G-Sans'),
+                            child: Padding(
+                              padding: const EdgeInsets.all(4),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  options[index],
+                                  style: TextStyle(
+                                      color: mFontMain,
+                                      fontSize: 50.sp,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'G-Sans'),
+                                ),
+                              ),
                             ),
                           ),
                           if (selectedIndex == index)
@@ -232,7 +255,7 @@ class _IdiomScreenState extends State<IdiomScreen> {
                                           color: Colors.red,
                                         ),
                                       )
-                                    : SizedBox(),
+                                    : const SizedBox(),
                         ],
                       );
                     },
@@ -247,18 +270,26 @@ class _IdiomScreenState extends State<IdiomScreen> {
   }
 
   Widget _buildHanjaButton(String hanja, [bool isPlaceholder = false]) {
+    // 정사각형 (기기에 따라 늘어나 보이지 않게)
     return Container(
-      width: 60.w,
-      height: 60.h,
+      width: 60.r,
+      height: 60.r,
       decoration: BoxDecoration(
         color: isPlaceholder ? mBoxYellow : mBoxLilac,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: mBoxLavender, width: 2.w),
       ),
       child: Center(
-        child: Text(
-          isPlaceholder ? "?" : hanja,
-          style: TextStyle(color: isPlaceholder ? mFontMain : mFontWhite, fontSize: 30.sp, fontWeight: FontWeight.bold, fontFamily: 'G-Sans'),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            isPlaceholder ? "?" : hanja,
+            style: TextStyle(
+                color: isPlaceholder ? mFontMain : mFontWhite,
+                fontSize: 30.sp,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'G-Sans'),
+          ),
         ),
       ),
     );

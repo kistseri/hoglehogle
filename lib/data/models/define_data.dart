@@ -21,22 +21,24 @@ class DefineData {
     required this.note,
   });
 
+  // 서버가 값을 빼거나 숫자로 보내도 오류 없이 받음
   DefineData.fromJson(Map<String, dynamic> json)
-      : result = json["result"],
-        number = json["ilno"],
-        typechk = json["typechk"],
-        questionImg = json["questionImg"],
-        questionText = json["questionText"],
-        answer = json["ans"],
-        wrongAnswer = json["wans"],
-        note = json["note"];
+      : result = json["result"]?.toString() ?? '',
+        number = json["ilno"]?.toString() ?? '',
+        typechk = json["typechk"]?.toString() ?? '',
+        questionImg = json["questionImg"]?.toString(),
+        questionText = json["questionText"]?.toString(),
+        answer = json["ans"]?.toString() ?? '',
+        wrongAnswer = json["wans"]?.toString() ?? '',
+        note = json["note"]?.toString() ?? '';
 }
 
 class DefineDataController extends GetxController {
   List<DefineData> _defineDataList = <DefineData>[].obs;
 
+  // 정답이 빈 데이터는 뺌
   void setDefineDataList(List<DefineData> defineDataList) {
-    _defineDataList = defineDataList;
+    _defineDataList = defineDataList.where((d) => d.answer.trim().isNotEmpty).toList();
     update();
   }
 

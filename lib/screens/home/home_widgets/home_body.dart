@@ -179,10 +179,18 @@ class _HomeBodyState extends State<HomeBody> {
     }
   }
 
+  bool _defineBusy = false; // 뜻 찾기 연타 방지
+
   Future<void> _onDefine() async {
+    if (_defineBusy) return;
     if (isContentLocked(grade)) {
-      await connectInfo(contentsCodes['define']);
-      await defineService(grade, contentsCodes['define']);
+      _defineBusy = true;
+      try {
+        await connectInfo(contentsCodes['define']);
+        await defineService(grade, contentsCodes['define']);
+      } finally {
+        _defineBusy = false;
+      }
     } else {
       showUnlockDialog(grade);
     }
@@ -205,19 +213,35 @@ class _HomeBodyState extends State<HomeBody> {
     }
   }
 
+  bool _cookieBusy = false; // 쿠키 연타 방지
+
   Future<void> _onCookie() async {
+    if (_cookieBusy) return;
     if (isContentLocked(grade)) {
-      await connectInfo(contentsCodes['cookie']);
-      await cookieService(grade, contentsCodes['cookie']);
+      _cookieBusy = true;
+      try {
+        await connectInfo(contentsCodes['cookie']);
+        await cookieService(grade, contentsCodes['cookie']);
+      } finally {
+        _cookieBusy = false;
+      }
     } else {
       showUnlockDialog(grade);
     }
   }
 
+  bool _idiomBusy = false; // 한자성어 연타 방지
+
   Future<void> _onIdiom() async {
+    if (_idiomBusy) return;
     if (isContentLocked(grade)) {
-      await connectInfo(contentsCodes['idiom']);
-      await idiomService(grade, contentsCodes['idiom']);
+      _idiomBusy = true;
+      try {
+        await connectInfo(contentsCodes['idiom']);
+        await idiomService(grade, contentsCodes['idiom']);
+      } finally {
+        _idiomBusy = false;
+      }
     } else {
       showUnlockDialog(grade);
     }

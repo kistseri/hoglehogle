@@ -1,15 +1,15 @@
 import 'dart:math';
 
 import 'package:flame/components.dart';
+import 'package:flame/events.dart';
 import 'package:flame/text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:get/get.dart';
 import 'package:hoho_hanja/_core/colors.dart';
-import 'package:hoho_hanja/data/models/cookie_data.dart';
+import 'package:hoho_hanja/screens/cookie/cookie_widgets/cookie_game.dart';
 
-class CookieElement extends SpriteComponent {
-  final cookie = Get.put(CookieDataController());
+class CookieElement extends SpriteComponent
+    with TapCallbacks, HasGameReference<CookieGame> {
   final bool isCorrect;
   final String text;
   final int index;
@@ -20,9 +20,11 @@ class CookieElement extends SpriteComponent {
     required this.text,
     required this.index,
     required this.speed,
+    required double cookieSize,
   }) {
-    width = 65.w;
-    height = 65.h;
+    // 정사각형 (태블릿에서 납작해지지 않게)
+    width = cookieSize;
+    height = cookieSize;
   }
 
   @override
@@ -39,7 +41,8 @@ class CookieElement extends SpriteComponent {
       textRenderer: TextPaint(
         style: TextStyle(
           fontSize: 25.sp,
-          color: mFontMain,
+          // 4번(폭탄)은 바탕이 어두워서 글자를 흰색으로
+          color: imageIndex == 4 ? mFontWhite : mFontMain,
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -51,15 +54,15 @@ class CookieElement extends SpriteComponent {
   }
 
   @override
-  void update(double dt) async {
+  void update(double dt) {
     super.update(dt);
     position.y += speed * dt;
+  }
 
-    if (position.y > 400 && position.y < 500) {
-      cookie.setWorry(true);
-    } else if (position.y >= 800) {
-      removeFromParent();
-      cookie.setWorry(false);
-    }
+  @override
+  void onTapDown(TapDownEvent event) {
+    // 이미 사라지는 중인 쿠키를 같은 순간 또 누르면 무시 (목숨 두 번 깎임·문제 건너뜀 방지)
+    if (isRemoving) return;
+    game.onCookieTapped(this);
   }
 }
