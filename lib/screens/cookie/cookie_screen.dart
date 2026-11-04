@@ -19,6 +19,8 @@ class CookieScreen extends StatefulWidget {
 
 class _CookieScreenState extends State<CookieScreen> {
   final cookieController = Get.put(CookieDataController());
+  // 게임은 한 번만 만듦 (화면 크기 변경 등으로 다시 그려져도 처음부터 다시 시작하지 않게)
+  CookieGame? _game;
 
   @override
   void initState() {
@@ -28,7 +30,11 @@ class _CookieScreenState extends State<CookieScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final CookieGame game = CookieGame(code: widget.code);
+    final game = _game ??= CookieGame(
+      code: widget.code,
+      topInset: MediaQuery.of(context).padding.top + kToolbarHeight,
+      cookieSize: 65.r,
+    );
     return Scaffold(
       body: Stack(
         children: [
@@ -42,9 +48,10 @@ class _CookieScreenState extends State<CookieScreen> {
               ),
             ),
           ),
-          Obx(() => CookieQuestion(
-              question: cookieController.quiz[game.currentIndex.value]
-                  ['options'][0])),
+          if (cookieController.quiz.isNotEmpty)
+            Obx(() => CookieQuestion(
+                question:
+                    cookieController.quiz[game.currentIndex.value].question)),
           Positioned(
             bottom: 50.h,
             right: 290.w,
@@ -58,7 +65,7 @@ class _CookieScreenState extends State<CookieScreen> {
             left: 0,
             right: 0,
             child: Container(
-              decoration: BoxDecoration(color: Colors.brown),
+              decoration: const BoxDecoration(color: Colors.brown),
               height: 75.h,
             ),
           ),

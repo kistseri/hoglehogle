@@ -35,6 +35,16 @@
 					<string>com.googleusercontent.apps.84498195538-kaftlg9rjvle8kv7re21qcteuag2ih3p</string>
 				</array>
 			</dict>
+			<dict>
+				<key>CFBundleTypeRole</key>
+				<string>Editor</string>
+				<key>CFBundleURLName</key>
+				<string>kakao</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>kakao10e3dd62edc83a288847655777badcb9</string>
+				</array>
+			</dict>
 		</array>
 		<key>LSRequiresIPhoneOS</key>
 		<true/>
@@ -68,7 +78,10 @@
 		<key>LSApplicationQueriesSchemes</key>
 		<array>
 		    <string>http</string>
-		    <string>http</string>
+		    <string>https</string>
+		    <string>kakaokompassauth</string>
+		    <string>kakaolink</string>
+		    <string>kakaoplus</string>
 		</array>
 	</dict>
 </plist>

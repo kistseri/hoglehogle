@@ -27,25 +27,27 @@ class IdiomData {
     required this.wrongAnswer,
   });
 
+  // 서버가 값을 빼거나 숫자·문자열을 섞어 보내도 오류 없이 받음
   IdiomData.fromJson(Map<String, dynamic> json)
-      : result = json["result"],
-        number = json["ilno"],
-        quize1 = json["quize1"],
-        quize2 = json["quize2"],
-        hanja1 = json["hanja1"],
-        hanja2 = json["hanja2"],
-        hanja3 = json["hanja3"],
-        hanja4 = json["hanja4"],
-        randomNum = json["random_num"],
-        selectedHanja = json["selected_hanja"],
-        wrongAnswer = json["wnas"];
+      : result = json["result"]?.toString() ?? '',
+        number = json["ilno"]?.toString() ?? '',
+        quize1 = json["quize1"]?.toString() ?? '',
+        quize2 = json["quize2"]?.toString() ?? '',
+        hanja1 = json["hanja1"]?.toString() ?? '',
+        hanja2 = json["hanja2"]?.toString() ?? '',
+        hanja3 = json["hanja3"]?.toString() ?? '',
+        hanja4 = json["hanja4"]?.toString() ?? '',
+        randomNum = int.tryParse(json["random_num"]?.toString() ?? '') ?? 0,
+        selectedHanja = json["selected_hanja"]?.toString() ?? '',
+        wrongAnswer = json["wnas"]?.toString() ?? '';
 }
 
 class IdiomDataController extends GetxController {
   List<IdiomData> _idiomDataList = <IdiomData>[].obs;
 
+  // 정답 한자가 빈 데이터는 뺌
   void setIdiomDataList(List<IdiomData> idiomDataList) {
-    _idiomDataList = idiomDataList;
+    _idiomDataList = idiomDataList.where((d) => d.selectedHanja.trim().isNotEmpty).toList();
     update();
   }
 

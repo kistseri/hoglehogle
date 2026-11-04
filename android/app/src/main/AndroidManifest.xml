@@ -46,7 +46,10 @@
         <!--                android:value="@string/client_name"/>-->
 
         <!-- 카카오 로그인 -->
-        <activity android:name="com.kakao.sdk.flutter.AuthCodeCustomTabsActivity">
+        <!-- kakao_flutter_sdk 2.x: AuthCodeCustomTabsActivity → auth.AuthCodeHandlerActivity 로 이름 변경 -->
+        <activity
+                android:name="com.kakao.sdk.flutter.auth.AuthCodeHandlerActivity"
+                android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>

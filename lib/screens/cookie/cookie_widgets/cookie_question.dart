@@ -14,7 +14,7 @@ class CookieQuestion extends StatelessWidget {
       child: Container(
         height: 75.h,
         width: 225.w,
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           image: DecorationImage(
             image: AssetImage('assets/images/cookie/cookie_question.png'),
             fit: BoxFit.contain,
