@@ -12,6 +12,7 @@ import 'package:hoho_hanja/screens/myroom/myroom_wigets/my_room_item.dart';
 import 'package:hoho_hanja/services/auth/my_goods_service.dart';
 import 'package:hoho_hanja/utils/network_check.dart';
 import 'package:hoho_hanja/widgets/dialog/dialog.dart';
+import 'package:hoho_hanja/widgets/dialog/loading_dialog.dart';
 import 'package:logger/logger.dart';
 
 import '../../myroom/load_item_service.dart';
@@ -27,6 +28,7 @@ Future<void> loginService(LoginDTO loginDTO, bool isAutoLoginChecked) async {
 
     String url = dotenv.get('LOGIN_URL');
 
+    showLoading('로그인 중...');
     try {
       if (loginDTO.email != "" || loginDTO.shaPassword != "") {
         // HTTP POST 요청
@@ -50,10 +52,12 @@ Future<void> loginService(LoginDTO loginDTO, bool isAutoLoginChecked) async {
 
             await myGoodsService();
             // await loadProfileImage(loginDataController.loginData.value!.id);
+            hideLoading();
             Get.offAll(() => const HomeScreen());
           }
           // 응답 데이터가 오류일 때("9999": 오류)
           else {
+            hideLoading();
             failDialog('로그인 실패', '${resultList['message']}');
 
             // 아이디, 비밀번호 입력 초기화
@@ -63,10 +67,14 @@ Future<void> loginService(LoginDTO loginDTO, bool isAutoLoginChecked) async {
         }
         // 응답을 받지 못했을 때
       } else {
+        hideLoading();
         failDialog('로그인 실패', '아이디와 비밀번호를 입력해주세요.');
       }
     } catch (e) {
       Logger().d('e = $e');
+    } finally {
+      // 응답 코드가 200이 아니거나 오류가 나도 로딩창은 닫음
+      hideLoading();
     }
   } else {
     failDialog("연결 실패", "인터넷 연결을 확인해주세요");

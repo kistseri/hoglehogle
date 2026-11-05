@@ -78,3 +78,12 @@ Future<void> _handleKakaoUser() async {
 Future<void> kakaoLogout() async {
   await UserApi.instance.unlink();
 }
+
+/// 카카오 로그인 해제 (로그아웃: logout, 탈퇴: unlink). 카카오로 로그인하지 않았거나 실패해도 조용히 넘어감.
+Future<void> kakaoSignOut({bool unlink = false}) async {
+  try {
+    unlink ? await UserApi.instance.unlink() : await UserApi.instance.logout();
+  } catch (e) {
+    Logger().d('카카오 로그아웃 건너뜀: $e');
+  }
+}

@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
+int _toInt(dynamic v) => v is int ? v : int.tryParse('${v ?? ''}'.trim()) ?? 0;
+
 class GoodsData {
   final int coin;
   final int dia;
@@ -9,8 +11,8 @@ class GoodsData {
 
   factory GoodsData.fromJson(Map<String, dynamic> json) {
     return GoodsData(
-      coin: json['coin'],
-      dia: json['dia'],
+      coin: _toInt(json['coin']),
+      dia: _toInt(json['dia']),
     );
   }
 }

@@ -23,6 +23,7 @@ import 'package:hoho_hanja/services/tracing/tracing_body_service.dart';
 import 'package:hoho_hanja/utils/connect_info.dart';
 import 'package:hoho_hanja/widgets/dialog/dialog.dart';
 import 'package:hoho_hanja/widgets/dialog/unlock_dilog.dart';
+import 'package:hoho_hanja/services/contents_ready_service.dart';
 
 /// 홈 화면 전체 (앱바 + 본문 + 하단 탭)
 ///
@@ -179,20 +180,30 @@ class _HomeBodyState extends State<HomeBody> {
     }
   }
 
+  // 잠긴 콘텐츠: 그 급수에 문제가 있으면 잠금 해제 구매창, 아직 없으면 '준비 중' (다이아 소모 방지)
+  // TODO(서버 SV-14): 콘텐츠 잠금 정보에 준비 여부가 오면 그 값으로 바꾸고 이 확인 요청은 뺌
+  Future<void> _unlockOrPreparing(String urlKey) async {
+    if (await isContentReady(urlKey, grade)) {
+      showUnlockDialog(grade);
+    } else {
+      failDialog('준비중', '${grades[grade] ?? ''} 콘텐츠는 준비 중입니다.\n조금만 기다려 주세요!');
+    }
+  }
+
   bool _defineBusy = false; // 뜻 찾기 연타 방지
 
   Future<void> _onDefine() async {
     if (_defineBusy) return;
-    if (isContentLocked(grade)) {
-      _defineBusy = true;
-      try {
+    _defineBusy = true;
+    try {
+      if (isContentLocked(grade)) {
         await connectInfo(contentsCodes['define']);
         await defineService(grade, contentsCodes['define']);
-      } finally {
-        _defineBusy = false;
+      } else {
+        await _unlockOrPreparing('DEFINE_URL');
       }
-    } else {
-      showUnlockDialog(grade);
+    } finally {
+      _defineBusy = false;
     }
   }
 
@@ -200,16 +211,16 @@ class _HomeBodyState extends State<HomeBody> {
 
   Future<void> _onBake() async {
     if (_bakeBusy) return;
-    if (isContentLocked(grade)) {
-      _bakeBusy = true;
-      try {
+    _bakeBusy = true;
+    try {
+      if (isContentLocked(grade)) {
         await connectInfo(contentsCodes['bake']);
         await bakeService(grade, contentsCodes['bake']);
-      } finally {
-        _bakeBusy = false;
+      } else {
+        await _unlockOrPreparing('BAKE_URL');
       }
-    } else {
-      showUnlockDialog(grade);
+    } finally {
+      _bakeBusy = false;
     }
   }
 
@@ -217,16 +228,16 @@ class _HomeBodyState extends State<HomeBody> {
 
   Future<void> _onCookie() async {
     if (_cookieBusy) return;
-    if (isContentLocked(grade)) {
-      _cookieBusy = true;
-      try {
+    _cookieBusy = true;
+    try {
+      if (isContentLocked(grade)) {
         await connectInfo(contentsCodes['cookie']);
         await cookieService(grade, contentsCodes['cookie']);
-      } finally {
-        _cookieBusy = false;
+      } else {
+        await _unlockOrPreparing('COOKIE_URL');
       }
-    } else {
-      showUnlockDialog(grade);
+    } finally {
+      _cookieBusy = false;
     }
   }
 
@@ -234,16 +245,16 @@ class _HomeBodyState extends State<HomeBody> {
 
   Future<void> _onIdiom() async {
     if (_idiomBusy) return;
-    if (isContentLocked(grade)) {
-      _idiomBusy = true;
-      try {
+    _idiomBusy = true;
+    try {
+      if (isContentLocked(grade)) {
         await connectInfo(contentsCodes['idiom']);
         await idiomService(grade, contentsCodes['idiom']);
-      } finally {
-        _idiomBusy = false;
+      } else {
+        await _unlockOrPreparing('IDIOM_URL');
       }
-    } else {
-      showUnlockDialog(grade);
+    } finally {
+      _idiomBusy = false;
     }
   }
 
@@ -483,23 +494,23 @@ class _HomeBodyState extends State<HomeBody> {
                 ),
               ),
               // 코인
-              _box(_r(207.7), 18.9, 16, 16, Image.asset('assets/images/icon/coin.png')),
+              _box(_r(193.7), 18.9, 16, 16, Image.asset('assets/images/icon/coin.png')),
               _place(
-                left: _r(225),
+                left: _r(211),
                 cy: 27,
                 size: 15,
                 child: Obx(() => Text(goodsController.formattedCoin.value, style: _outlineStyle(15))),
               ),
               // 다이아 (누르면 구매)
-              _box(_r(273.5), 18.3, 17, 17, Image.asset('assets/images/icon/diamond.png')),
+              _box(_r(259.5), 18.3, 17, 17, Image.asset('assets/images/icon/diamond.png')),
               _place(
-                left: _r(293),
+                left: _r(279),
                 cy: 27,
                 size: 15,
                 child: Obx(() => Text(goodsController.formattedDia.value, style: _outlineStyle(15))),
               ),
               _box(
-                _r(268),
+                _r(254),
                 8,
                 50,
                 37,
@@ -511,14 +522,15 @@ class _HomeBodyState extends State<HomeBody> {
                 ),
               ),
               // 프로필
+              // 시안 24에서 1.25배, 다이아와 간격을 두고 오른쪽 끝에서 10 떨어지게
               _box(
-                _r(324.5),
-                14.5,
-                24,
-                24,
+                _r(320),
+                11.5,
+                30,
+                30,
                 GestureDetector(
                   onTap: widget.onAvatarPressed,
-                  child: MyRoomCircleAvatar(size: _d(24)),
+                  child: MyRoomCircleAvatar(size: _d(30)),
                 ),
               ),
 

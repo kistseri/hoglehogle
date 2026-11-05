@@ -1,96 +1,42 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:hoho_hanja/_core/colors.dart';
-import 'package:hoho_hanja/_core/size.dart';
-import 'package:hoho_hanja/data/models/login_data.dart';
 import 'package:hoho_hanja/data/models/setting_data.dart';
+import 'package:hoho_hanja/screens/setting/setting_widgets/setting_button.dart';
+import 'package:hoho_hanja/utils/design_scale.dart';
 import 'package:hoho_hanja/widgets/dialog/coupon_dialog.dart';
-import 'package:logger/logger.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class CouponButton extends StatefulWidget {
-  const CouponButton({super.key});
+class CouponButton extends StatelessWidget {
+  final DesignScale scale;
 
-  @override
-  State<CouponButton> createState() => _CouponButtonState();
-}
-
-class _CouponButtonState extends State<CouponButton> {
-  final SettingDataController settingController = Get.find<SettingDataController>();
-  final LoginDataController loginDataController = Get.find<LoginDataController>();
+  const CouponButton({super.key, required this.scale});
 
   @override
   Widget build(BuildContext context) {
-    final bool isAos = Theme.of(context).platform == TargetPlatform.android;
-    final id = loginDataController.loginData.value!.id;
-    final couponText = settingController.isVisible.value;
-    final isCouponInsert = couponText == 'N' ? true : false;
-    return GestureDetector(
-      onTap: () async {
-        if (isAos) {
-          setState(() {
-            showCouponDialog(context);
-          });
-        } else {
+    final isAos = Theme.of(context).platform == TargetPlatform.android;
+    final settingController = Get.isRegistered<SettingDataController>()
+        ? Get.find<SettingDataController>()
+        : Get.put(SettingDataController());
+    return Obx(() {
+      // 안드로이드는 늘 쿠폰 입력, iOS는 심사가 끝난 뒤('N')에만 쿠폰 입력 (그 전엔 홈페이지)
+      final yn = settingController.isVisible.value; // Obx가 이 값을 지켜보도록 먼저 읽음
+      final isCouponInsert = isAos || yn == 'N';
+      return SettingButton(
+        scale: scale,
+        color: const Color(0xFF9AC4C9),
+        icon: isCouponInsert ? Icons.confirmation_number_outlined : null,
+        text: isCouponInsert ? '쿠폰 입력하기' : '홈페이지 바로가기',
+        onTap: () async {
           if (isCouponInsert) {
-            setState(() {
-              showCouponDialog(context);
-            });
-          } else {
-            Uri url;
-            url = Uri.parse("https://hohoedu.co.kr");
-            if (await canLaunchUrl(url)) {
-              await launchUrl(
-                url,
-                mode: LaunchMode.externalApplication,
-              );
-            } else {
-              throw "Could not launch $url";
-            }
+            showCouponDialog(context);
+            return;
           }
-        }
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: Color(0xFF9AC4C9),
-          borderRadius: BorderRadius.circular(10.r),
-        ),
-        child: Center(
-          child: Padding(
-            padding: EdgeInsets.all(gapHalf),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (isCouponInsert) Icon(Icons.confirmation_number_outlined, color: mFontWhite),
-                Text(
-                  isCouponInsert ? '쿠폰 입력하기' : '홈페이지 바로가기',
-                  style: TextStyle(
-                    color: mFontWhite,
-                    fontSize: 16.sp,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-    // : GestureDetector(
-    // onTap: () async {
-    // // 기본 URL 설정
-    //
-    // if (isCouponInsert) {
-    // url = Uri.parse(
-    // "http://ststallpass.cafe24.com/coupon?username=$id");
-    // } else {
-    // // 기본 URL
-    //
-    // }
-    // // URL 브라우저에서 열기
-    //
-    // },
-    //
-    // );
+          final url = Uri.parse("https://hohoedu.co.kr");
+          if (await canLaunchUrl(url)) {
+            await launchUrl(url, mode: LaunchMode.externalApplication);
+          }
+        },
+      );
+    });
   }
 }

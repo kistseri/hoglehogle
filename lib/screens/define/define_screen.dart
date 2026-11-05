@@ -2,10 +2,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:hoho_hanja/_core/colors.dart';
-import 'package:hoho_hanja/_core/size.dart';
 import 'package:hoho_hanja/data/models/define_data.dart';
 import 'package:hoho_hanja/main.dart';
 import 'package:hoho_hanja/utils/design_scale.dart';
@@ -153,7 +151,7 @@ class _DefineScreenState extends State<DefineScreen> {
                   top: sc.y(DesignAppBar.height),
                   right: 0,
                   bottom: mq.padding.bottom,
-                  child: _quizBody(type, correctImage, correctText, note),
+                  child: _quizBody(sc, type, correctImage, correctText, note),
                 ),
               ],
             );
@@ -163,205 +161,199 @@ class _DefineScreenState extends State<DefineScreen> {
     );
   }
 
-  Widget _quizBody(String type, String correctImage, String correctText, String note) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: gapHalf, left: gapMain, right: gapMain),
-      child: Column(
-        children: [
-          // 문제
-          Expanded(
-            flex: 2,
-            // 키가 작은 화면에서도 칸 밖으로 넘치지 않게 줄여서 표시
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Column(
-                children: [
-                  Text(
-                    '단어의 뜻 찾기',
-                    style: TextStyle(color: mFontMain, fontSize: 24.sp, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    note,
-                    style: TextStyle(
-                      color: mFontSub,
-                      fontSize: 15.sp,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // 문제 수
-          Expanded(
-            flex: 1,
-            child: Center(
-              child: RichText(
-                text: TextSpan(
+  // 본문 (시안 360 x 698 기준, 앱바 아래): 폭 296 칸에 위에서부터
+  // 제목 74 · 문제 수 37 · 문제(그림/글자) 296 · 보기 버튼 148(위아래 여백 16) · 아래 여백
+  // 모두 배율 하나로만 키우거나 줄여서, 휴대폰·태블릿 어디서나 같은 비율로 보이게 한다.
+  static const double _contentWidth = 296;
+
+  Widget _quizBody(DesignScale sc, String type, String correctImage, String correctText, String note) {
+    double d(num v) => sc.d(v);
+
+    return Align(
+      alignment: Alignment.topCenter,
+      child: SizedBox(
+        width: d(_contentWidth),
+        child: Column(
+          children: [
+            // 문제
+            SizedBox(
+              height: d(74),
+              // 안내 문구가 길어도 칸 밖으로 넘치지 않게 줄여서 표시
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Column(
                   children: [
-                    TextSpan(
-                      text: '${currentQuestionIndex + 1}',
-                      style: TextStyle(color: Colors.green, fontSize: 26.sp, fontWeight: FontWeight.bold),
+                    Text(
+                      '단어의 뜻 찾기',
+                      style: TextStyle(color: mFontMain, fontSize: d(24), fontWeight: FontWeight.bold),
                     ),
-                    TextSpan(
-                      text: '/${defineController.quiz.length}',
-                      style: TextStyle(color: mFontMain, fontSize: 26.sp, fontWeight: FontWeight.bold),
-                    )
+                    Text(
+                      note,
+                      style: TextStyle(color: mFontSub, fontSize: d(15)),
+                    ),
                   ],
                 ),
               ),
             ),
-          ),
-          Expanded(
-            flex: 8,
-            child: Center(
-              child: (type == "3" || type == "4") ? textBox(correctText) : imageBox(correctImage),
-            ),
-          ),
-          Expanded(
-            flex: 4,
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: gapHalf),
-              child: Row(
-                children: List.generate(
-                  2,
-                  (index) {
-                    return Expanded(
-                      child: GestureDetector(
-                        onTap: () => onSelect(index),
-                        child: Padding(
-                          // 버튼 사이 간격을 반씩 나눠서, 두 버튼 폭이 같고 위 문제 칸과 양끝이 맞게
-                          padding: index == 0
-                              ? EdgeInsets.only(right: gapQuarter / 2)
-                              : EdgeInsets.only(left: gapQuarter / 2),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: mBoxLightBlue,
-                              borderRadius: BorderRadius.circular(15.sp),
-                            ),
-                            child: LayoutBuilder(
-                              builder: (context, constraints) {
-                                final baseFontSize = 50.sp;
-                                final availableWidth = constraints.maxWidth - 8.0;
-                                double maxTextWidth = 0;
-
-                                for (var o in options) {
-                                  final tp = TextPainter(
-                                    text: TextSpan(
-                                      text: o,
-                                      style: TextStyle(
-                                        fontSize: baseFontSize,
-                                        fontWeight: FontWeight.bold,
-                                        fontFamily: 'NotoSansKR-SemiBold',
-                                      ),
-                                    ),
-                                    textDirection: TextDirection.ltr,
-                                  )..layout();
-                                  maxTextWidth = max(maxTextWidth, tp.width);
-                                  tp.dispose();
-                                }
-
-                                final scale = availableWidth / maxTextWidth;
-                                final fittedFontSize = baseFontSize * scale;
-
-                                return Stack(
-                                  children: [
-                                    Center(
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(4.0),
-                                        child: FittedBox(
-                                          child: Text(
-                                            options[index],
-                                            softWrap: true,
-                                            style: TextStyle(
-                                                color: mFontMain,
-                                                fontSize: fittedFontSize >= 50.sp ? 50.sp : fittedFontSize,
-                                                fontWeight: FontWeight.bold,
-                                                fontFamily: 'NotoSansKR-SemiBold'),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    if (selectedIndex == index)
-                                      isCorrect
-                                          ? Center(
-                                              child: Icon(
-                                                Icons.circle_outlined,
-                                                size: constraints.maxHeight,
-                                                color: Colors.green,
-                                              ),
-                                            )
-                                          : isWrong
-                                              ? Center(
-                                                  child: Icon(
-                                                    Icons.close,
-                                                    size: constraints.maxHeight,
-                                                    color: Colors.red,
-                                                  ),
-                                                )
-                                              : const SizedBox(),
-                                  ],
-                                );
-                              },
-                            ),
-                          ),
-                        ),
+            // 문제 수
+            SizedBox(
+              height: d(37),
+              child: Center(
+                child: RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: '${currentQuestionIndex + 1}',
+                        style: TextStyle(color: Colors.green, fontSize: d(26), fontWeight: FontWeight.bold),
                       ),
-                    );
-                  },
+                      TextSpan(
+                        text: '/${defineController.quiz.length}',
+                        style: TextStyle(color: mFontMain, fontSize: d(26), fontWeight: FontWeight.bold),
+                      )
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Container(),
-          )
-        ],
+            // 문제 (그림 또는 글자)
+            SizedBox(
+              height: d(296),
+              child: (type == "3" || type == "4") ? textBox(sc, correctText) : imageBox(sc, correctImage),
+            ),
+            // 보기 버튼 2개
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: d(16)),
+              child: SizedBox(
+                height: d(116),
+                child: Row(
+                  children: List.generate(
+                    2,
+                    (index) => Expanded(
+                      child: Padding(
+                        // 버튼 사이 간격을 반씩 나눠서, 두 버튼 폭이 같고 위 문제 칸과 양끝이 맞게
+                        padding: index == 0 ? EdgeInsets.only(right: d(4)) : EdgeInsets.only(left: d(4)),
+                        child: _optionButton(sc, index),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget imageBox(String correctImage) {
+  Widget _optionButton(DesignScale sc, int index) {
+    return GestureDetector(
+      onTap: () => onSelect(index),
+      child: Container(
+        decoration: BoxDecoration(
+          color: mBoxLightBlue,
+          borderRadius: BorderRadius.circular(sc.d(15)),
+        ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // 두 보기 중 긴 글자가 버튼 폭에 맞는 크기로 둘 다 같은 크기 (최대 시안 50)
+            final baseFontSize = sc.d(50);
+            final availableWidth = constraints.maxWidth - sc.d(8);
+            double maxTextWidth = 0;
+
+            for (var o in options) {
+              final tp = TextPainter(
+                text: TextSpan(
+                  text: o,
+                  style: TextStyle(
+                    fontSize: baseFontSize,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'NotoSansKR-SemiBold',
+                  ),
+                ),
+                textDirection: TextDirection.ltr,
+              )..layout();
+              maxTextWidth = max(maxTextWidth, tp.width);
+              tp.dispose();
+            }
+
+            final fittedFontSize = maxTextWidth > 0 ? baseFontSize * availableWidth / maxTextWidth : baseFontSize;
+
+            return Stack(
+              children: [
+                Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(sc.d(4)),
+                    child: FittedBox(
+                      child: Text(
+                        options[index],
+                        softWrap: true,
+                        style: TextStyle(
+                          color: mFontMain,
+                          fontSize: min(fittedFontSize, baseFontSize),
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'NotoSansKR-SemiBold',
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                if (selectedIndex == index && (isCorrect || isWrong))
+                  Center(
+                    child: Icon(
+                      isCorrect ? Icons.circle_outlined : Icons.close,
+                      size: constraints.maxHeight,
+                      color: isCorrect ? Colors.green : Colors.red,
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget imageBox(DesignScale sc, String correctImage) {
     // 비율을 유지하고, 불러오는 중·실패 시에도 빈 화면이나 오류가 나지 않게
     return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(sc.d(20)),
       child: SizedBox(
         width: double.infinity,
         height: double.infinity,
         child: correctImage.isEmpty
-            ? _imageError()
+            ? _imageError(sc)
             : Image.network(
                 correctImage,
                 fit: BoxFit.contain,
                 loadingBuilder: (context, child, progress) =>
                     progress == null ? child : const Center(child: CircularProgressIndicator()),
-                errorBuilder: (context, error, stackTrace) => _imageError(),
+                errorBuilder: (context, error, stackTrace) => _imageError(sc),
               ),
       ),
     );
   }
 
-  Widget _imageError() {
+  Widget _imageError(DesignScale sc) {
     return Container(
       color: mBoxGray,
       alignment: Alignment.center,
-      child: Icon(Icons.image_not_supported_outlined, size: 60.sp, color: mFontSub),
+      child: Icon(Icons.image_not_supported_outlined, size: sc.d(60), color: mFontSub),
     );
   }
 
-  Widget textBox(String correctText) {
+  Widget textBox(DesignScale sc, String correctText) {
     return Container(
       width: double.infinity,
       height: double.infinity,
-      padding: EdgeInsets.all(gapHalf),
-      decoration: BoxDecoration(color: mBoxGray, borderRadius: BorderRadius.circular(20)),
+      padding: EdgeInsets.all(sc.d(16)),
+      decoration: BoxDecoration(color: mBoxGray, borderRadius: BorderRadius.circular(sc.d(20))),
       child: Center(
         // 글자가 길어도 상자 밖으로 넘치지 않게
         child: FittedBox(
           fit: BoxFit.scaleDown,
           child: Text(
             correctText,
-            style: TextStyle(color: mFontMain, fontSize: 75.sp, fontWeight: FontWeight.w900, fontFamily: 'G-Sans'),
+            style: TextStyle(color: mFontMain, fontSize: sc.d(75), fontWeight: FontWeight.w900, fontFamily: 'G-Sans'),
           ),
         ),
       ),

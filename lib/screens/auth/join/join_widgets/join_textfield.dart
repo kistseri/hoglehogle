@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hoho_hanja/_core/colors.dart';
 import 'package:hoho_hanja/_core/constants.dart';
-import 'package:hoho_hanja/_core/size.dart';
+import 'package:hoho_hanja/screens/auth/auth_widgets/auth_layout.dart';
+import 'package:hoho_hanja/utils/design_scale.dart';
 
 class JoinTextField extends StatelessWidget {
   final TextEditingController controller;
@@ -25,32 +25,22 @@ class JoinTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final sc = DesignScale.fromContext(context);
     return Padding(
-      padding: EdgeInsets.all(gapQuarter),
+      padding: EdgeInsets.all(sc.d(8)),
       child: SizedBox(
-        height: 50.h,
+        height: sc.d(50),
         child: TextField(
           focusNode: focusNode,
           controller: controller,
           readOnly: readOnly,
-          decoration: InputDecoration(
-              hintText: hintText,
-              hintStyle: const TextStyle(color: mFontSub),
-              enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: mTextField, width: 2.w),
-                borderRadius: BorderRadius.all(Radius.circular(50.r)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: mBoxYellow, width: 2.sp),
-                borderRadius: BorderRadius.all(Radius.circular(50.r)),
-              ),
-              fillColor: mTextField,
-              prefixIcon: FittedBox(
-                child: Padding(
-                  padding: EdgeInsets.all(gapMain),
-                  child: Image.asset(icon),
-                ),
-              )),
+          style: authInputStyle(sc),
+          decoration: authInputDecoration(
+            sc,
+            hintText: hintText,
+            icon: icon,
+            fillColor: mTextField,
+          ),
           cursorColor: mFontMain,
           keyboardType: _getKeyboardType(type),
           obscureText: type == TextFieldType.password,

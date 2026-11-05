@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:hoho_hanja/_core/colors.dart';
-import 'package:hoho_hanja/_core/size.dart';
+import 'package:hoho_hanja/screens/auth/auth_widgets/auth_layout.dart';
+import 'package:hoho_hanja/utils/design_scale.dart';
 import 'package:hoho_hanja/utils/verification.dart';
 
 class Verification extends StatelessWidget {
@@ -15,56 +15,53 @@ class Verification extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final sc = DesignScale.fromContext(context);
     return Scaffold(
       backgroundColor: mBackWhite,
-      appBar: AppBar(),
+      appBar: authAppBar(sc),
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.all(gapHalf),
-            child: Column(
-              children: [
-                Padding(
-                  padding: EdgeInsets.all(gapHalf),
-                  child: Center(
-                    child: Text(
-                      '휴대폰으로 발송된\n인증번호를 입력해 주세요',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          color: mFontMain,
-                          fontSize: fontHuge,
-                          fontWeight: FontWeight.bold),
+          child: AuthContent(
+            scale: sc,
+            child: Padding(
+              padding: EdgeInsets.all(sc.d(16)),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.all(sc.d(16)),
+                    child: Center(
+                      child: Text(
+                        '휴대폰으로 발송된\n인증번호를 입력해 주세요',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: mFontMain, fontSize: sc.d(24), fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(height: gapMain),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(5, (index) {
-                    return Expanded(
-                      flex: 1,
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: gapQuarter),
-                        child: Obx(() => TextField(
+                  Padding(
+                    padding: EdgeInsets.only(top: sc.d(32)),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(5, (index) {
+                        return Expanded(
+                          flex: 1,
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: sc.d(8)),
+                            child: TextField(
                               controller: controller.textControllers[index],
-                              // TextEditingController(
-                              //     text: controller.code[index]),
                               focusNode: controller.focusNodes[index],
                               textAlign: TextAlign.center,
-                              style: TextStyle(fontSize: 30.sp),
+                              style: TextStyle(fontSize: sc.d(30)),
                               maxLength: 1,
                               keyboardType: TextInputType.number,
                               decoration: InputDecoration(
                                 counterText: "",
+                                contentPadding: EdgeInsets.symmetric(vertical: sc.d(12)),
                                 enabledBorder: OutlineInputBorder(
-                                  borderSide:
-                                      BorderSide(color: mTextField, width: 2),
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(5.0.r)),
+                                  borderSide: BorderSide(color: mTextField, width: sc.d(2)),
+                                  borderRadius: BorderRadius.all(Radius.circular(sc.d(5))),
                                 ),
                                 focusedBorder: OutlineInputBorder(
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(5.0.r)),
+                                  borderRadius: BorderRadius.all(Radius.circular(sc.d(5))),
                                 ),
                                 fillColor: mTextField,
                                 filled: true,
@@ -74,23 +71,24 @@ class Verification extends StatelessWidget {
                                 controller.onValueChanged(value, index);
                               },
                               onEditingComplete: () {
-                                controller.onBackspace(
-                                    controller.textControllers[index].text,
-                                    index);
+                                controller.onBackspace(controller.textControllers[index].text, index);
                               },
-                            )),
-                      ),
-                    );
-                  }),
-                ),
-                SizedBox(height: 350.r),
-                SizedBox(height: gapMediumSmall),
-                ConfirmButton(
-                  text: '인증하기',
-                  id: id,
-                  isJoin: isJoin,
-                )
-              ],
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(top: sc.d(370)),
+                    child: ConfirmButton(
+                      text: '인증하기',
+                      id: id,
+                      isJoin: isJoin,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -132,26 +130,13 @@ class ConfirmButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(VerificationController());
-    return GestureDetector(
+    return AuthButton(
+      text: text,
+      color: mBtnActive,
+      fontFamily: 'mainFont',
       onTap: () {
-        verificationService(
-            controller.textControllers.map((e) => e.text).join(), id, isJoin);
+        verificationService(controller.textControllers.map((e) => e.text).join(), id, isJoin);
       },
-      child: Container(
-        width: double.infinity,
-        height: 50.h,
-        decoration: BoxDecoration(
-          color: mBtnActive,
-          borderRadius: BorderRadius.circular(50.r),
-        ),
-        child: Center(
-          child: Text(
-            text,
-            style: TextStyle(
-                color: Colors.white, fontSize: 18.sp, fontFamily: 'mainFont'),
-          ),
-        ),
-      ),
     );
   }
 }

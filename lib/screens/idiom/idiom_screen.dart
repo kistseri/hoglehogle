@@ -14,6 +14,7 @@ import 'package:hoho_hanja/utils/result_service.dart';
 import 'package:hoho_hanja/widgets/appbar/design_app_bar.dart';
 import 'package:hoho_hanja/widgets/dialog/result_dialog.dart';
 
+// 한자 성어
 class IdiomScreen extends StatefulWidget {
   final String code;
 
@@ -209,6 +210,8 @@ class _IdiomScreenState extends State<IdiomScreen> {
                   decoration: BoxDecoration(
                     color: mBackWhite,
                   ),
+                  // 흰 바탕은 화면 끝까지, 보기 버튼은 안드로이드 내비게이션 바·홈 표시줄 위 영역의 가운데에
+                  padding: EdgeInsets.only(bottom: mq.padding.bottom),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: List.generate(

@@ -82,3 +82,13 @@ Future<void> googleLogout() async {
   await _ensureGoogleInitialized();
   await googleSignIn.signOut();
 }
+
+/// 구글 로그인 해제 (로그아웃: signOut, 탈퇴: disconnect). 구글로 로그인하지 않았거나 실패해도 조용히 넘어감.
+Future<void> googleSignOut({bool disconnect = false}) async {
+  try {
+    await _ensureGoogleInitialized();
+    disconnect ? await googleSignIn.disconnect() : await googleSignIn.signOut();
+  } catch (e) {
+    Logger().d('구글 로그아웃 건너뜀: $e');
+  }
+}

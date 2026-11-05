@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:hoho_hanja/_core/http.dart';
@@ -9,52 +7,32 @@ import 'package:hoho_hanja/widgets/dialog/dialog.dart';
 import 'package:logger/logger.dart';
 
 // 닉네임 중복검사
+// 'available' = 사용 가능 (type이 'update'면 변경까지 성공), 'duplication' = 중복,
+// 'fail' = 변경 실패, '예외발생' = 서버 응답 없음, '인터넷 연결 확인'
 Future<String> nicknameCheckService(String type, String nickname) async {
   final connectivityController = Get.put(ConnectivityController());
 
-  if (connectivityController.isConnected.value) {
-    String url = dotenv.get('NICKNAME_CHK_URL');
-    
-    final Map<String, dynamic> requestData = {
-      'nickname': nickname,
-    };
-
-    // HTTP POST 요청
-    final response = await dio.post(url, data: jsonEncode(requestData));
-
-    try {
-      // 응답을 성공적으로 받았을 때
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> result = json.decode(response.data);
-        final resultValue = result['result'];
-
-        // 응답 결과가 있는 경우
-        if (resultValue == "0000") {
-          if (type == 'update') {
-            await nicknameUpdateService(nickname);
-          }
-          return 'available';
-        }
-        // 응답 데이터가 오류일 때("9999": 오류)
-        else {
-          if (type == 'join') {
-            Logger().d('중복');
-          }
-          if (type == 'update') {
-            failDialog('변경 실패', '${result['message']}');
-          }
-          return 'duplication';
-        }
-      }
-    }
-    // 예외처리
-    catch (e) {
-      Logger().d('e = $e');
-      return '예외발생';
-    }
-  } else {
+  if (!connectivityController.isConnected.value) {
     failDialog("연결 실패", "인터넷 연결을 확인해주세요");
     return '인터넷 연결 확인';
   }
-  return '';
+
+  final result = await postJson(dotenv.get('NICKNAME_CHK_URL'), {'nickname': nickname});
+  Logger().d(result);
+  if (result == null) {
+    if (type == 'update') failDialog('변경 실패', '잠시 후 다시 시도해주세요.');
+    return '예외발생';
+  }
+
+  if (result['result'] == "0000") {
+    if (type == 'update') {
+      return await nicknameUpdateService(nickname) ? 'available' : 'fail';
+    }
+    return 'available';
+  }
+
+  // 응답 데이터가 오류일 때("9999": 중복 등)
+  if (type == 'join') Logger().d('중복');
+  if (type == 'update') failDialog('변경 실패', '${result['message'] ?? '사용할 수 없는 닉네임이에요.'}');
+  return 'duplication';
 }

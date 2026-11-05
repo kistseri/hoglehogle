@@ -6,14 +6,9 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:hoho_hanja/data/models/goods_data.dart';
-import 'package:hoho_hanja/data/models/login_data.dart';
-import 'package:hoho_hanja/data/models/my_room_data.dart';
 import 'package:hoho_hanja/data/models/rank_data.dart';
-import 'package:hoho_hanja/screens/myroom/myroom_wigets/my_room_item.dart';
 import 'package:hoho_hanja/screens/rank/rank_screen.dart';
 import 'package:hoho_hanja/utils/network_check.dart';
 
@@ -104,38 +99,6 @@ void main() {
     c.setRankData(_people(5));
     await tester.pump();
     expect(find.text('사용자4'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('[디버그] 1·2·3위 자리에 내(테스트 계정) 캐릭터를 넣었다 뺄 수 있음', (tester) async {
-    // 마이룸 컨트롤러가 화면 배율(ScreenUtil)을 씀
-    ScreenUtil.configure(
-      data: const MediaQueryData(size: Size(360, 780)),
-      designSize: const Size(360, 720),
-      splitScreenMode: false,
-      minTextAdapt: false,
-    );
-    Get.put(LoginDataController()).setLoginData(LoginData(nickName: '테스트계정', id: 'user1'));
-    Get.put(GoodsDataController());
-    Get.put(MyroomDataController());
-    Get.put(MyroomItemController());
-    Get.put(RankDataController()).setRankData(_people(5));
-    await _pumpRank(tester);
-
-    expect(find.text('테스트계정'), findsNothing);
-    await tester.tap(find.text('1').first);
-    await tester.pump();
-    expect(find.text('테스트계정'), findsOneWidget);
-    expect(find.text('사용자0'), findsNothing); // 1위 자리가 내 캐릭터로 바뀜
-    expect(find.text('4,900점'), findsNWidgets(2)); // 1위 자리: 내 점수(user1) 그대로, 2위 자리: 원래 user1
-
-    await tester.tap(find.text('3').first);
-    await tester.pump();
-    expect(find.text('테스트계정'), findsNWidgets(2));
-
-    await tester.tap(find.text('1').first);
-    await tester.pump();
-    expect(find.text('사용자0'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

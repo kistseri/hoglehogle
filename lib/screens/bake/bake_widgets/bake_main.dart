@@ -27,6 +27,7 @@ class BakeMain extends StatefulWidget {
   final double kx; // 배경을 화면 폭에 맞춰 가로로 늘린 배율 (칸 x·폭에 곱함)
   final ValueChanged<int> onQuestionChanged;
   final ValueChanged<bool> onWeepBear;
+  final ValueChanged<int> onSolvedChanged; // 맞힌 문제 수가 바뀔 때 (화면 표시)
 
   const BakeMain({
     super.key,
@@ -36,6 +37,7 @@ class BakeMain extends StatefulWidget {
     required this.kx,
     required this.onQuestionChanged,
     required this.onWeepBear,
+    required this.onSolvedChanged,
   });
 
   @override
@@ -130,7 +132,7 @@ class _BakeMainState extends State<BakeMain> with WidgetsBindingObserver {
 
     if (correct) {
       effect.correctSound();
-      _solved.add(row.question);
+      if (_solved.add(row.question)) widget.onSolvedChanged(_solved.length);
       // 모든 문제를 한 번씩 맞히면 끝 (판에 복습 줄이 남아 있어도)
       if (_solved.length >= _total) {
         _gameOver();

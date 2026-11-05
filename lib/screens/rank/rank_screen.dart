@@ -1,11 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hoho_hanja/_core/colors.dart';
-import 'package:hoho_hanja/_core/constants.dart';
-import 'package:hoho_hanja/data/models/login_data.dart';
 import 'package:hoho_hanja/data/models/rank_data.dart';
-import 'package:hoho_hanja/screens/myroom/myroom_wigets/my_room_item.dart';
 import 'package:hoho_hanja/screens/rank/rank_widgets/rank_card.dart';
 import 'package:hoho_hanja/screens/rank/rank_widgets/ranking_list.dart';
 import 'package:hoho_hanja/services/rank/rank_service.dart';
@@ -25,30 +21,6 @@ class RankScreen extends StatefulWidget {
 
 class _RankScreenState extends State<RankScreen> {
   final rankController = Get.put(RankDataController());
-
-  // [디버그 빌드 전용] 1·2·3위 자리에 지금 로그인한(테스트) 계정의 캐릭터를 대신 넣어 보기
-  // 마이룸에서 옷을 바꾸면 바로 반영됨. 릴리스 빌드에서는 버튼이 안 보이고 동작하지 않음.
-  final Set<int> _previewMine = {};
-
-  // 지금 로그인한 계정의 캐릭터·옷 (마이룸 상태)을 랭킹 데이터 모양으로
-  RankData? _myRankData() {
-    if (!Get.isRegistered<MyroomItemController>()) return null;
-    final item = Get.find<MyroomItemController>();
-    final login = Get.isRegistered<LoginDataController>() ? Get.find<LoginDataController>().loginData.value : null;
-    final mine = rankController.rankDataList.firstWhereOrNull((r) => r.id == login?.id);
-    final charIndex = characterList.indexWhere((c) => c.assetName == item.characterImage.value.assetName);
-    return RankData(
-      result: '0000',
-      id: login?.id ?? '',
-      totalPoints: mine?.totalPoints ?? 0,
-      nickName: login?.nickName ?? '내 캐릭터',
-      characterImage: '${charIndex < 0 ? 0 : charIndex}',
-      hatImage: item.hatImage.value,
-      clothesImage: item.clothingImage.value,
-      eyeImage: item.accessoriesImage.value,
-      backgroundImage: item.backgroundImage.value,
-    );
-  }
 
   // ── 시안 단위 배치 (앱바 아래 = 0, 가로는 시안 폭 360 기준) ──
   static const double _titleCenter = 20; // '월간 랭킹' 가운데
@@ -87,7 +59,7 @@ class _RankScreenState extends State<RankScreen> {
   Widget build(BuildContext context) {
     final mq = MediaQuery.of(context);
     // 앱바와 같은 배율
-    final s = DesignScale.of(mq.size, mq.padding).s;
+    final s = DesignScale.ofScreen(context).s;
     double d(num v) => v * s;
 
     return ColoredBox(
@@ -105,10 +77,6 @@ class _RankScreenState extends State<RankScreen> {
               height: d(RankCard.height),
               child: Obx(() {
                 final list = rankController.rankDataList;
-                if (kDebugMode && _previewMine.contains(index)) {
-                  final mine = _myRankData();
-                  if (mine != null) return RankCard(rank: index + 1, place: index + 1, data: mine, s: s);
-                }
                 // 이 자리에 해당하는 사람이 없으면 (3명 미만·불러오기 전) 그리지 않음
                 if (list.length <= index) return const SizedBox.shrink();
                 return RankCard(rank: rankController.ranks[index], place: index + 1, data: list[index], s: s);
@@ -149,39 +117,6 @@ class _RankScreenState extends State<RankScreen> {
                   ),
                 ),
               ),
-              // [디버그 빌드 전용] 1·2·3위 자리에 내 캐릭터 넣기 버튼
-              if (kDebugMode)
-                Positioned(
-                  left: d(8),
-                  top: d(6),
-                  child: Row(
-                    children: [
-                      for (var i = 0; i < 3; i++)
-                        Padding(
-                          padding: EdgeInsets.only(right: d(4)),
-                          child: GestureDetector(
-                            onTap: () => setState(() {
-                              if (!_previewMine.remove(i)) _previewMine.add(i);
-                            }),
-                            child: Container(
-                              width: d(26),
-                              height: d(26),
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: _previewMine.contains(i) ? Colors.orange : Colors.white24,
-                                borderRadius: BorderRadius.circular(d(6)),
-                                border: Border.all(color: Colors.white70),
-                              ),
-                              child: Text(
-                                '${i + 1}',
-                                style: TextStyle(color: mFontWhite, fontSize: d(12), fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
               // 흰 판 (머리글 + 4위부터)
               Positioned(
                 left: 0,

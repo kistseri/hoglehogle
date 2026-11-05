@@ -26,6 +26,17 @@ class DesignScale {
     return DesignScale._(s, screen.width / s, padding.top);
   }
 
+  // 현재 화면 기준 (키보드가 올라와도 배율은 그대로)
+  factory DesignScale.fromContext(BuildContext context) {
+    return DesignScale.of(MediaQuery.sizeOf(context), MediaQuery.paddingOf(context));
+  }
+
+  // 앱바 아래 본문처럼 Scaffold가 상단 여백을 지운 곳에서도 앱바와 같은 배율 (기기 화면 전체 기준)
+  factory DesignScale.ofScreen(BuildContext context) {
+    final view = MediaQueryData.fromView(View.of(context));
+    return DesignScale.of(view.size, view.padding);
+  }
+
   // 카드가 넓어질 수 있는 최대 폭 (시안 단위)
   double get maxContentWidth => math.min(dw, designWidth * maxWidthStretch);
 
