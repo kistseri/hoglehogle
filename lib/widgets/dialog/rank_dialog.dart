@@ -1,80 +1,76 @@
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'dart:math' as math;
+
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hoho_hanja/_core/colors.dart';
-import 'package:flutter/material.dart';
+import 'package:hoho_hanja/utils/design_scale.dart';
 
+/// 랭킹 기준 안내 팝업
+///
+/// 크기·글자·여백을 모두 시안(360 폭) 단위로 정하고 랭킹 화면과 같은 배율로 키우거나 줄임.
+/// 그래서 작은 폰·큰 폰·태블릿에서 화면 대비 비율이 같게 보임.
 void showRankDialog(String title, String message) {
   Get.generalDialog(
     barrierDismissible: true,
     barrierLabel: '',
-    transitionDuration: Duration(milliseconds: 200),
+    transitionDuration: const Duration(milliseconds: 200),
     pageBuilder: (context, anim1, anim2) {
+      final mq = MediaQuery.of(context);
+      final sc = DesignScale.of(mq.size, mq.padding);
+      double d(num v) => sc.d(v);
+      // 화면 높이에서 상태바·하단바를 뺀 높이 (안내문이 길면 이 안에서 스크롤)
+      final availH = mq.size.height - mq.padding.top - mq.padding.bottom;
+
       return SafeArea(
-        // Align으로 전체 화면 안에서 위치 지정
         child: Align(
-          alignment: Alignment(0, -0.3), // Y축 음수 → 위쪽
+          alignment: const Alignment(0, -0.3), // 가운데보다 조금 위
           child: Material(
             color: Colors.transparent,
             child: Container(
-              width: Get.width * 0.9,
-              // 모서리 둥글게, 배경 흰색
+              // 시안 폭 360 중 324 (태블릿처럼 넓어도 화면 폭을 넘지 않게)
+              width: math.min(d(324), mq.size.width - d(16)),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(50),
+                borderRadius: BorderRadius.circular(d(36)),
               ),
-              padding: EdgeInsets.only(
-                top: 32,
-                left: 24,
-                right: 24,
-                bottom: 16,
-              ),
+              padding: EdgeInsets.fromLTRB(d(22), d(28), d(22), d(18)),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // 제목
                   Text(
                     title,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 24.sp,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: d(20), color: mFontMain),
                     textAlign: TextAlign.center,
                   ),
-                  SizedBox(height: 16),
-                  // 메시지
+                  // 안내문
                   Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: EdgeInsets.fromLTRB(d(4), d(18), d(4), d(24)),
                     child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxHeight: Get.height * 0.5,
-                      ),
+                      constraints: BoxConstraints(maxHeight: availH * 0.5),
                       child: SingleChildScrollView(
                         child: Text(
                           message,
                           textAlign: TextAlign.start,
-                          style: TextStyle(fontSize: 14.sp),
+                          style: TextStyle(fontSize: d(13.5), height: 1.5, color: mFontMain),
                         ),
                       ),
                     ),
                   ),
-                  SizedBox(height: 32),
                   // 닫기 버튼
                   GestureDetector(
                     onTap: () => Get.back(),
                     child: Container(
                       width: double.infinity,
-                      height: 50,
+                      height: d(44),
                       decoration: BoxDecoration(
                         color: primaryColor,
-                        borderRadius: BorderRadius.circular(50),
+                        borderRadius: BorderRadius.circular(d(22)),
                       ),
                       alignment: Alignment.center,
                       child: Text(
                         '닫기',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16.sp,
-                        ),
+                        style: TextStyle(color: Colors.white, fontSize: d(15), fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),

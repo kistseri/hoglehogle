@@ -1,29 +1,30 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:hoho_hanja/_core/colors.dart';
-import 'package:hoho_hanja/_core/constants.dart';
 import 'package:hoho_hanja/screens/home/home_screen.dart';
 import 'package:hoho_hanja/services/auth/my_goods_service.dart';
+import 'package:hoho_hanja/utils/design_scale.dart';
 import 'package:lottie/lottie.dart';
 
-Widget buildIcon(
-    IconData icon, Color color, double size, double top, double left,
-    {double? right}) {
-  return Positioned(
-    top: top,
-    left: left,
-    right: right,
-    child: Icon(
-      icon,
-      color: color,
-      size: size.sp,
-    ),
-  );
-}
+// 결과창 (시안: 360 x 720 휴대폰 기준)
+// 화면 가운데에 280 x 360 카드, 그 주위에 장식 아이콘. 모두 배율 하나로만 키우거나 줄여서
+// 휴대폰·태블릿 어디서나 같은 모양으로 보이게 한다.
+const double _cardW = 280;
+const double _cardH = 360;
 
-void resultDialog(
-    BuildContext context, int correctAnswers, int totalQuestions, String coin) {
+// 장식 아이콘 (시안 360 x 720 화면 좌표: 왼쪽 위 기준)
+const List<({IconData icon, Color color, double size, double top, double left})> _decorations = [
+  (icon: Icons.circle, color: Colors.amber, size: 30, top: 135, left: 35),
+  (icon: Icons.circle, color: Colors.amber, size: 15, top: 165, left: 20),
+  (icon: Icons.circle, color: Colors.lightGreen, size: 7.5, top: 400, left: 15),
+  (icon: Icons.star, color: Colors.white, size: 10, top: 520, left: 35),
+  (icon: Icons.star, color: Colors.amber, size: 20, top: 160, left: 300),
+  (icon: Icons.circle, color: Colors.lightGreen, size: 10, top: 180, left: 325),
+  (icon: Icons.star, color: Colors.white, size: 25, top: 520, left: 300),
+  (icon: Icons.circle, color: Colors.amber, size: 10, top: 505, left: 325),
+];
+
+void resultDialog(BuildContext context, int correctAnswers, int totalQuestions, String coin) {
   // 결과 저장에 실패하면 서버 문구('예외' 등) 대신 '-' 로 표시
   final String coinText = int.tryParse(coin.trim()) != null ? coin.trim() : '-';
 
@@ -32,152 +33,144 @@ void resultDialog(
     // 바깥 터치·뒤로가기로 닫히면 끝난 게임 화면에 갇히므로 '메인으로'로만 닫음
     barrierDismissible: false,
     barrierLabel: '',
-    transitionDuration: Duration(milliseconds: 300),
-    // 애니메이션 시간 조정
-    pageBuilder: (BuildContext buildContext, Animation<double> animation,
-        Animation<double> secondaryAnimation) {
+    transitionDuration: const Duration(milliseconds: 300),
+    pageBuilder: (BuildContext buildContext, Animation<double> animation, Animation<double> secondaryAnimation) {
+      final sc = DesignScale.fromContext(buildContext);
+      double d(num v) => sc.d(v);
+      final size = MediaQuery.sizeOf(buildContext);
+      // 시안 화면(360 x 720)을 실제 화면 가운데에 맞춤
+      final cx = size.width / 2;
+      final cy = size.height / 2;
+
       return PopScope(
         canPop: false,
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
-          body: Stack(
+        child: Material(
+          type: MaterialType.transparency,
+          child: Stack(
             clipBehavior: Clip.none,
-            alignment: Alignment.center,
             children: [
-              for (var icon in iconData)
-                buildIcon(
-                  icon['icon'],
-                  icon['color'],
-                  icon['size'],
-                  icon['top'],
-                  icon['left'],
+              for (final deco in _decorations)
+                Positioned(
+                  left: cx + d(deco.left - 180),
+                  top: cy + d(deco.top - 360),
+                  child: Icon(deco.icon, color: deco.color, size: d(deco.size)),
                 ),
-              Positioned(
-                child: Dialog(
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(50.0.sp)),
-                  backgroundColor: mBoxBeige,
-                  child: SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.8,
-                    height: MediaQuery.of(context).size.height * 0.5,
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Positioned(
-                          right: -40.w,
-                          top: 100.h,
-                          child: Lottie.asset(
-                            'assets/lottie/star_animation.json',
-                            height: 150.h,
-                            fit: BoxFit.cover,
-                          ),
+              Center(
+                child: Container(
+                  width: d(_cardW),
+                  height: d(_cardH),
+                  decoration: BoxDecoration(
+                    color: mBoxBeige,
+                    borderRadius: BorderRadius.circular(d(50)),
+                  ),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      // 반짝이 (카드 오른쪽 밖으로 조금 나감)
+                      Positioned(
+                        right: d(-40),
+                        top: d(100),
+                        width: d(332),
+                        height: d(150),
+                        child: IgnorePointer(
+                          child: Lottie.asset('assets/lottie/star_animation.json', fit: BoxFit.cover),
                         ),
-                        // 별 이미지 위치
-                        Positioned(
-                          right: 95.0.w,
-                          top: -50.0.h,
-                          child: SizedBox(
-                              width: 100,
-                              height: 100,
-                              child:
-                                  Image.asset('assets/images/icon/star.png')),
-                        ),
-                        // 중앙의 텍스트 및 이미지
-                        Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Padding(
-                                padding: EdgeInsets.all(16.0.sp),
-                                child: RichText(
-                                  text: TextSpan(
-                                    children: [
-                                      TextSpan(
-                                        text: '$correctAnswers',
-                                        style: TextStyle(
-                                          color: Color(0xFFFF7E00),
-                                          fontSize: 30.sp,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                      ),
+                      // 위쪽 별 (카드 위로 반쯤 걸침)
+                      Positioned(
+                        left: d(85),
+                        top: d(-68),
+                        width: d(100),
+                        height: d(100),
+                        child: Image.asset('assets/images/icon/star.png', fit: BoxFit.contain),
+                      ),
+                      // 점수 · 받은 동전 · 메인으로
+                      Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.all(d(16)),
+                              child: RichText(
+                                text: TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: '$correctAnswers',
+                                      style: TextStyle(
+                                        color: const Color(0xFFFF7E00),
+                                        fontSize: d(30),
+                                        fontWeight: FontWeight.bold,
                                       ),
-                                      TextSpan(
-                                        text: '/$totalQuestions',
-                                        style: TextStyle(
-                                          color: Color(0xFFB4A784),
-                                          fontSize: 30.sp,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      )
-                                    ],
-                                  ),
+                                    ),
+                                    TextSpan(
+                                      text: '/$totalQuestions',
+                                      style: TextStyle(
+                                        color: const Color(0xFFB4A784),
+                                        fontSize: d(30),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    )
+                                  ],
                                 ),
                               ),
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.5),
-                                  borderRadius: BorderRadius.circular(100),
+                            ),
+                            Container(
+                              padding: EdgeInsets.all(d(20)),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.5),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Container(
+                                width: d(150),
+                                height: d(150),
+                                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Image.asset('assets/images/icon/coin.png', width: d(96), height: d(96), fit: BoxFit.contain),
+                                    Text(
+                                      coinText,
+                                      style: TextStyle(
+                                        fontSize: d(24),
+                                        height: 1.2,
+                                        color: Colors.brown,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                padding: EdgeInsets.all(20),
+                              ),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.all(d(16)),
+                              child: GestureDetector(
+                                onTap: () async {
+                                  await myGoodsService();
+                                  Get.offAll(() => const HomeScreen());
+                                },
                                 child: Container(
-                                  width: 150.0,
-                                  height: 150.0,
+                                  height: d(40),
+                                  width: d(144),
+                                  alignment: Alignment.center,
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(100),
+                                    color: const Color(0xFFFEBE30),
+                                    borderRadius: BorderRadius.circular(d(50)),
                                   ),
-                                  child: Center(
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        SizedBox(
-                                          child: Image.asset(
-                                            'assets/images/icon/coin.png',
-                                          ),
-                                        ),
-                                        Text(
-                                          coinText,
-                                          style: TextStyle(
-                                              fontSize: 24.sp,
-                                              color: Colors.brown,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                      ],
+                                  child: Text(
+                                    '메인으로',
+                                    style: TextStyle(
+                                      color: mFontWhite,
+                                      fontSize: d(16),
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                 ),
                               ),
-                              Padding(
-                                padding: EdgeInsets.all(16.0.sp),
-                                child: GestureDetector(
-                                  onTap: () async {
-                                    await myGoodsService();
-                                    Get.offAll(() => const HomeScreen());
-                                  },
-                                  child: Container(
-                                    height: 40.0.h,
-                                    width:
-                                        MediaQuery.of(context).size.width * 0.4,
-                                    decoration: BoxDecoration(
-                                      color: Color(0xFFFEBE30),
-                                      borderRadius: BorderRadius.circular(50),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        '메인으로',
-                                        style: TextStyle(
-                                            color: mFontWhite,
-                                            fontSize: 16.0.sp,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),

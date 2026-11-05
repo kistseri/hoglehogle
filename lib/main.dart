@@ -57,7 +57,9 @@ Future<void> main() async {
   // Hive 초기화
   var appDocumentDir = await getApplicationDocumentsDirectory();
   await Hive.initFlutter(appDocumentDir.path);
-  await Hive.openBox('settingBox');
+  final settingBox = await Hive.openBox('settingBox');
+  // 저장해 둔 소리 크기 복원
+  restoreVolumes(settingBox);
 
   // Android 는 시스템 스플래시를 바로 내리고 Flutter SplashScreen 으로 큰 로고를 보여줌
   // (Android 12+ 시스템 스플래시는 로고가 작은 원 안에만 그려짐)
@@ -183,4 +185,22 @@ class _MyAppState extends State<MyApp> {
       },
     );
   }
+}
+
+/// 저장해 둔 배경음·효과음 크기를 플레이어에 넣음 (0~1)
+/// 예전 버전은 효과음을 0~10으로 저장했으므로 1보다 크면 10으로 나눠서 바꿔 저장.
+void restoreVolumes(Box box) {
+  double read(String key) {
+    final v = box.get(key, defaultValue: 0.0);
+    return v is num ? v.toDouble() : 0.0;
+  }
+
+  final bgm = read('bgmVolume').clamp(0.0, 1.0);
+  var fx = read('effectVolume');
+  if (fx > 1) {
+    fx = (fx / 10).clamp(0.0, 1.0);
+    box.put('effectVolume', fx);
+  }
+  music.setVolume(bgm);
+  effect.setVolume(fx.clamp(0.0, 1.0));
 }

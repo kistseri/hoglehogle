@@ -1,225 +1,176 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:hive/hive.dart';
 import 'package:hoho_hanja/_core/constants.dart';
-import 'package:hoho_hanja/_core/size.dart';
 import 'package:hoho_hanja/_core/style.dart';
-import 'package:hoho_hanja/data/models/goods_data.dart';
-import 'package:hoho_hanja/data/models/login_data.dart';
 import 'package:hoho_hanja/data/models/my_room_data.dart';
-import 'package:hoho_hanja/main.dart';
+import 'package:hoho_hanja/services/myroom/selected_item_service.dart';
+import 'package:hoho_hanja/widgets/character_avatar.dart';
 import 'package:hoho_hanja/widgets/dialog/buy_item_dialog.dart';
-import 'package:logger/logger.dart';
 
+/// 마이룸에서 고른 캐릭터·착용 아이템 (앱바 프로필·랭킹 미리보기도 같이 씀)
+///
+/// 앱 어디서든 [MyroomItemController.to]로 꺼냄. 다른 컨트롤러가 아직 없어도 만들어지도록
+/// 생성할 때 다른 컨트롤러를 찾지 않음.
 class MyroomItemController extends GetxController {
-  final MyroomDataController myroomDataController = Get.find<MyroomDataController>();
-  final LoginDataController loginDataController = Get.find<LoginDataController>();
-  final GoodsDataController goodsDataController = Get.find<GoodsDataController>();
+  static MyroomItemController get to => Get.isRegistered<MyroomItemController>()
+      ? Get.find<MyroomItemController>()
+      : Get.put(MyroomItemController(), permanent: true);
 
-  final RxString selectedCategory = ''.obs;
-  final RxInt selectedItem = (-1).obs;
+  final RxString selectedCategory = MyroomDataController.categoryIds.first.obs;
+  final RxInt characterIndex = 0.obs; // characterList 순서
   final RxString clothingImage = ''.obs; // 옷 이미지 URL
   final RxString accessoriesImage = ''.obs; // 안경 이미지 URL
   final RxString backgroundImage = ''.obs; // 배경 이미지 URL
   final RxString hatImage = ''.obs; // 모자 이미지 URL
-  var characterImage = characterList[0].obs;
-  int currentCharacter = 0;
+  final RxMap<String, int?> selectedItems = <String, int?>{}.obs; // 카테고리 → 착용 아이템 id
 
-  final RxDouble characterLeft = 0.0.obs;
-  final Rx<Size> clothesSize = Size.fromHeight(70.h).obs;
-  final Rx<double> clothesTop = 210.h.obs;
-  final Rx<Size> hatSize = Size.fromHeight(70.h).obs;
-  final Rx<double> hatTop = 80.h.obs;
-  final RxMap<String, int?> selectedItems = <String, int?>{}.obs;
+  // 이 상태가 누구 것인지 (로그아웃 후 다른 계정으로 들어오면 이전 계정의 옷을 지움)
+  String? _userId;
 
-  void updateSelectedItem(String categoryId, int? itemId) {
-    selectedItems[categoryId] = itemId;
+  void resetFor(String userId) {
+    if (_userId == userId) return;
+    _userId = userId;
+    selectedCategory.value = MyroomDataController.categoryIds.first;
+    characterIndex.value = 0;
+    clothingImage.value = '';
+    accessoriesImage.value = '';
+    backgroundImage.value = '';
+    hatImage.value = '';
+    selectedItems.clear();
+    _dirty = false;
   }
+
+  // 마지막 저장 뒤 바뀐 것이 있는지 (서버에서 받은 착용 상태로 덮어쓰지 않도록, 나갈 때 저장하도록)
+  bool _dirty = false;
+  bool get hasChanges => _dirty;
 
   void setSelectedCategory(String categoryId) {
     selectedCategory.value = categoryId;
-    selectedItem.value = -1;
   }
 
-  void selectItem(int index) {
-    selectedItem.value = index;
+  // 지금 입고 있는 아이템인지 (배경 포함)
+  bool isWorn(MyroomData item) => selectedItems[item.categoryId] == item.itemId;
 
-    var item = myroomDataController.getDataByCategory(selectedCategory.value)[index];
-
-    updateSelectedItem(item.categoryId, item.itemId);
-
-    updateScreenImage(item);
-  }
-
-  void updateScreenImage(MyroomData item) {
-    if (item.useyn == 'Y') {
-      // 옷 이미지를 업데이트
-      if (item.categoryId == '10') {
-        clothingImage.value = item.item;
-      }
-      // 모자 이미지를 업데이트
-      else if (item.categoryId == '20') {
-        hatImage.value = item.item;
-      }
-      // 안경 이미지를 업데이트
-      else if (item.categoryId == '30') {
-        accessoriesImage.value = item.item;
-      }
-      // 배경 이미지를 업데이트
-      else if (item.categoryId == '40') {
-        backgroundImage.value = item.item;
-      }
+  // 아이템을 누르면: 가진 것은 바로 입히고, 안 가진 것은 구매 팝업만 (사기 전에는 착용 목록에 넣지 않음)
+  void tapItem(MyroomData item) {
+    if (item.isOwned) {
+      wear(item);
     } else {
       showBuyItemDialog(item);
     }
   }
 
-  void nextCharacter() {
-    currentCharacter = (currentCharacter + 1) % characterList.length;
-    characterImage.value = characterList[currentCharacter];
+  void wear(MyroomData item) {
+    if (!item.isOwned) return;
+    selectedItems[item.categoryId] = item.itemId;
+    _setImage(item.categoryId, item.item);
+    _dirty = true;
   }
 
-  void applyItemResponse(Map<String, dynamic> json) {
-    final charIndex = json['char_index'] ?? '00';
-    final items = json['items'] as List;
-
-    currentCharacter = int.tryParse(charIndex) ?? 0;
-    characterImage.value = characterList[currentCharacter];
-    applyCharacterSettings(currentCharacter);
-
-    for (var item in items) {
-      final categoryId = item['categoryId'].toString();
-      final itemId = int.tryParse(item['itemId'].toString());
-      ;
-      final itemImg = item['itemimg'];
-
-      updateSelectedItem(categoryId, itemId);
-
-      switch (categoryId) {
-        case '10':
-          clothingImage.value = itemImg;
-          break;
-        case '20':
-          hatImage.value = itemImg;
-          break;
-        case '30':
-          accessoriesImage.value = itemImg;
-          break;
-        case '40':
-          backgroundImage.value = itemImg;
-          break;
-      }
+  void _setImage(String categoryId, String url) {
+    switch (categoryId) {
+      case '10':
+        clothingImage.value = url;
+      case '20':
+        hatImage.value = url;
+      case '30':
+        accessoriesImage.value = url;
+      case '40':
+        backgroundImage.value = url;
     }
   }
 
-  void applyCharacterSettings(int index) {
-    characterLeft.value = characterLeftMap[index] ?? 0.0;
-    clothesSize.value = clothesSizeMap[index] ?? Size.fromHeight(70.h);
-    clothesTop.value = clothesTopMap[index] ?? 210.h;
-    hatSize.value = hatSizeMap[index] ?? Size.fromHeight(40.h);
-    hatTop.value = hatTopMap[index] ?? 80.h;
+  void nextCharacter() {
+    characterIndex.value = (characterIndex.value + 1) % characterList.length;
+    _dirty = true;
   }
 
-  static final Map<int, double> characterLeftMap = {
-    0: 0.0, // 호랑이
-    1: 0.0, // 토끼
-    2: 0.0, // 곰
-    3: screenHeight >= 1000 ? 40.w : 55.w, // 다람쥐
-  };
+  /// 서버에 저장된 착용 상태 반영 (앱 시작 때)
+  /// 그사이 사용자가 마이룸에서 바꾼 게 있으면 덮어쓰지 않음.
+  void applyItemResponse(Map<String, dynamic> json) {
+    if (_dirty) return;
+    final charIndex = int.tryParse('${json['char_index'] ?? ''}'.trim()) ?? 0;
+    characterIndex.value = CharacterAvatar.safeIndex(charIndex);
 
-  static final Map<int, Size> clothesSizeMap = {
-    0: Size(120.w, 70.h), // 호랑이
-    1: Size(100.w, 50.h), // 토끼
-    2: Size(140.w, 70.h), // 곰
-    3: Size(110.w, 60.h), // 다람쥐
-  };
+    final items = json['items'];
+    if (items is! List) return;
+    for (final item in items) {
+      if (item is! Map) continue;
+      final categoryId = '${item['categoryId'] ?? ''}'.trim();
+      if (categoryId.isEmpty) continue;
+      selectedItems[categoryId] = int.tryParse('${item['itemId'] ?? ''}'.trim());
+      _setImage(categoryId, item['itemimg']?.toString() ?? '');
+    }
+  }
 
-  static final Map<int, double> clothesTopMap = {
-    0: 210.h, // 호랑이
-    1: 234.h, // 토끼
-    2: 210.h, // 곰
-    3: 223.h, // 다람쥐
-  };
-
-  static final Map<int, Size> hatSizeMap = {
-    0: Size(80.w, 40.h), // 호랑이
-    1: Size(70.w, 40.h), // 토끼
-    2: Size(100.w, 50.h), // 곰
-    3: Size(60.w, 40.h), // 다람쥐
-  };
-
-  static final Map<int, double> hatTopMap = {
-    0: 80.h,
-    1: 130.h,
-    2: 80.h,
-    3: 80.h,
-  };
+  /// 바뀐 게 있으면 서버에 저장 (마이룸을 나갈 때·앱이 백그라운드로 갈 때)
+  Future<void> saveIfChanged() async {
+    if (!_dirty) return;
+    _dirty = false;
+    final items = selectedItems.entries.map((e) => {'categoryId': e.key, 'itemId': e.value}).toList();
+    final ok = await selectedItemService(items, characterIndex.value.toString().padLeft(2, '0'));
+    if (!ok) _dirty = true; // 다음에 나갈 때 다시 저장
+  }
 }
 
+/// 아이템 칸 (그리드 한 칸)
 class MyroomItem extends StatelessWidget {
-  final String category;
-  final String itemName;
-  final bool isSelected;
-  final int price;
-  final bool isOwn;
+  final MyroomData item;
+  final bool isWorn;
 
   const MyroomItem({
     super.key,
-    required this.category,
-    required this.itemName,
-    required this.isSelected,
-    required this.price,
-    required this.isOwn,
+    required this.item,
+    required this.isWorn,
   });
 
   @override
   Widget build(BuildContext context) {
-    final MyroomItemController itemController = Get.find<MyroomItemController>();
-    bool isCurrentlyWorn = itemController.clothingImage.value == itemName ||
-        itemController.hatImage.value == itemName ||
-        itemController.accessoriesImage.value == itemName;
-    return Container(
-      decoration: BoxDecoration(
-        color: Color(0xFFF4E9D0),
-        borderRadius: BorderRadius.circular(8.r),
-        border: isCurrentlyWorn ? Border.all(color: Color(0xFFEF6363), width: 2.w) : Border.all(color: Colors.transparent),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Expanded(
-            child: SizedBox(height: 4.h),
-          ),
-          Expanded(
-            flex: category == "40" ? 5 : 3,
-            child: Padding(
-              padding: EdgeInsets.all(category == "40" ? 0.0 : 8.0),
-              child: Image.network(
-                itemName,
-                fit: BoxFit.fill,
+    return LayoutBuilder(builder: (context, c) {
+      final w = c.maxWidth; // 칸 크기 기준 (기기와 상관없이 같은 비율)
+      final isBackground = item.categoryId == '40';
+      return Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFF4E9D0),
+          borderRadius: BorderRadius.circular(w * 0.08),
+          border: Border.all(color: isWorn ? const Color(0xFFEF6363) : Colors.transparent, width: w * 0.02),
+        ),
+        child: Column(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  isBackground ? w * 0.04 : w * 0.12,
+                  isBackground ? w * 0.04 : w * 0.1,
+                  isBackground ? w * 0.04 : w * 0.12,
+                  item.isOwned ? (isBackground ? w * 0.04 : w * 0.1) : 0,
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(isBackground ? w * 0.05 : 0),
+                  child: item.item.startsWith('http')
+                      ? CharacterAvatar.network(item.item, isBackground ? BoxFit.cover : BoxFit.contain)
+                      : const SizedBox.shrink(),
+                ),
               ),
             ),
-          ),
-          Expanded(
-              child: Visibility(
-            visible: !isOwn,
-            child: SizedBox(
-              height: 4.h,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.asset('assets/images/icon/coin.png'),
-                  Text(
-                    '$price',
-                    style: outlineTextStyle(14.sp),
-                  ),
-                ],
+            // 안 가진 아이템은 가격
+            if (!item.isOwned)
+              SizedBox(
+                height: w * 0.26,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset('assets/images/icon/coin.png', height: w * 0.18),
+                    Padding(
+                      padding: EdgeInsets.only(left: w * 0.02),
+                      child: Text('${item.coin}', style: outlineTextStyle(w * 0.13).copyWith(fontSize: w * 0.13)),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          )),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    });
   }
 }

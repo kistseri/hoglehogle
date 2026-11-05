@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hoho_hanja/_core/constants.dart';
 
-/// 캐릭터 + 모자·옷·배경을 동그라미 안에 그리는 아바타 (랭킹 등)
+/// 캐릭터 + 모자·옷·배경을 동그라미 안에 그리는 아바타 (랭킹·앱바 프로필)
 ///
 /// 마이룸 화면에서 옷을 입히는 배치(마이룸 단위: 화면 폭 360, 캐릭터 키 200)를 그대로 축소해서 그림.
 /// 그래서 마이룸에서 입은 모습과 똑같고, 모든 위치·크기가 아바타 크기 [size] 기준이라 기기와 상관없이 같게 보임.
@@ -61,14 +61,20 @@ class CharacterAvatar extends StatelessWidget {
 
   static String _fileName(String url) => RegExp(r'([^/]+)\.\w+$').firstMatch(url)?.group(1) ?? '';
 
-  bool _isHttp(String? url) => url != null && url.startsWith('http');
+  static bool _isHttp(String? url) => url != null && url.startsWith('http');
 
-  @override
-  Widget build(BuildContext context) {
+  /// 캐릭터·옷·모자 (마이룸 단위 배치). 아바타와 마이룸 화면이 함께 씀
+  ///
+  /// [k] 마이룸 단위 → 화면, [roomLeft] 마이룸 화면(폭 360)의 왼쪽 끝, [charTop] 캐릭터 위쪽 (모두 화면 px)
+  static List<Widget> layers({
+    required int characterIndex,
+    String? hatUrl,
+    String? clothesUrl,
+    required double k,
+    required double roomLeft,
+    required double charTop,
+  }) {
     final i = safeIndex(characterIndex);
-    final k = size * characterRatio / characterHeight; // 마이룸 단위 → 화면
-    final roomLeft = size / 2 - roomWidth / 2 * k; // 마이룸 화면 왼쪽 끝 (동그라미 밖까지)
-    final charTop = size * (1 - characterRatio); // 캐릭터 발이 동그라미 아래에 닿게
 
     // 마이룸 좌표 (가로: 화면 폭 전체 안에서 가운데 정렬, 세로: 캐릭터 위쪽 기준)로 배치
     Widget place(
@@ -88,6 +94,42 @@ class CharacterAvatar extends StatelessWidget {
     final clothesDx = _isHttp(clothes) ? (clothesShift[_fileName(clothes!)] ?? 0.0) : 0.0;
     final clothesK = _isHttp(clothes) ? (clothesScale[_fileName(clothes!)] ?? 1.0) : 1.0;
 
+    return [
+      // 캐릭터
+      place(
+        left: characterLeft[i],
+        top: 0,
+        height: characterHeight,
+        child: Image.asset(characterList[i].assetName, fit: BoxFit.contain),
+      ),
+      // 옷
+      if (_isHttp(clothes))
+        place(
+          // 왼쪽 끝을 옮기면 가운데가 그 절반만 움직이므로 두 배로 (모자 보정과 같은 방식)
+          left: clothesDx > 0 ? clothesDx * 2 : 0,
+          right: clothesDx < 0 ? -clothesDx * 2 : 0,
+          top: clothesTop[i],
+          height: clothesHeight[i] * clothesK,
+          child: network(clothes!, BoxFit.contain),
+        ),
+      // 모자
+      if (_isHttp(hat))
+        place(
+          left: adj.dx > 0 ? adj.dx * 2 : 0,
+          right: adj.dx < 0 ? -adj.dx * 2 : 0,
+          top: hatTop[i] + adj.dy,
+          height: hatHeight,
+          child: network(hat!, BoxFit.contain),
+        ),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final k = size * characterRatio / characterHeight; // 마이룸 단위 → 화면
+    final roomLeft = size / 2 - roomWidth / 2 * k; // 마이룸 화면 왼쪽 끝 (동그라미 밖까지)
+    final charTop = size * (1 - characterRatio); // 캐릭터 발이 동그라미 아래에 닿게
+
     return SizedBox(
       width: size,
       height: size,
@@ -98,35 +140,17 @@ class CharacterAvatar extends StatelessWidget {
             // 배경
             Positioned.fill(
               child: _isHttp(backgroundUrl)
-                  ? _network(backgroundUrl!, BoxFit.cover)
+                  ? network(backgroundUrl!, BoxFit.cover)
                   : ColoredBox(color: Colors.grey.shade200),
             ),
-            // 캐릭터
-            place(
-              left: characterLeft[i],
-              top: 0,
-              height: characterHeight,
-              child: Image.asset(characterList[i].assetName, fit: BoxFit.contain),
+            ...layers(
+              characterIndex: characterIndex,
+              hatUrl: hatUrl,
+              clothesUrl: clothesUrl,
+              k: k,
+              roomLeft: roomLeft,
+              charTop: charTop,
             ),
-            // 옷
-            if (_isHttp(clothes))
-              place(
-                // 왼쪽 끝을 옮기면 가운데가 그 절반만 움직이므로 두 배로 (모자 보정과 같은 방식)
-                left: clothesDx > 0 ? clothesDx * 2 : 0,
-                right: clothesDx < 0 ? -clothesDx * 2 : 0,
-                top: clothesTop[i],
-                height: clothesHeight[i] * clothesK,
-                child: _network(clothes!, BoxFit.contain),
-              ),
-            // 모자
-            if (_isHttp(hat))
-              place(
-                left: adj.dx > 0 ? adj.dx * 2 : 0,
-                right: adj.dx < 0 ? -adj.dx * 2 : 0,
-                top: hatTop[i] + adj.dy,
-                height: hatHeight,
-                child: _network(hat!, BoxFit.contain),
-              ),
           ],
         ),
       ),
@@ -134,7 +158,7 @@ class CharacterAvatar extends StatelessWidget {
   }
 
   // 그림을 못 받아도 오류 표시 없이 빈 칸으로
-  Widget _network(String url, BoxFit fit) {
+  static Widget network(String url, BoxFit fit) {
     return Image.network(url, fit: fit, errorBuilder: (_, __, ___) => const SizedBox.shrink());
   }
 }

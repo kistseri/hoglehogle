@@ -36,21 +36,23 @@ class CookieData {
         wanswer5 = json["wans5"]?.toString() ?? '';
 }
 
-// 쿠키 한 판 (문제 1개)
+// 다람쥐 주문 1개 (문제 1개)
 class CookieQuiz {
   final String question;
   final String answer;
-  final List<String> wrongAnswers; // 최대 3개, 빈 값·정답과 같은 값은 뺌
+  final List<String> wrongAnswers; // 최대 5개, 빈 값·정답과 같은 값은 뺌
 
   const CookieQuiz(this.question, this.answer, this.wrongAnswers);
 }
 
 class CookieDataController extends GetxController {
-  static const int maxQuestions = 20;
+  // 한 판에 받는 주문(문제) 수
+  static const int maxQuestions = 30;
 
   List<CookieData> _cookieDataList = <CookieData>[];
   List<CookieQuiz> _quiz = [];
   RxBool isWorried = false.obs;
+  RxBool isHappy = false.obs; // 정답을 맞힌 직후 잠깐 좋아하는 얼굴
 
   // 문제 순서는 불러올 때 한 번만 섞고, 문제·정답이 빈 데이터는 뺌
   void setCookieDataList(List<CookieData> cookieDataList) {
@@ -59,13 +61,14 @@ class CookieDataController extends GetxController {
         .where((d) => d.quize.trim().isNotEmpty && d.answer.trim().isNotEmpty)
         .take(maxQuestions)
         .map((d) {
-      final wrongs = [d.wanswer1, d.wanswer2, d.wanswer3]
+      final wrongs = [d.wanswer1, d.wanswer2, d.wanswer3, d.wanswer4, d.wanswer5]
           .where((w) => w.trim().isNotEmpty && w != d.answer)
           .toSet()
           .toList();
       return CookieQuiz(d.quize, d.answer, wrongs);
     }).toList();
     isWorried.value = false;
+    isHappy.value = false;
     update();
   }
 
@@ -75,5 +78,9 @@ class CookieDataController extends GetxController {
 
   void setWorry(bool value) {
     if (isWorried.value != value) isWorried.value = value;
+  }
+
+  void setHappy(bool value) {
+    if (isHappy.value != value) isHappy.value = value;
   }
 }

@@ -25,8 +25,9 @@ PODS:
   - flutter_inappwebview_ios/Core (0.0.1):
     - Flutter
     - OrderedSet (~> 6.0.3)
-  - flutter_secure_storage (6.0.0):
+  - flutter_secure_storage_darwin (10.0.0):
     - Flutter
+    - FlutterMacOS
   - google_sign_in_ios (0.0.1):
     - Flutter
     - FlutterMacOS
@@ -81,7 +82,7 @@ PODS:
     - FlutterMacOS
   - url_launcher_ios (0.0.1):
     - Flutter
-  - volume_controller (0.0.1):
+  - volume_controller (3.7.0):
     - Flutter
   - webview_flutter_wkwebview (0.0.1):
     - Flutter
@@ -93,7 +94,7 @@ DEPENDENCIES:
   - device_info_plus (from `.symlinks/plugins/device_info_plus/ios`)
   - Flutter (from `Flutter`)
   - flutter_inappwebview_ios (from `.symlinks/plugins/flutter_inappwebview_ios/ios`)
-  - flutter_secure_storage (from `.symlinks/plugins/flutter_secure_storage/ios`)
+  - flutter_secure_storage_darwin (from `.symlinks/plugins/flutter_secure_storage_darwin/darwin`)
   - google_sign_in_ios (from `.symlinks/plugins/google_sign_in_ios/darwin`)
   - in_app_purchase_storekit (from `.symlinks/plugins/in_app_purchase_storekit/darwin`)
   - just_audio (from `.symlinks/plugins/just_audio/darwin`)
@@ -131,8 +132,8 @@ EXTERNAL SOURCES:
     :path: Flutter
   flutter_inappwebview_ios:
     :path: ".symlinks/plugins/flutter_inappwebview_ios/ios"
-  flutter_secure_storage:
-    :path: ".symlinks/plugins/flutter_secure_storage/ios"
+  flutter_secure_storage_darwin:
+    :path: ".symlinks/plugins/flutter_secure_storage_darwin/darwin"
   google_sign_in_ios:
     :path: ".symlinks/plugins/google_sign_in_ios/darwin"
   in_app_purchase_storekit:
@@ -166,7 +167,7 @@ SPEC CHECKSUMS:
   device_info_plus: 21fcca2080fbcd348be798aa36c3e5ed849eefbe
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   flutter_inappwebview_ios: b89ba3482b96fb25e00c967aae065701b66e9b99
-  flutter_secure_storage: 1ed9476fba7e7a782b22888f956cce43e2c62f13
+  flutter_secure_storage_darwin: 46e401699982ee74142909676535e0f6a7321e58
   google_sign_in_ios: 92f9b87736ef92fbfda3bdd2036283d2e44bfc29
   GoogleSignIn: e449a40a92e9f2eea56e98b5214d13725dc5a00a
   GoogleUtilities: 7dc09b3fa9ecb5c2298b952313d14628b61b9da3
@@ -185,7 +186,7 @@ SPEC CHECKSUMS:
   shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
   sign_in_with_apple: 5e34677a4e74c5f42760f41b3bbe05343e84d171
   url_launcher_ios: 7a95fa5b60cc718a708b8f2966718e93db0cef1b
-  volume_controller: ca1cde542ee70fad77d388f82e9616488110942b
+  volume_controller: b2f529b1dc3496fe900df1baef358aadce59a827
   webview_flutter_wkwebview: 8ebf4fded22593026f7dbff1fbff31ea98573c8d
 
 PODFILE CHECKSUM: 4f1c12611da7338d21589c0b2ecd6bd20b109694

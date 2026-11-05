@@ -12,7 +12,6 @@ import 'package:hoho_hanja/services/purchase/product_service.dart';
 import 'package:hoho_hanja/services/rank/rank_service.dart';
 import 'package:hoho_hanja/utils/design_scale.dart';
 import 'package:hoho_hanja/utils/get_main_notice.dart';
-import 'package:hoho_hanja/widgets/appbar/custom_appbar.dart';
 import 'package:hoho_hanja/widgets/appbar/design_app_bar.dart';
 
 import '../../services/myroom/load_item_service.dart';
@@ -117,31 +116,29 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver, Ro
     if (_selectedIndex == 2) {
       // 홈은 앱바·하단 탭까지 HomeBody가 시안 비율대로 직접 그림
       return null;
-    } else if (_selectedIndex == 0) {
-      // 랭킹: 홈과 같은 시안 좌표·크기 앱바 (탭을 오가도 코인·다이아·프로필 위치가 그대로)
-      final mq = MediaQuery.of(context);
-      final sc = DesignScale.of(mq.size, mq.padding);
-      return PreferredSize(
-        preferredSize: Size.fromHeight(sc.d(DesignAppBar.height)),
-        child: AnnotatedRegion<SystemUiOverlayStyle>(
-          value: SystemUiOverlayStyle.light,
-          child: ColoredBox(
-            color: primaryColor,
-            child: DesignAppBar(
-              scale: sc,
-              onGreen: true,
-              onPressed: () => _onTabChanged(2),
-              onAvatarPressed: () => _onTabChanged(1),
-              onDiamondPressed: () async => await productService(),
-            ),
-          ),
-        ),
-      );
     } else if (_selectedIndex == 1) {
       return null;
-    } else {
-      return CustomAppBar(onPressed: () => _onTabChanged(2));
     }
+    // 랭킹(초록 배경)·설정(흰 배경): 홈과 같은 시안 좌표·크기 앱바 (탭을 오가도 코인·다이아·프로필 위치가 그대로)
+    final onGreen = _selectedIndex == 0;
+    final mq = MediaQuery.of(context);
+    final sc = DesignScale.of(mq.size, mq.padding);
+    return PreferredSize(
+      preferredSize: Size.fromHeight(sc.d(DesignAppBar.height)),
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: onGreen ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+        child: ColoredBox(
+          color: onGreen ? primaryColor : Colors.white,
+          child: DesignAppBar(
+            scale: sc,
+            onGreen: onGreen,
+            onPressed: () => _onTabChanged(2),
+            onAvatarPressed: () => _onTabChanged(1),
+            onDiamondPressed: () async => await productService(),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildBody() {

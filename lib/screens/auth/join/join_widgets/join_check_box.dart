@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:hoho_hanja/_core/colors.dart';
-import 'package:hoho_hanja/_core/size.dart';
 import 'package:hoho_hanja/data/DTO/requestDTO/joinDTO.dart';
 import 'package:hoho_hanja/screens/auth/join/join_screen.dart';
 import 'package:hoho_hanja/screens/auth/join/join_widgets/join_button.dart';
 import 'package:hoho_hanja/services/auth/join/get_auth_code.dart';
+import 'package:hoho_hanja/utils/design_scale.dart';
 
 class JoinCheckBox extends StatefulWidget {
   final String method;
@@ -26,6 +26,7 @@ class _JoinCheckBoxState extends State<JoinCheckBox> {
   Widget build(BuildContext context) {
     final JoinReqDTOController joinReqDTO = Get.put(JoinReqDTOController());
     final joinController = Get.put(JoinTextController());
+    final sc = DesignScale.fromContext(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -40,6 +41,7 @@ class _JoinCheckBoxState extends State<JoinCheckBox> {
           },
           context,
           showTermsDialog,
+          sc,
         ),
         buildCheckBox(
           '개인정보 수집 및 이용동의 (필수)',
@@ -51,9 +53,10 @@ class _JoinCheckBoxState extends State<JoinCheckBox> {
           },
           context,
           showPrivacyPolicyDialog,
+          sc,
         ),
-        SizedBox(height: gapHuge),
-        Center(
+        Padding(
+          padding: EdgeInsets.only(top: sc.d(50)),
           child: JoinButton(
             text: '휴대폰 인증하기',
             movePage: () async {
@@ -128,8 +131,8 @@ class _JoinCheckBoxState extends State<JoinCheckBox> {
     return null;
   }
 
-  Widget buildCheckBox(String text, bool isChecked, Function(bool?) onChanged,
-      BuildContext context, void Function(BuildContext) onTap) {
+  Widget buildCheckBox(String text, bool isChecked, Function(bool?) onChanged, BuildContext context,
+      void Function(BuildContext) onTap, DesignScale sc) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -139,14 +142,21 @@ class _JoinCheckBoxState extends State<JoinCheckBox> {
               onTap: () {
                 onChanged(!isChecked);
               },
-              child: Checkbox(
-                value: isChecked,
-                onChanged: onChanged,
-                activeColor: primaryColor,
-                checkColor: Colors.white,
-                side: BorderSide(
-                  color: isChecked ? primaryColor : Colors.grey,
-                  width: 2,
+              // 체크박스(기본 48 x 48)도 같은 배율로
+              child: SizedBox(
+                width: sc.d(48),
+                height: sc.d(48),
+                child: FittedBox(
+                  child: Checkbox(
+                    value: isChecked,
+                    onChanged: onChanged,
+                    activeColor: primaryColor,
+                    checkColor: Colors.white,
+                    side: BorderSide(
+                      color: isChecked ? primaryColor : Colors.grey,
+                      width: 2,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -158,8 +168,9 @@ class _JoinCheckBoxState extends State<JoinCheckBox> {
               },
               child: Text(
                 text,
-                style: const TextStyle(
+                style: TextStyle(
                   color: mFontMain,
+                  fontSize: sc.d(14),
                 ),
               ),
             ),
@@ -174,7 +185,7 @@ class _JoinCheckBoxState extends State<JoinCheckBox> {
           child: Icon(
             CupertinoIcons.forward,
             color: mFontMain,
-            size: fontLarge,
+            size: sc.d(20),
           ),
         )
       ],

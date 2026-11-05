@@ -1,110 +1,86 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:get/get.dart';
 import 'package:hoho_hanja/_core/colors.dart';
-import 'package:hoho_hanja/_core/size.dart';
+import 'package:hoho_hanja/utils/design_scale.dart';
 
 class TermsAndPrivacy extends StatelessWidget {
-  const TermsAndPrivacy({
-    super.key,
-  });
+  final DesignScale scale;
+
+  const TermsAndPrivacy({super.key, required this.scale});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: gapQuarter),
-      child: SizedBox(
-        height: 16.h,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            GestureDetector(
-              onTap: () {
-                _showdialog(context, '호글호글 이용약관', 'hogulhogul_terms.txt');
-              },
-              child: Text(
-                '호글호글 이용약관',
-                style: TextStyle(color: mFontLightGray),
-              ),
-            ),
-            VerticalDivider(
-              color: mFontLightGray,
-              thickness: 1.w,
-              width: 10.w,
-            ),
-            GestureDetector(
-              onTap: () {
-                _showdialog(context, '개인정보 처리방침', 'hogulhogul_privacy.txt');
-              },
-              child: Text(
-                '개인정보 처리방침',
-                style: TextStyle(color: mFontLightGray),
-              ),
-            ),
-          ],
-        ),
+    double d(num v) => scale.d(v);
+    final style = TextStyle(color: mFontLightGray, fontSize: d(12));
+    return SizedBox(
+      height: d(18),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          GestureDetector(
+            onTap: () => _showTerms(context, '호글호글 이용약관', 'hogulhogul_terms.txt'),
+            child: Text('호글호글 이용약관', style: style),
+          ),
+          VerticalDivider(color: mFontLightGray, thickness: d(1), width: d(16)),
+          GestureDetector(
+            onTap: () => _showTerms(context, '개인정보 처리방침', 'hogulhogul_privacy.txt'),
+            child: Text('개인정보 처리방침', style: style),
+          ),
+        ],
       ),
     );
   }
 
-  void _showdialog(BuildContext context, String title, String fileUrl) async {
-    Future<String> loadTerms() async {
-      return await rootBundle.loadString('assets/text/$fileUrl');
-    }
-
-    final String termsContent = await loadTerms();
+  Future<void> _showTerms(BuildContext context, String title, String file) async {
+    final content = await rootBundle.loadString('assets/text/$file');
+    if (!context.mounted) return;
 
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
       barrierLabel: '',
-      barrierColor: Colors.black.withOpacity(0.5),
-      pageBuilder: (BuildContext context, Animation<double> animation,
-          Animation<double> secondaryAnimation) {
-        return Center(
-          child: Material(
-            color: Colors.transparent,
-            child: Padding(
-              padding: EdgeInsets.all(gapMain),
+      barrierColor: Colors.black.withValues(alpha: 0.5),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        final mq = MediaQuery.of(context);
+        final sc = DesignScale.of(mq.size, mq.padding);
+        double d(num v) => sc.d(v);
+        final availH = mq.size.height - mq.padding.top - mq.padding.bottom;
+        return SafeArea(
+          child: Center(
+            child: Material(
+              color: Colors.transparent,
               child: Container(
-                width: MediaQuery.of(context).size.width * 0.9,
-                decoration: BoxDecoration(
-                  color: mBackWhite,
-                  borderRadius: BorderRadius.circular(15.r),
-                ),
-                child: Padding(
-                  padding: EdgeInsets.all(gapHalf),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: 24.sp,
-                            fontWeight: FontWeight.bold,
-                            color: mFontMain,
-                          ),
+                width: math.min(d(324), mq.size.width - d(16)),
+                // 약관이 길어도 화면 안에서 스크롤
+                constraints: BoxConstraints(maxHeight: availH * 0.85),
+                padding: EdgeInsets.fromLTRB(d(20), d(22), d(20), d(8)),
+                decoration: BoxDecoration(color: mBackWhite, borderRadius: BorderRadius.circular(d(16))),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: TextStyle(fontSize: d(20), fontWeight: FontWeight.bold, color: mFontMain)),
+                    Flexible(
+                      child: Padding(
+                        padding: EdgeInsets.only(top: d(12)),
+                        child: SingleChildScrollView(
+                          child: Text(content, style: TextStyle(color: mFontSub, fontSize: d(12.5), height: 1.5)),
                         ),
-                        SizedBox(height: 10.h),
-                        Text(
-                          termsContent,
-                          style: TextStyle(color: mFontSub),
-                        ),
-                        SizedBox(height: 20.h),
-                        Align(
-                          alignment: Alignment.center,
-                          child: GestureDetector(
-                              onTap: () {
-                                Get.back();
-                              },
-                              child: Text('닫기')),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
+                    Center(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => Navigator.of(context).pop(),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: d(24), vertical: d(12)),
+                          child: Text('닫기', style: TextStyle(color: mFontMain, fontSize: d(15))),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -112,10 +88,7 @@ class TermsAndPrivacy extends StatelessWidget {
         );
       },
       transitionBuilder: (context, animation, secondaryAnimation, child) {
-        return FadeTransition(
-          opacity: animation,
-          child: child,
-        );
+        return FadeTransition(opacity: animation, child: child);
       },
     );
   }

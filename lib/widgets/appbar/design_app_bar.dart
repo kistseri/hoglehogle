@@ -96,17 +96,17 @@ class _DesignAppBarState extends State<DesignAppBar> {
           ),
           sc.box(4 + inset, 5, 44, 44, GestureDetector(behavior: HitTestBehavior.opaque, onTap: _onBack)),
           // 코인
-          sc.box(sc.r(207.7, inset), 18.9, 16, 16, Image.asset('assets/images/icon/coin.png')),
+          sc.box(sc.r(193.7, inset), 18.9, 16, 16, Image.asset('assets/images/icon/coin.png')),
           sc.place(
-            left: sc.r(225, inset),
+            left: sc.r(211, inset),
             cy: 27,
             size: 15,
             child: Obx(() => Text(goodsController.formattedCoin.value, style: _outlineStyle(15))),
           ),
           // 다이아
-          sc.box(sc.r(273.5, inset), 18.3, 17, 17, Image.asset('assets/images/icon/diamond.png')),
+          sc.box(sc.r(259.5, inset), 18.3, 17, 17, Image.asset('assets/images/icon/diamond.png')),
           sc.place(
-            left: sc.r(293, inset),
+            left: sc.r(279, inset),
             cy: 27,
             size: 15,
             child: Obx(() => Text(goodsController.formattedDia.value, style: _outlineStyle(15))),
@@ -114,21 +114,22 @@ class _DesignAppBarState extends State<DesignAppBar> {
           // 다이아 누르는 영역 (홈과 같은 크기)
           if (widget.onDiamondPressed != null)
             sc.box(
-              sc.r(268, inset),
+              sc.r(254, inset),
               8,
               50,
               37,
               GestureDetector(behavior: HitTestBehavior.opaque, onTap: widget.onDiamondPressed),
             ),
           // 프로필
+          // 시안 24에서 1.25배, 다이아와 간격을 두고 오른쪽 끝에서 10 떨어지게
           sc.box(
-            sc.r(324.5, inset),
-            14.5,
-            24,
-            24,
+            sc.r(320, inset),
+            11.5,
+            30,
+            30,
             GestureDetector(
               onTap: widget.onAvatarPressed,
-              child: MyRoomCircleAvatar(size: sc.d(24)),
+              child: MyRoomCircleAvatar(size: sc.d(30)),
             ),
           ),
         ],

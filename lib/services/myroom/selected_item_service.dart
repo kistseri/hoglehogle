@@ -4,47 +4,27 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:hoho_hanja/_core/http.dart';
 import 'package:hoho_hanja/data/models/login_data.dart';
-import 'package:hoho_hanja/services/myroom/my_room_service.dart';
 import 'package:hoho_hanja/utils/network_check.dart';
-import 'package:hoho_hanja/widgets/dialog/dialog.dart';
 import 'package:logger/logger.dart';
 
-Future<void> selectedItemService(List<Map<String, dynamic>> items, String character) async {
+// 캐릭터·착용 아이템 저장. 성공하면 true
+// 마이룸을 나가거나 앱이 백그라운드로 갈 때 불리므로 팝업은 띄우지 않음 (실패하면 다음에 나갈 때 다시 저장)
+Future<bool> selectedItemService(List<Map<String, dynamic>> items, String character) async {
   final connectivityController = Get.put(ConnectivityController());
-  final loginController = Get.find<LoginDataController>();
+  final id = Get.isRegistered<LoginDataController>() ? Get.find<LoginDataController>().loginData.value?.id : null;
+  if (!connectivityController.isConnected.value || id == null) return false;
 
-  if (connectivityController.isConnected.value) {
-    String url = dotenv.get('SELECTED_ITEM_COPY_URL');
-    String id = loginController.loginData.value!.id;
-
-    final Map<String, dynamic> requestData = {
-      'user_id': id,
-      'char_index': character,
-      'items': items,
-    };
-
-
-    // HTTP POST 요청
-    final response = await dio.post(url, data: jsonEncode(requestData));
-    try {
-      // 응답을 성공적으로 받았을 때
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> result = json.decode(response.data);
-        final resultValue = result['result'];
-        // 응답 결과가 있는 경우
-        if (resultValue == "0000") {
-        }
-        // 응답 데이터가 오류일 때("9999": 오류)
-        else {
-          failDialog('불러오기 실패', '${result['message']}');
-        }
-      }
-    }
-    // 예외처리
-    catch (e) {
-      Logger().d('e = $e');
-    }
-  } else {
-    failDialog("연결 실패", "인터넷 연결을 확인해주세요");
+  try {
+    final response = await dio.post(
+      dotenv.get('SELECTED_ITEM_COPY_URL'),
+      data: jsonEncode({'user_id': id, 'char_index': character, 'items': items}),
+    );
+    final result = response.data is String ? json.decode(response.data) : response.data;
+    if (response.statusCode == 200 && result is Map && result['result']?.toString() == '0000') return true;
+    Logger().w('착용 아이템 저장 실패: ${result is Map ? result['message'] : response.statusCode}');
+    return false;
+  } catch (e) {
+    Logger().w('착용 아이템 저장 실패: $e');
+    return false;
   }
 }

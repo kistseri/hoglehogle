@@ -2,25 +2,74 @@ import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:hoho_hanja/_core/colors.dart';
 import 'package:hoho_hanja/screens/auth/login/social_login_screen.dart';
 import 'package:hoho_hanja/services/auth/withdraw_service.dart';
+import 'package:hoho_hanja/utils/design_scale.dart';
 
+/// 회원 탈퇴 확인 → 계산 문제 → 탈퇴
+/// 크기는 시안 단위, 화면 배율대로 (작은 폰·태블릿에서도 같은 비율)
 void showWithdrawDialog(BuildContext context) {
-  Get.defaultDialog(
-    title: '회원 탈퇴',
-    middleText: '모든 정보가 삭제되고 복구할 수 없습니다.\n정말로 탈퇴하시겠습니까?',
-    textConfirm: '탈퇴',
-    buttonColor: Colors.red,
-    textCancel: '취소',
-    onConfirm: () async {
-      showDeleteProtectDialog(context, () async{
-        await withdrawService();
-      });
-    },
-    onCancel: () {
-      Get.back();
+  showDialog(
+    context: context,
+    builder: (ctx) {
+      final sc = DesignScale.fromContext(ctx);
+      double d(num v) => sc.d(v);
+
+      Widget button(String text, Color color, VoidCallback onTap, {double left = 0}) {
+        return Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(left: left),
+            child: GestureDetector(
+              onTap: onTap,
+              child: Container(
+                height: d(42),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(d(10))),
+                child: Text(text, style: TextStyle(color: mFontWhite, fontSize: d(15))),
+              ),
+            ),
+          ),
+        );
+      }
+
+      return Dialog(
+        backgroundColor: Colors.white,
+        insetPadding: EdgeInsets.symmetric(horizontal: d(8), vertical: d(24)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(d(20))),
+        child: SizedBox(
+          width: min(d(300), MediaQuery.sizeOf(ctx).width - d(16)),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(d(20), d(22), d(20), d(18)),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('회원 탈퇴', style: TextStyle(color: mFontMain, fontSize: d(20), fontWeight: FontWeight.bold)),
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: d(16)),
+                  child: Text(
+                    '모든 정보가 삭제되고 복구할 수 없습니다.\n정말로 탈퇴하시겠습니까?',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: mFontSub, fontSize: d(14), height: 1.5),
+                  ),
+                ),
+                Row(
+                  children: [
+                    button('탈퇴', Colors.red, () {
+                      // 이 창을 닫고 계산 문제로 (창이 겹쳐 남지 않게)
+                      Navigator.of(ctx).pop();
+                      showDeleteProtectDialog(context, () => withdrawService());
+                    }),
+                    // 취소는 이 창만 닫음
+                    button('취소', mBtnBack, () => Navigator.of(ctx).pop(), left: d(10)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
     },
   );
 }
@@ -38,7 +87,8 @@ void withdrawDialog() {
   );
 }
 
-void showDeleteProtectDialog(BuildContext context, VoidCallback onDeleteConfirmed) {
+void showDeleteProtectDialog(BuildContext context, Future<void> Function() onDeleteConfirmed) {
+  if (!context.mounted) return;
   final rand = Random();
   final isSimple = rand.nextBool();
 
@@ -69,103 +119,100 @@ void showDeleteProtectDialog(BuildContext context, VoidCallback onDeleteConfirme
 
   String input = '';
   String? errorText;
+  bool sending = false;
 
   showDialog(
     context: context,
     barrierDismissible: false,
     builder: (BuildContext ctx) {
-      return AlertDialog(
+      final sc = DesignScale.fromContext(ctx);
+      double d(num v) => sc.d(v);
+
+      return Dialog(
         backgroundColor: Colors.white,
-        contentPadding: const EdgeInsets.all(16),
-        content: SizedBox(
-          width: 500,
-          height: MediaQuery.of(context).size.height / 2,
+        insetPadding: EdgeInsets.symmetric(horizontal: d(8), vertical: d(24)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(d(20))),
+        child: SizedBox(
+          width: min(d(300), MediaQuery.sizeOf(ctx).width - d(16)),
           child: StatefulBuilder(
             builder: (context, setState) {
-              return Column(
-                children: [
-                  // 위쪽: 문제 및 입력 상태
-                  Expanded(
-                    flex: 2,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Spacer(
-                              flex: 1,
-                            ),
-                            Expanded(
-                              flex: 1,
-                              child: const Text(
-                                "탈퇴 확인",
-                                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            Expanded(
-                              flex: 1,
-                              child: GestureDetector(
-                                child: Icon(Icons.clear),
-                                onTap: () => Navigator.of(ctx).pop(),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Text("문제: $question = ?", style: const TextStyle(fontSize: 18)),
-                        const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade200,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Center(
-                            child: Text(
-                              input.isEmpty ? "정답을 입력해주세요." : input,
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                              textAlign: TextAlign.center,
+              return Padding(
+                padding: EdgeInsets.fromLTRB(d(16), d(12), d(16), d(18)),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // 제목 + 닫기
+                    SizedBox(
+                      height: d(40),
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Text("탈퇴 확인", style: TextStyle(fontSize: d(18), fontWeight: FontWeight.bold)),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: GestureDetector(
+                              onTap: sending ? null : () => Navigator.of(ctx).pop(),
+                              child: Icon(Icons.clear, size: d(24)),
                             ),
                           ),
-                        ),
-                        if (errorText != null)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8),
-                            child: Text(
-                              errorText!,
-                              style: const TextStyle(color: Colors.red, fontSize: 14),
-                            ),
-                          ),
-                        //                             onPressed: () => Navigator.of(ctx).pop(),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  // 아래: 키패드
-                  Expanded(
-                    flex: 3,
-                    child: SizedBox(
-                      width: 300,
-                      child: _buildKeypad(onTap: (value) async {
-                        setState(() {
-                          if (value == '←') {
+                    Padding(
+                      padding: EdgeInsets.only(top: d(8)),
+                      child: Text("문제: $question = ?", style: TextStyle(fontSize: d(17))),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.only(top: d(12)),
+                      child: Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(d(12)),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(d(8)),
+                        ),
+                        child: Text(
+                          input.isEmpty ? "정답을 입력해주세요." : input,
+                          style: TextStyle(fontSize: d(17), fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      height: d(26),
+                      child: Center(
+                        child: errorText == null
+                            ? null
+                            : Text(errorText!, style: TextStyle(color: Colors.red, fontSize: d(13))),
+                      ),
+                    ),
+                    // 키패드 (정사각 버튼)
+                    _buildKeypad(
+                      d: d,
+                      onTap: (value) async {
+                        if (sending) return;
+                        if (value == '←') {
+                          setState(() {
                             if (input.isNotEmpty) input = input.substring(0, input.length - 1);
-                          } else if (value == '확인') {
-                            final answer = int.tryParse(input);
-                            if (answer == correctAnswer) {
-                              onDeleteConfirmed();
-                              Navigator.of(ctx).pop();
-                            } else {
-                              errorText = "정답이 아닙니다.";
-                            }
+                          });
+                        } else if (value == '확인') {
+                          if (int.tryParse(input) == correctAnswer) {
+                            setState(() => sending = true);
+                            Navigator.of(ctx).pop();
+                            await onDeleteConfirmed();
                           } else {
-                            if (input.length < 4) input += value;
+                            setState(() => errorText = "정답이 아닙니다.");
                           }
-                        });
-                      }),
+                        } else {
+                          setState(() {
+                            if (input.length < 4) input += value;
+                            errorText = null;
+                          });
+                        }
+                      },
                     ),
-                  ),
-                ],
+                  ],
+                ),
               );
             },
           ),
@@ -175,8 +222,8 @@ void showDeleteProtectDialog(BuildContext context, VoidCallback onDeleteConfirme
   );
 }
 
-Widget _buildKeypad({required void Function(String value) onTap}) {
-  final keys = [
+Widget _buildKeypad({required double Function(num) d, required void Function(String value) onTap}) {
+  const keys = [
     ['1', '2', '3'],
     ['4', '5', '6'],
     ['7', '8', '9'],
@@ -184,41 +231,37 @@ Widget _buildKeypad({required void Function(String value) onTap}) {
   ];
 
   return Column(
-    mainAxisAlignment: MainAxisAlignment.spaceAround,
-    children: keys.map(
-      (row) {
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: row.map((key) {
-            return Padding(
-              padding: const EdgeInsets.all(4),
-              child: SizedBox(
-                width: 45.w,
-                height: 45.h,
-                child: CupertinoButton(
-                  padding: EdgeInsets.zero,
-                  color: CupertinoColors.systemGrey5,
-                  borderRadius: BorderRadius.circular(8),
-                  onPressed: () => onTap(key),
-                  child: Center(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      for (final row in keys)
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            for (final key in row)
+              Padding(
+                padding: EdgeInsets.all(d(4)),
+                child: SizedBox(
+                  width: d(56),
+                  height: d(48),
+                  child: CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    color: CupertinoColors.systemGrey5,
+                    borderRadius: BorderRadius.circular(d(8)),
+                    onPressed: () => onTap(key),
                     child: Text(
                       key,
                       maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 20,
+                      style: TextStyle(
+                        fontSize: d(key == '확인' ? 16 : 20),
                         fontWeight: FontWeight.w500,
                         color: CupertinoColors.black,
                       ),
-                      textAlign: TextAlign.center,
                     ),
                   ),
                 ),
               ),
-            );
-          }).toList(),
-        );
-      },
-    ).toList(),
+          ],
+        ),
+    ],
   );
 }

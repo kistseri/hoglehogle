@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -46,4 +47,19 @@ class _TrustedRootHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) =>
       super.createHttpClient(context ?? _context);
+}
+
+/// POST 후 JSON 결과를 Map으로 돌려줌. 인터넷이 끊기거나 서버 오류·응답 형식이 이상하면 null.
+/// (예외가 밖으로 새지 않도록 요청까지 전부 try 안에서)
+Future<Map<String, dynamic>?> postJson(String url, [Map<String, dynamic>? data]) async {
+  try {
+    final response = await dio.post(url, data: data == null ? null : jsonEncode(data));
+    if (response.statusCode != 200) return null;
+    final body = response.data;
+    final decoded = body is String ? jsonDecode(body) : body;
+    return decoded is Map ? Map<String, dynamic>.from(decoded) : null;
+  } catch (e) {
+    Logger().w('요청 실패 $url: $e');
+    return null;
+  }
 }
