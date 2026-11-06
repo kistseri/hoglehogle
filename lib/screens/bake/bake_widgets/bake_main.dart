@@ -161,7 +161,7 @@ class _BakeMainState extends State<BakeMain> with WidgetsBindingObserver {
 
     String coin = await resultService(widget.code, correctCount);
     if (!mounted) return;
-    resultDialog(context, correctCount, _total, coin);
+    resultDialog(context, correctCount, _total, coin, onRetry: () => resultService(widget.code, correctCount));
   }
 
   @override

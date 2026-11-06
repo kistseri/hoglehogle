@@ -18,7 +18,7 @@ class MatchingData {
 }
 
 class MatchingDataController extends GetxController {
-  List<MatchingData> _matchingDataList = <MatchingData>[].obs;
+  List<MatchingData> _matchingDataList = <MatchingData>[]; // 화면이 값을 지켜보지 않고 열기 전에 넣으므로 일반 List + update() (C-38)
 
   void setMatchingDataList(List<MatchingData> matchingDataList) {
     _matchingDataList = matchingDataList;

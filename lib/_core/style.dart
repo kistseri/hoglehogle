@@ -42,10 +42,8 @@ ThemeData lightTheme = ThemeData(
     onSecondary: CommonColors.grey2,
     primary: Colors.white, // point color1
     secondary: CommonColors.grey4, // point color3
-    background: Colors.white, // app backgound
     surface: Colors.white, // card background
     onSurface: Colors.black, // text3
-    onBackground: CommonColors.grey3, //text1
     secondaryContainer: CommonColors.grey2,
     onSecondaryContainer: LightColors.blue,
     error: LightColors.orange, // danger
@@ -68,10 +66,8 @@ ThemeData darkTheme = ThemeData(
     onSecondary: CommonColors.grey5,
     primary: CommonColors.grey3,
     secondary: CommonColors.grey2,
-    background: DarkColors.basic,
     surface: DarkColors.basic,
     onSurface: Colors.white,
-    onBackground: CommonColors.grey4,
     secondaryContainer: CommonColors.grey4,
     onSecondaryContainer: DarkColors.indigo,
     error: DarkColors.orange,
@@ -80,11 +76,13 @@ ThemeData darkTheme = ThemeData(
   ),
 );
 
+// 흰 글자 + 회색 테두리. 예전에는 const라 fontSize 인자가 무시됐음 (C-33)
 TextStyle outlineTextStyle(double fontSize) {
-  return const TextStyle(
+  return TextStyle(
+    fontSize: fontSize,
     fontFamily: 'BMJUA',
     color: Colors.white,
-    shadows: [
+    shadows: const [
       Shadow(
         offset: Offset(0, -1),
         color: Colors.grey,

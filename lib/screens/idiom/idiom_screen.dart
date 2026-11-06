@@ -2,10 +2,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:hoho_hanja/_core/colors.dart';
-import 'package:hoho_hanja/_core/size.dart';
 import 'package:hoho_hanja/data/models/idiom_data.dart';
 import 'package:hoho_hanja/main.dart';
 import 'package:hoho_hanja/screens/idiom/idiom_widgets/top_arc_clipper.dart';
@@ -77,7 +75,8 @@ class _IdiomScreenState extends State<IdiomScreen> {
         final score = (correctCount - wrongQuestions.length).clamp(0, idiomController.idiom.length);
         final coin = await resultService(widget.code, score);
         if (!mounted) return;
-        resultDialog(context, score, idiomController.idiom.length, coin);
+        resultDialog(context, score, idiomController.idiom.length, coin,
+            onRetry: () => resultService(widget.code, score));
       }
     } else {
       effect.wrongSound();
@@ -95,6 +94,8 @@ class _IdiomScreenState extends State<IdiomScreen> {
     final mq = MediaQuery.of(context);
     final size = mq.size;
     final sc = DesignScale.of(size, mq.padding);
+    // ScreenUtil(.sp/.r) 대신 다른 화면과 같은 배율 하나로 (C-34)
+    double d(num v) => sc.d(v);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark,
@@ -112,7 +113,7 @@ class _IdiomScreenState extends State<IdiomScreen> {
             Column(
           children: [
             Padding(
-              padding: EdgeInsets.only(top: 16.0.r),
+              padding: EdgeInsets.only(top: d(16.0)),
               child: RichText(
                 textAlign: TextAlign.center,
                 text: TextSpan(
@@ -121,14 +122,14 @@ class _IdiomScreenState extends State<IdiomScreen> {
                         text: '한자성어 문제',
                         style: TextStyle(
                           color: mFontMain,
-                          fontSize: 24.sp,
+                          fontSize: d(24),
                           fontWeight: FontWeight.bold,
                         )),
                     TextSpan(
                       text: '\n빈 칸에 알맞은 한자를 찾아보세요.',
                       style: TextStyle(
                         color: mFontMain,
-                        fontSize: 16.sp,
+                        fontSize: d(16),
                       ),
                     ),
                   ],
@@ -136,9 +137,9 @@ class _IdiomScreenState extends State<IdiomScreen> {
               ),
             ),
             Padding(
-              padding: EdgeInsets.all(16.0.r),
+              padding: EdgeInsets.all(d(16.0)),
               child: Container(
-                padding: EdgeInsets.all(16.r),
+                padding: EdgeInsets.all(d(16)),
                 decoration: BoxDecoration(
                   color: mBackWhite,
                   borderRadius: BorderRadius.circular(15),
@@ -154,7 +155,7 @@ class _IdiomScreenState extends State<IdiomScreen> {
                               text: '${currentQuestionIndex + 1}',
                               style: TextStyle(
                                 color: primaryColor,
-                                fontSize: 20.sp,
+                                fontSize: d(20),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -162,7 +163,7 @@ class _IdiomScreenState extends State<IdiomScreen> {
                               text: "/${idiomController.idiomDataList.length}",
                               style: TextStyle(
                                 color: mFontMain,
-                                fontSize: 20.sp,
+                                fontSize: d(20),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -174,29 +175,34 @@ class _IdiomScreenState extends State<IdiomScreen> {
                       fit: BoxFit.scaleDown,
                       child: Text(
                         idiomController.idiomDataList[currentQuestionIndex].quize1,
-                        style: TextStyle(color: const Color(0xFF391E65), fontSize: 40.sp, fontWeight: FontWeight.bold, letterSpacing: 5),
+                        style: TextStyle(
+                            color: const Color(0xFF391E65),
+                            fontSize: d(40),
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 5),
                       ),
                     ),
-                    SizedBox(height: gapHalf),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildHanjaButton(idiomController.idiomDataList[currentQuestionIndex].hanja1,
-                            idiomController.idiomDataList[currentQuestionIndex].randomNum == 1),
-                        _buildHanjaButton(idiomController.idiomDataList[currentQuestionIndex].hanja2,
-                            idiomController.idiomDataList[currentQuestionIndex].randomNum == 2),
-                        _buildHanjaButton(idiomController.idiomDataList[currentQuestionIndex].hanja3,
-                            idiomController.idiomDataList[currentQuestionIndex].randomNum == 3),
-                        _buildHanjaButton(idiomController.idiomDataList[currentQuestionIndex].hanja4,
-                            idiomController.idiomDataList[currentQuestionIndex].randomNum == 4),
-                      ],
+                    Padding(
+                      padding: EdgeInsets.only(top: d(16), bottom: d(16)),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildHanjaButton(sc, idiomController.idiomDataList[currentQuestionIndex].hanja1,
+                              idiomController.idiomDataList[currentQuestionIndex].randomNum == 1),
+                          _buildHanjaButton(sc, idiomController.idiomDataList[currentQuestionIndex].hanja2,
+                              idiomController.idiomDataList[currentQuestionIndex].randomNum == 2),
+                          _buildHanjaButton(sc, idiomController.idiomDataList[currentQuestionIndex].hanja3,
+                              idiomController.idiomDataList[currentQuestionIndex].randomNum == 3),
+                          _buildHanjaButton(sc, idiomController.idiomDataList[currentQuestionIndex].hanja4,
+                              idiomController.idiomDataList[currentQuestionIndex].randomNum == 4),
+                        ],
+                      ),
                     ),
-                    SizedBox(height: gapHalf),
                     const Divider(),
                     Text(
                       quizWrap(idiomController.idiomDataList[currentQuestionIndex].quize2),
                       // '일이삼사오육칠팔구십일이삼사오육칠',
-                      style: TextStyle(fontSize: 20.sp),
+                      style: TextStyle(fontSize: d(20)),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -227,8 +233,8 @@ class _IdiomScreenState extends State<IdiomScreen> {
                             checkAnswer(options[index]);
                           },
                           child: Container(
-                            width: 100.r,
-                            height: 100.r,
+                            width: d(100),
+                            height: d(100),
                             decoration: BoxDecoration(
                               color: mBoxYellow,
                               borderRadius: BorderRadius.circular(10),
@@ -244,7 +250,11 @@ class _IdiomScreenState extends State<IdiomScreen> {
                                           fit: BoxFit.scaleDown,
                                           child: Text(
                                             options[index],
-                                            style: TextStyle(color: mFontMain, fontSize: 50.sp, fontWeight: FontWeight.bold, fontFamily: 'G-Sans'),
+                                            style: TextStyle(
+                                                color: mFontMain,
+                                                fontSize: d(50),
+                                                fontWeight: FontWeight.bold,
+                                                fontFamily: 'G-Sans'),
                                           ),
                                         ),
                                       ),
@@ -285,22 +295,27 @@ class _IdiomScreenState extends State<IdiomScreen> {
     );
   }
 
-  Widget _buildHanjaButton(String hanja, [bool isPlaceholder = false]) {
+  Widget _buildHanjaButton(DesignScale sc, String hanja, [bool isPlaceholder = false]) {
+    double d(num v) => sc.d(v);
     // 정사각형 (기기에 따라 늘어나 보이지 않게)
     return Container(
-      width: 60.r,
-      height: 60.r,
+      width: d(60),
+      height: d(60),
       decoration: BoxDecoration(
         color: isPlaceholder ? mBoxYellow : mBoxLilac,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: mBoxLavender, width: 2.w),
+        border: Border.all(color: mBoxLavender, width: d(2)),
       ),
       child: Center(
         child: FittedBox(
           fit: BoxFit.scaleDown,
           child: Text(
             isPlaceholder ? "?" : hanja,
-            style: TextStyle(color: isPlaceholder ? mFontMain : mFontWhite, fontSize: 30.sp, fontWeight: FontWeight.bold, fontFamily: 'G-Sans'),
+            style: TextStyle(
+                color: isPlaceholder ? mFontMain : mFontWhite,
+                fontSize: d(30),
+                fontWeight: FontWeight.bold,
+                fontFamily: 'G-Sans'),
           ),
         ),
       ),

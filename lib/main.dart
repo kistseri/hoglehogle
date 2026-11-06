@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -13,6 +12,7 @@ import 'package:hoho_hanja/_core/http.dart';
 import 'package:hoho_hanja/_core/style.dart';
 import 'package:hoho_hanja/screens/auth/login/social_login_screen.dart';
 import 'package:hoho_hanja/services/auth/login/auto_login.dart';
+import 'package:hoho_hanja/services/purchase/purchase_controller.dart';
 import 'package:hoho_hanja/utils/coupon_screen.dart';
 import 'package:hoho_hanja/utils/network_check.dart';
 import 'package:hoho_hanja/utils/sound.dart';
@@ -24,8 +24,6 @@ import 'package:path_provider/path_provider.dart';
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 final SoundEffects effect = SoundEffects();
 final BackgroundMusicController music = Get.put(BackgroundMusicController());
-final double screenWidth = MediaQuery.of(Get.context!).size.width;
-final double screenHeight = MediaQuery.of(Get.context!).size.height;
 
 Future<void> main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -46,6 +44,9 @@ Future<void> main() async {
 
   // 네트워크연결 초기화
   Get.put(ConnectivityController());
+
+  // 앱 전체 결제 처리 (로그인하면 결제 리스너 시작, C-04)
+  Get.put(PurchaseController(), permanent: true);
   await settingScreen();
 
   //화면 세로방향 고정
@@ -75,27 +76,21 @@ Future<void> main() async {
   }
 
   runApp(
-    ScreenUtilInit(
-      designSize: const Size(360, 720),
-      minTextAdapt: true,
-      splitScreenMode: true,
+    // ScreenUtilInit 제거: 모든 화면이 DesignScale(가로·세로 중 작은 배율 하나)로 크기를 정함 (C-34)
+    GetMaterialApp(
+      initialBinding: BindingsBuilder(() {}),
+      theme: lightTheme,
+      darkTheme: darkTheme,
+      themeMode: ThemeMode.light,
+      navigatorObservers: [routeObserver],
+      home: const MyApp(),
       builder: (context, child) {
-        return GetMaterialApp(
-          initialBinding: BindingsBuilder(() {}),
-          theme: lightTheme,
-          darkTheme: darkTheme,
-          themeMode: ThemeMode.light,
-          navigatorObservers: [routeObserver],
-          home: const MyApp(),
-          builder: (context, child) {
-            return MediaQuery(
-                data: MediaQuery.of(context).copyWith(
-                  textScaler: TextScaler.noScaling,
-                ),
-                // 스플래시를 Navigator 위에 덮어서 그 사이 뜨는 다이얼로그도 가림
-                child: Platform.isAndroid ? SplashScreen(child: child!) : child!);
-          },
-        );
+        return MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              textScaler: TextScaler.noScaling,
+            ),
+            // 스플래시를 Navigator 위에 덮어서 그 사이 뜨는 다이얼로그도 가림
+            child: Platform.isAndroid ? SplashScreen(child: child!) : child!);
       },
     ),
   );

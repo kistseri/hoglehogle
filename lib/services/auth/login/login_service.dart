@@ -1,4 +1,3 @@
-import 'dart:convert';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -8,14 +7,13 @@ import 'package:hoho_hanja/data/DTO/requestDTO/loginDTO.dart';
 import 'package:hoho_hanja/data/models/login_data.dart';
 import 'package:hoho_hanja/screens/auth/login/local_login_screen.dart';
 import 'package:hoho_hanja/screens/home/home_screen.dart';
-import 'package:hoho_hanja/screens/myroom/myroom_wigets/my_room_item.dart';
+import 'package:hoho_hanja/services/auth/login/auto_login.dart';
 import 'package:hoho_hanja/services/auth/my_goods_service.dart';
 import 'package:hoho_hanja/utils/network_check.dart';
 import 'package:hoho_hanja/widgets/dialog/dialog.dart';
 import 'package:hoho_hanja/widgets/dialog/loading_dialog.dart';
 import 'package:logger/logger.dart';
 
-import '../../myroom/load_item_service.dart';
 
 // 로그인 요청
 Future<void> loginService(LoginDTO loginDTO, bool isAutoLoginChecked) async {
@@ -30,12 +28,13 @@ Future<void> loginService(LoginDTO loginDTO, bool isAutoLoginChecked) async {
 
     showLoading('로그인 중...');
     try {
-      if (loginDTO.email != "" || loginDTO.shaPassword != "") {
+      // 아이디와 비밀번호가 둘 다 있어야 요청 (C-39)
+      if (loginDTO.email != "" && loginDTO.shaPassword != "") {
         // HTTP POST 요청
         final response = await dio.post(url, data: loginDTO.toJson());
         // 응답을 성공적으로 받았을 때
         if (response.statusCode == 200) {
-          final resultList = json.decode(response.data);
+          final resultList = firstJsonMap(decodeBody(response.data)) ?? {}; // 응답 형식 통일 (C-18)
 
           final resultValue = resultList['result'];
 
@@ -45,8 +44,11 @@ Future<void> loginService(LoginDTO loginDTO, bool isAutoLoginChecked) async {
             final LoginDataController loginDataController = Get.put(LoginDataController(), permanent: true);
             loginDataController.setLoginData(loginData);
 
+            // 자동 로그인을 체크했으면 저장, 체크를 풀고 로그인했으면 예전 저장값 삭제 (C-29)
             if (isAutoLoginChecked) {
-              await storage.write(key: 'login', value: 'id ${loginDTO.email} password ${loginDTO.shaPassword}');
+              await storage.write(key: storedLoginKey, value: encodeStoredLogin(loginDTO.email, loginDTO.shaPassword));
+            } else {
+              await storage.delete(key: storedLoginKey);
             }
             // await getToken();
 
@@ -58,6 +60,8 @@ Future<void> loginService(LoginDTO loginDTO, bool isAutoLoginChecked) async {
           // 응답 데이터가 오류일 때("9999": 오류)
           else {
             hideLoading();
+            // 비밀번호가 바뀌는 등으로 실패한 저장값은 지움 (매번 자동 로그인 실패 방지)
+            await storage.delete(key: storedLoginKey);
             failDialog('로그인 실패', '${resultList['message']}');
 
             // 아이디, 비밀번호 입력 초기화

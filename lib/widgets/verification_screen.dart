@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:hoho_hanja/_core/colors.dart';
 import 'package:hoho_hanja/screens/auth/auth_widgets/auth_layout.dart';
@@ -11,7 +12,7 @@ class Verification extends StatelessWidget {
 
   Verification({super.key, required this.id, required this.isJoin});
 
-  final VerificationController controller = Get.put(VerificationController());
+  final VerificationController controller = Get.put(VerificationController())..reset();
 
   @override
   Widget build(BuildContext context) {
@@ -37,46 +38,80 @@ class Verification extends StatelessWidget {
                       ),
                     ),
                   ),
+                  // 인증번호 5자리: 숨긴 입력칸 하나 + 칸 5개 표시
+                  // (붙여넣기·문자 자동완성·백스페이스가 그대로 동작, C-28)
                   Padding(
                     padding: EdgeInsets.only(top: sc.d(32)),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(5, (index) {
-                        return Expanded(
-                          flex: 1,
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: sc.d(8)),
-                            child: TextField(
-                              controller: controller.textControllers[index],
-                              focusNode: controller.focusNodes[index],
-                              textAlign: TextAlign.center,
-                              style: TextStyle(fontSize: sc.d(30)),
-                              maxLength: 1,
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
-                                counterText: "",
-                                contentPadding: EdgeInsets.symmetric(vertical: sc.d(12)),
-                                enabledBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: mTextField, width: sc.d(2)),
-                                  borderRadius: BorderRadius.all(Radius.circular(sc.d(5))),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.all(Radius.circular(sc.d(5))),
-                                ),
-                                fillColor: mTextField,
-                                filled: true,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => controller.focusNode.requestFocus(),
+                      child: Stack(
+                        children: [
+                          // 실제 입력 (보이지 않음)
+                          Opacity(
+                            opacity: 0,
+                            child: SizedBox(
+                              height: sc.d(64),
+                              child: TextField(
+                                controller: controller.codeController,
+                                focusNode: controller.focusNode,
+                                autofocus: true,
+                                keyboardType: TextInputType.number,
+                                autofillHints: const [AutofillHints.oneTimeCode],
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                  LengthLimitingTextInputFormatter(VerificationController.codeLength),
+                                ],
+                                showCursor: false,
+                                enableInteractiveSelection: false,
+                                decoration: const InputDecoration(counterText: '', border: InputBorder.none),
+                                onChanged: (value) {
+                                  if (value.length == VerificationController.codeLength) {
+                                    controller.focusNode.unfocus();
+                                  }
+                                },
                               ),
-                              cursorColor: mFontMain,
-                              onChanged: (value) {
-                                controller.onValueChanged(value, index);
-                              },
-                              onEditingComplete: () {
-                                controller.onBackspace(controller.textControllers[index].text, index);
+                            ),
+                          ),
+                          // 보이는 칸 5개
+                          IgnorePointer(
+                            child: ValueListenableBuilder<TextEditingValue>(
+                              valueListenable: controller.codeController,
+                              builder: (context, value, _) {
+                                final code = value.text;
+                                return Row(
+                                  children: List.generate(VerificationController.codeLength, (index) {
+                                    final isCurrent = index == code.length ||
+                                        (index == VerificationController.codeLength - 1 &&
+                                            code.length == VerificationController.codeLength);
+                                    return Expanded(
+                                      child: Padding(
+                                        padding: EdgeInsets.symmetric(horizontal: sc.d(8)),
+                                        child: Container(
+                                          height: sc.d(64),
+                                          alignment: Alignment.center,
+                                          decoration: BoxDecoration(
+                                            color: mTextField,
+                                            borderRadius: BorderRadius.circular(sc.d(5)),
+                                            border: Border.all(
+                                              color: isCurrent ? mFontMain : mTextField,
+                                              width: sc.d(2),
+                                            ),
+                                          ),
+                                          child: Text(
+                                            index < code.length ? code[index] : '',
+                                            style: TextStyle(fontSize: sc.d(30), color: mFontMain),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }),
+                                );
                               },
                             ),
                           ),
-                        );
-                      }),
+                        ],
+                      ),
                     ),
                   ),
                   Padding(
@@ -98,24 +133,21 @@ class Verification extends StatelessWidget {
 }
 
 class VerificationController extends GetxController {
-  final textControllers = List<TextEditingController>.generate(
-      5, (index) => TextEditingController()).obs;
-  final focusNodes = List<FocusNode>.generate(5, (index) => FocusNode()).obs;
+  static const int codeLength = 5;
 
-  void onValueChanged(String value, int index) {
-    if (value.isNotEmpty && index < 4) {
-      FocusScope.of(Get.context!).requestFocus(focusNodes[index + 1]);
-    }
+  final codeController = TextEditingController();
+  final focusNode = FocusNode();
 
-    if (index == 4 && value.isNotEmpty) {
-      focusNodes[index].unfocus();
-    }
-  }
+  String get code => codeController.text;
 
-  void onBackspace(String value, int index) {
-    if (value.isEmpty && index > 0) {
-      FocusScope.of(Get.context!).requestFocus(focusNodes[index - 1]);
-    }
+  // 인증 화면을 새로 열 때 이전에 입력한 번호 지우기
+  void reset() => codeController.clear();
+
+  @override
+  void onClose() {
+    codeController.dispose();
+    focusNode.dispose();
+    super.onClose();
   }
 }
 
@@ -133,9 +165,8 @@ class ConfirmButton extends StatelessWidget {
     return AuthButton(
       text: text,
       color: mBtnActive,
-      fontFamily: 'mainFont',
       onTap: () {
-        verificationService(controller.textControllers.map((e) => e.text).join(), id, isJoin);
+        verificationService(controller.code, id, isJoin);
       },
     );
   }

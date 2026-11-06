@@ -37,6 +37,8 @@ Future<void> appleLogin() async {
     }
 
     String result = await emailCheckService(email);
+    // 연결 실패 등 확인 자체가 안 됐으면 가입 화면으로 보내지 않음 (안내창은 emailCheckService가 띄움)
+    if (result != "0000" && result != "9999") return;
     if (result == "0000") {
       Logger().d(credential.userIdentifier);
       LoginData loginData = LoginData(id: email, nickName: nickName);

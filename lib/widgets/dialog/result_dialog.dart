@@ -24,9 +24,14 @@ const List<({IconData icon, Color color, double size, double top, double left})>
   (icon: Icons.circle, color: Colors.amber, size: 10, top: 505, left: 325),
 ];
 
-void resultDialog(BuildContext context, int correctAnswers, int totalQuestions, String coin) {
-  // 결과 저장에 실패하면 서버 문구('예외' 등) 대신 '-' 로 표시
-  final String coinText = int.tryParse(coin.trim()) != null ? coin.trim() : '-';
+// 결과 저장에 실패하면 서버 문구('예외' 등) 대신 '-' 로 표시
+String _coinText(String coin) => int.tryParse(coin.trim()) != null ? coin.trim() : '-';
+
+/// [onRetry]: 결과 저장에 실패했을 때(코인 '-') '다시 저장' 버튼이 부를 함수. 보통 () => resultService(code, count) (C-19)
+void resultDialog(BuildContext context, int correctAnswers, int totalQuestions, String coin,
+    {Future<String> Function()? onRetry}) {
+  String coinText = _coinText(coin);
+  bool saving = false;
 
   showGeneralDialog(
     context: context,
@@ -41,6 +46,46 @@ void resultDialog(BuildContext context, int correctAnswers, int totalQuestions, 
       // 시안 화면(360 x 720)을 실제 화면 가운데에 맞춤
       final cx = size.width / 2;
       final cy = size.height / 2;
+
+      return StatefulBuilder(builder: (context, setDialogState) {
+      final failed = coinText == '-';
+
+      Widget button(String label, Color color, double width, VoidCallback? onTap) {
+        return GestureDetector(
+          onTap: onTap,
+          child: Container(
+            height: d(40),
+            width: d(width),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: onTap == null ? color.withValues(alpha: 0.5) : color,
+              borderRadius: BorderRadius.circular(d(50)),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(color: mFontWhite, fontSize: d(16), fontWeight: FontWeight.bold),
+            ),
+          ),
+        );
+      }
+
+      Future<void> retry() async {
+        if (onRetry == null || saving) return;
+        setDialogState(() => saving = true);
+        final newCoin = await onRetry();
+        setDialogState(() {
+          saving = false;
+          coinText = _coinText(newCoin);
+        });
+        if (coinText == '-') {
+          Get.snackbar('저장 실패', '인터넷 연결을 확인하고 다시 시도해주세요.', snackPosition: SnackPosition.BOTTOM);
+        }
+      }
+
+      Future<void> goHome() async {
+        await myGoodsService();
+        Get.offAll(() => const HomeScreen());
+      }
 
       return PopScope(
         canPop: false,
@@ -143,29 +188,20 @@ void resultDialog(BuildContext context, int correctAnswers, int totalQuestions, 
                             ),
                             Padding(
                               padding: EdgeInsets.all(d(16)),
-                              child: GestureDetector(
-                                onTap: () async {
-                                  await myGoodsService();
-                                  Get.offAll(() => const HomeScreen());
-                                },
-                                child: Container(
-                                  height: d(40),
-                                  width: d(144),
-                                  alignment: Alignment.center,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFFEBE30),
-                                    borderRadius: BorderRadius.circular(d(50)),
-                                  ),
-                                  child: Text(
-                                    '메인으로',
-                                    style: TextStyle(
-                                      color: mFontWhite,
-                                      fontSize: d(16),
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
+                              // 저장에 실패했으면 '다시 저장'과 '메인으로'를 나란히 (C-19)
+                              child: failed && onRetry != null
+                                  ? Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        button(saving ? '저장 중…' : '다시 저장', const Color(0xFF8BC34A), 112,
+                                            saving ? null : retry),
+                                        Padding(
+                                          padding: EdgeInsets.only(left: d(12)),
+                                          child: button('메인으로', const Color(0xFFFEBE30), 112, saving ? null : goHome),
+                                        ),
+                                      ],
+                                    )
+                                  : button('메인으로', const Color(0xFFFEBE30), 144, goHome),
                             ),
                           ],
                         ),
@@ -178,6 +214,7 @@ void resultDialog(BuildContext context, int correctAnswers, int totalQuestions, 
           ),
         ),
       );
+      });
     },
   );
 }

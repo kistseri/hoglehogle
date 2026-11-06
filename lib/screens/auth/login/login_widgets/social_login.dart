@@ -83,7 +83,7 @@ Widget getPlatform(String platform, DesignScale sc) {
           ),
           Padding(
             padding: EdgeInsets.only(top: sc.d(16)),
-            child: Divider(height: sc.d(16), thickness: sc.d(1)),
+            child: Divider(height: sc.d(16), thickness: sc.d(1), color:Color(0xFFD9D9D9)),
           ),
         ],
       );

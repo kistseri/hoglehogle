@@ -108,6 +108,7 @@ class _DefineScreenState extends State<DefineScreen> {
           score,
           defineController.quiz.length,
           coin,
+          onRetry: () => resultService(widget.code, score),
         );
       }
     } else {

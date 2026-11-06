@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:hoho_hanja/_core/colors.dart';
 import 'package:hoho_hanja/_core/constants.dart';
@@ -17,7 +16,7 @@ import 'package:hoho_hanja/services/bake/bake_service.dart';
 import 'package:hoho_hanja/services/cookie/cookie_service.dart';
 import 'package:hoho_hanja/services/define/define_service.dart';
 import 'package:hoho_hanja/services/idiom/idiom_service.dart';
-import 'package:hoho_hanja/services/matching/matching_service.dart';
+import 'package:hoho_hanja/services/matching/matching_body_service.dart';
 import 'package:hoho_hanja/services/purchase/product_service.dart';
 import 'package:hoho_hanja/services/tracing/tracing_body_service.dart';
 import 'package:hoho_hanja/utils/connect_info.dart';
@@ -73,7 +72,9 @@ class _HomeBodyState extends State<HomeBody> {
   double _r(num v) => v + (_dw - designWidth) - (_m - baseMargin);
 
   double _d(num v) => v * _s;
+
   double _x(num v) => v * _s;
+
   double _y(num v) => _top + v * _s;
 
   String get grade => widget.grade;
@@ -82,11 +83,12 @@ class _HomeBodyState extends State<HomeBody> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      myGoodsService();
+      refreshGoodsIfStale(); // 최근에 받아 왔으면 생략 (C-44)
     });
   }
 
-  bool isContentLocked(String grade) {
+  // 서버 lock 값이 true면 '열린' 급수 (예전 이름 isContentLocked는 의미가 반대였음, C-42)
+  bool isContentOpen(String grade) {
     return contentsData.contentsDataList.any((content) => content.phase == grade && content.lock);
   }
 
@@ -130,8 +132,7 @@ class _HomeBodyState extends State<HomeBody> {
       fontSize: _d(size),
       color: Colors.white,
       shadows: [
-        for (final offset in [Offset(0, -o), Offset(o, 0), Offset(0, o), Offset(-o, 0)])
-          Shadow(offset: offset, color: Colors.grey, blurRadius: o),
+        for (final offset in [Offset(0, -o), Offset(o, 0), Offset(0, o), Offset(-o, 0)]) Shadow(offset: offset, color: Colors.grey, blurRadius: o),
       ],
     );
   }
@@ -141,8 +142,7 @@ class _HomeBodyState extends State<HomeBody> {
   Future<void> _onTracing() async {
     if (_tracingBusy) return;
     // 잠금 정보를 아직 못 받았으면(불러오기 실패·급수 바꾸는 중) 들어가지 않음
-    final tracing = contentsData.contentsDataList
-        .firstWhereOrNull((content) => content.code == contentsCodes['tracing'] && content.phase == grade);
+    final tracing = contentsData.contentsDataList.firstWhereOrNull((content) => content.code == contentsCodes['tracing'] && content.phase == grade);
     if (tracing == null) {
       failDialog('불러오기 실패', '잠시 후 다시 시도해주세요.');
       return;
@@ -151,8 +151,7 @@ class _HomeBodyState extends State<HomeBody> {
     _tracingBusy = true;
     try {
       await connectInfo(contentsCodes['tracing']);
-      // isContentLocked는 이름과 달리 '열림' 여부
-      await tracingBodyService(grade, tracing.openPage, isContentLocked(grade));
+      await tracingBodyService(grade, tracing.openPage, isContentOpen(grade));
     } finally {
       _tracingBusy = false;
     }
@@ -163,8 +162,7 @@ class _HomeBodyState extends State<HomeBody> {
   Future<void> _onMatching() async {
     if (_matchingBusy) return;
     // 잠금 정보를 아직 못 받았으면(불러오기 실패·급수 바꾸는 중) 들어가지 않음
-    final matching = contentsData.contentsDataList
-        .firstWhereOrNull((content) => content.code == contentsCodes['matching'] && content.phase == grade);
+    final matching = contentsData.contentsDataList.firstWhereOrNull((content) => content.code == contentsCodes['matching'] && content.phase == grade);
     if (matching == null) {
       failDialog('불러오기 실패', '잠시 후 다시 시도해주세요.');
       return;
@@ -173,8 +171,7 @@ class _HomeBodyState extends State<HomeBody> {
     _matchingBusy = true;
     try {
       await connectInfo(contentsCodes['matching']);
-      // isContentLocked는 이름과 달리 '열림' 여부. 열려 있으면 카드 전부(null)
-      await matchingService(grade, isContentLocked(grade) ? null : matching.openPage);
+      await matchingBodyService(grade, matching.openPage, isContentOpen(grade));
     } finally {
       _matchingBusy = false;
     }
@@ -196,7 +193,7 @@ class _HomeBodyState extends State<HomeBody> {
     if (_defineBusy) return;
     _defineBusy = true;
     try {
-      if (isContentLocked(grade)) {
+      if (isContentOpen(grade)) {
         await connectInfo(contentsCodes['define']);
         await defineService(grade, contentsCodes['define']);
       } else {
@@ -213,7 +210,7 @@ class _HomeBodyState extends State<HomeBody> {
     if (_bakeBusy) return;
     _bakeBusy = true;
     try {
-      if (isContentLocked(grade)) {
+      if (isContentOpen(grade)) {
         await connectInfo(contentsCodes['bake']);
         await bakeService(grade, contentsCodes['bake']);
       } else {
@@ -230,7 +227,7 @@ class _HomeBodyState extends State<HomeBody> {
     if (_cookieBusy) return;
     _cookieBusy = true;
     try {
-      if (isContentLocked(grade)) {
+      if (isContentOpen(grade)) {
         await connectInfo(contentsCodes['cookie']);
         await cookieService(grade, contentsCodes['cookie']);
       } else {
@@ -247,7 +244,7 @@ class _HomeBodyState extends State<HomeBody> {
     if (_idiomBusy) return;
     _idiomBusy = true;
     try {
-      if (isContentLocked(grade)) {
+      if (isContentOpen(grade)) {
         await connectInfo(contentsCodes['idiom']);
         await idiomService(grade, contentsCodes['idiom']);
       } else {

@@ -5,7 +5,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:hoho_hanja/data/models/login_data.dart';
@@ -26,24 +25,21 @@ Future<void> _pump(WidgetTester tester, {Size size = const Size(360, 780), doubl
   tester.view.padding = FakeViewPadding(top: top, bottom: bottom);
   addTearDown(tester.view.reset);
   await tester.pumpWidget(
-    ScreenUtilInit(
-      designSize: const Size(360, 720),
-      builder: (_, __) => GetMaterialApp(
-        theme: ThemeData(fontFamily: 'NotoSansKR-Regular'),
-        home: RepaintBoundary(
-          child: Builder(builder: (context) {
-            final mq = MediaQuery.of(context);
-            final s = [mq.size.width / 360, (mq.size.height - top - bottom) / 698].reduce((a, b) => a < b ? a : b);
-            return Scaffold(
-              // 홈의 설정 탭과 같은 높이의 앱바 자리
-              appBar: PreferredSize(
-                preferredSize: Size.fromHeight(53 * s),
-                child: Container(color: Colors.green.shade100),
-              ),
-              body: const SettingScreen(),
-            );
-          }),
-        ),
+    GetMaterialApp(
+      theme: ThemeData(fontFamily: 'NotoSansKR-Regular'),
+      home: RepaintBoundary(
+        child: Builder(builder: (context) {
+          final mq = MediaQuery.of(context);
+          final s = [mq.size.width / 360, (mq.size.height - top - bottom) / 698].reduce((a, b) => a < b ? a : b);
+          return Scaffold(
+            // 홈의 설정 탭과 같은 높이의 앱바 자리
+            appBar: PreferredSize(
+              preferredSize: Size.fromHeight(53 * s),
+              child: Container(color: Colors.green.shade100),
+            ),
+            body: const SettingScreen(),
+          );
+        }),
       ),
     ),
   );
@@ -177,4 +173,3 @@ void main() {
     expect(find.byType(SettingScreen), findsOneWidget);
   });
 }
-

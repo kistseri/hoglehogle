@@ -50,6 +50,8 @@ class _CookieScreenState extends State<CookieScreen> {
       code: widget.code,
       // 앱바·진행 표시 아래부터 쿠키를 떨어뜨림
       topInset: sc.y(GameHud.bottom + 4),
+      // 땅 윗면 (쿠키는 땅 뒤로 쑥 들어가며 사라짐)
+      groundTop: mq.size.height - bottom - d(_groundHeight),
       cookieSize: d(_cookieSize),
     );
 
@@ -71,15 +73,19 @@ class _CookieScreenState extends State<CookieScreen> {
                 alignment: Alignment.topCenter,
               ),
             ),
+            // 게임 (쿠키는 화면 폭 전체에서 떨어짐)
+            Positioned.fill(child: GameWidget(game: game)),
+            // 꼬리·땅·다람쥐는 쿠키보다 앞에 그림: 쿠키가 땅 뒤로 쑥 들어가며 사라지게 (터치는 뒤의 쿠키로 통과)
             // 다람쥐 꼬리 (원래 163 x 166 그림을 절반 크기로)
-            place(-11.5, 50, 81.5, 83, Image.asset('assets/images/cookie/squirrel_tail1.png', fit: BoxFit.contain)),
+            place(-11.5, 50, 81.5, 83,
+                IgnorePointer(child: Image.asset('assets/images/cookie/squirrel_tail1.png', fit: BoxFit.contain))),
             // 땅 (홈 표시줄 칸까지 채움)
             Positioned(
               left: 0,
               right: 0,
               bottom: 0,
               height: bottom + d(_groundHeight),
-              child: const ColoredBox(color: Colors.brown),
+              child: const IgnorePointer(child: ColoredBox(color: Colors.brown)),
             ),
             // 다람쥐 (원래 228 x 227 그림을 2.5분의 1 크기로)
             place(
@@ -87,20 +93,20 @@ class _CookieScreenState extends State<CookieScreen> {
               70,
               91.2,
               90.8,
-              Obx(
-                // 맞힌 직후엔 좋아하는 얼굴, 정답이 바닥 가까이 오면 걱정하는 얼굴
-                () => Image.asset(
-                  cookieController.isHappy.value
-                      ? 'assets/images/cookie/squirrel_fighting.png'
-                      : cookieController.isWorried.value
-                          ? 'assets/images/cookie/squirrel_worry.png'
-                          : 'assets/images/cookie/squirrel_smile.png',
-                  fit: BoxFit.contain,
+              IgnorePointer(
+                child: Obx(
+                  // 맞힌 직후엔 좋아하는 얼굴, 틀리거나 정답이 바닥 가까이 오면 걱정하는 얼굴
+                  () => Image.asset(
+                    cookieController.isHappy.value
+                        ? 'assets/images/cookie/squirrel_fighting.png'
+                        : cookieController.isWorried.value
+                            ? 'assets/images/cookie/squirrel_worry.png'
+                            : 'assets/images/cookie/squirrel_smile.png',
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
             ),
-            // 게임 (쿠키는 화면 폭 전체에서 떨어짐)
-            Positioned.fill(child: GameWidget(game: game)),
             // 문제 말풍선: 쿠키보다 위에 그려서 가려지지 않게 (터치는 뒤의 쿠키로 통과)
             if (cookieController.quiz.isNotEmpty)
               place(
@@ -121,15 +127,15 @@ class _CookieScreenState extends State<CookieScreen> {
               right: 0,
               child: DesignAppBar(scale: sc, inset: inset),
             ),
-            // 시작 카운트다운 (3 → 2 → 1 → 시작!)
+            // 가운데 큰 글자: 시작 카운트다운(3 → 2 → 1 → 시작!), 끝날 때 '다 모았어요!'/'아쉬워요!'
             Positioned.fill(
               child: IgnorePointer(
                 child: Obx(() {
-                  final text = game.countdownText.value;
+                  final text = game.bannerText.value;
                   if (text.isEmpty) return const SizedBox.shrink();
                   return Center(
                     child: TweenAnimationBuilder<double>(
-                      // 숫자가 바뀔 때마다 크게 나타났다가 제자리로
+                      // 글자가 바뀔 때마다 크게 나타났다가 제자리로
                       key: ValueKey(text),
                       tween: Tween(begin: 1.6, end: 1.0),
                       duration: const Duration(milliseconds: 300),
@@ -138,7 +144,7 @@ class _CookieScreenState extends State<CookieScreen> {
                       child: Text(
                         text,
                         style: TextStyle(
-                          fontSize: d(text.length > 1 ? 56 : 80),
+                          fontSize: d(text.length <= 1 ? 80 : (text.length <= 3 ? 56 : 44)),
                           fontWeight: FontWeight.w900,
                           color: mFontYellow,
                           shadows: [

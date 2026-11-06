@@ -34,7 +34,7 @@ class DefineData {
 }
 
 class DefineDataController extends GetxController {
-  List<DefineData> _defineDataList = <DefineData>[].obs;
+  List<DefineData> _defineDataList = <DefineData>[]; // 화면이 값을 지켜보지 않고 열기 전에 넣으므로 일반 List + update() (C-38)
 
   // 정답·오답이 비었거나 둘이 같은 데이터는 뺌 (빈 버튼·정답 두 개 방지)
   void setDefineDataList(List<DefineData> defineDataList) {

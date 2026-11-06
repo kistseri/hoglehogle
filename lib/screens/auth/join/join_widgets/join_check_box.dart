@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:hoho_hanja/services/auth/update/nickname_check_service.dart';
 import 'package:hoho_hanja/_core/colors.dart';
 import 'package:hoho_hanja/data/DTO/requestDTO/joinDTO.dart';
 import 'package:hoho_hanja/screens/auth/join/join_screen.dart';
@@ -70,6 +71,22 @@ class _JoinCheckBoxState extends State<JoinCheckBox> {
                 );
                 return;
               }
+
+              // 닉네임 칸에서 포커스가 빠질 때만 중복 검사를 하므로, 제출 직전에 한 번 더 검사 (C-25)
+              final nickName = joinController.nickNameController.text.trim();
+              final status = await nicknameCheckService('join', nickName);
+              if (status == 'duplication') {
+                joinController.nickNameController.text = '';
+                Get.snackbar('알림', '중복된 닉네임입니다. 다른 닉네임을 입력해주세요.',
+                    snackPosition: SnackPosition.BOTTOM, duration: const Duration(seconds: 3));
+                return;
+              }
+              if (status == '예외발생') {
+                Get.snackbar('알림', '닉네임을 확인하지 못했습니다. 잠시 후 다시 시도해주세요.',
+                    snackPosition: SnackPosition.BOTTOM, duration: const Duration(seconds: 3));
+                return;
+              }
+              if (status != 'available') return; // 인터넷 연결 없음 (안내창은 nicknameCheckService가 띄움)
 
               joinReqDTO.setJoinDTO(
                   email: joinController.emailController.text,
@@ -162,9 +179,7 @@ class _JoinCheckBoxState extends State<JoinCheckBox> {
             ),
             GestureDetector(
               onTap: () {
-                if (onTap != null) {
-                  onTap(context);
-                }
+                onTap(context);
               },
               child: Text(
                 text,
@@ -178,9 +193,7 @@ class _JoinCheckBoxState extends State<JoinCheckBox> {
         ),
         GestureDetector(
           onTap: () {
-            if (onTap != null) {
-              onTap(context);
-            }
+            onTap(context);
           },
           child: Icon(
             CupertinoIcons.forward,

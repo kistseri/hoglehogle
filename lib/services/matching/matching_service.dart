@@ -14,7 +14,7 @@ import 'package:logger/logger.dart';
 bool _isLoading = false;
 
 // 한자 맞추기 (openPage: 열린 카드 수, null이면 전부)
-Future<void> matchingService(String phase, int? openPage) async {
+Future<void> matchingService(String phase, int? openPage, String gubun) async {
   if (_isLoading) return;
   _isLoading = true;
 
@@ -29,6 +29,7 @@ Future<void> matchingService(String phase, int? openPage) async {
 
     final Map<String, dynamic> requestData = {
       'phase': phase,
+      'gubun': gubun,
     };
 
     // HTTP POST 요청
@@ -41,7 +42,7 @@ Future<void> matchingService(String phase, int? openPage) async {
 
       // 카드가 없는 급수
       if (resultList.isEmpty) {
-        failDialog('준비중', '준비 중입니다.');
+        failDialog('알림', '준비 중입니다.');
         return;
       }
 
@@ -50,6 +51,10 @@ Future<void> matchingService(String phase, int? openPage) async {
       // 응답 결과가 있는 경우
       if (resultValue == "0000") {
         List<MatchingData> matchingDataList = resultList.map((item) => MatchingData.fromJson(item)).toList();
+        // 카드 순서를 랜덤으로 (잠긴 급수는 열린 openPage장 안에서만 섞어 열린 카드가 바뀌지 않게)
+        final openCount = (openPage ?? matchingDataList.length).clamp(0, matchingDataList.length);
+        final opened = matchingDataList.sublist(0, openCount)..shuffle();
+        matchingDataList = [...opened, ...matchingDataList.sublist(openCount)];
         final MatchingDataController matchingController = Get.put(MatchingDataController());
         matchingController.setMatchingDataList(matchingDataList);
 

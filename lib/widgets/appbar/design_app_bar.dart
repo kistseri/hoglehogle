@@ -43,7 +43,7 @@ class _DesignAppBarState extends State<DesignAppBar> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      myGoodsService();
+      refreshGoodsIfStale(); // 최근에 받아 왔으면 생략 (C-44)
     });
   }
 

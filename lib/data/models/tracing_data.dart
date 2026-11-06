@@ -21,7 +21,7 @@ class TracingData {
 }
 
 class TracingDataController extends GetxController {
-  List<TracingData> _tracingDataList = <TracingData>[].obs;
+  List<TracingData> _tracingDataList = <TracingData>[]; // 화면이 값을 지켜보지 않고 열기 전에 넣으므로 일반 List + update() (C-38)
 
   void setTracingData(List<TracingData> tracingDataList) {
     _tracingDataList = tracingDataList;

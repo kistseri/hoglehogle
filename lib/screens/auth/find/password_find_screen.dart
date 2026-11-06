@@ -5,6 +5,7 @@ import 'package:hoho_hanja/screens/auth/auth_widgets/auth_layout.dart';
 import 'package:hoho_hanja/screens/auth/join/join_widgets/join_textfield.dart';
 import 'package:hoho_hanja/services/auth/find/password_find_service.dart';
 import 'package:hoho_hanja/utils/design_scale.dart';
+import 'package:hoho_hanja/widgets/dialog/dialog.dart';
 
 class PasswordFindScreen extends StatefulWidget {
   const PasswordFindScreen({super.key});
@@ -67,9 +68,18 @@ class _PasswordFindScreenState extends State<PasswordFindScreen> {
                   AuthButton(
                     text: '확인',
                     color: mBtnActive,
-                    fontFamily: 'mainFont',
                     onTap: () {
-                      passwordFindService(emailController.text, phoneController.text);
+                      // 입력값 확인 후 요청 (C-27)
+                      final email = emailController.text.trim();
+                      final phone = phoneController.text.replaceAll(RegExp(r'[^0-9]'), '');
+                      // 이메일 형식이 아닌 아이디(예: test)로 가입한 기존 회원이 있어 형식은 검사하지 않음
+                      if (email.isEmpty) {
+                        failDialog('비밀번호 찾기 실패', '아이디(이메일)를 입력해주세요.');
+                      } else if (phone.length != 10 && phone.length != 11) {
+                        failDialog('비밀번호 찾기 실패', '휴대폰 번호를 정확히 입력해주세요.');
+                      } else {
+                        passwordFindService(email, phone);
+                      }
                     },
                   ),
                 ],

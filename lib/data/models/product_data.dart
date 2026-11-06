@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:hoho_hanja/data/models/json_parse.dart';
 
 class ProductData {
   final String productName;
@@ -17,11 +18,12 @@ class ProductData {
 
   factory ProductData.fromJson(Map<String, dynamic> json) {
     return ProductData(
-      productName: json['product_name'],
-      dia: json['dia'],
-      coin: json['coin'] ?? 0,
-      color: json['color'],
-      price: json['price'],
+      // 서버 값 타입이 바뀌어도 TypeError 없이 받음 (C-37)
+      productName: jsonStr(json['product_name']),
+      dia: jsonInt(json['dia']),
+      coin: jsonInt(json['coin']),
+      color: jsonStr(json['color']),
+      price: jsonInt(json['price']),
     );
   }
 }

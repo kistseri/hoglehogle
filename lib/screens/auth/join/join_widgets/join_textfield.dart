@@ -58,7 +58,6 @@ class JoinTextField extends StatelessWidget {
         return TextInputType.phone;
       case TextFieldType.password:
       case TextFieldType.normal:
-      default:
         return TextInputType.text;
     }
   }

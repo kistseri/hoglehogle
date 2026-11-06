@@ -1,8 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
 
 
@@ -11,6 +9,7 @@
             android:name="${applicationName}"
             android:icon="@mipmap/ic_launcher"
             android:usesCleartextTraffic="true">
+        <!-- 결제 서버(stst88981.cafe24.com)가 http만 받으므로 허용 (11/06 결정). https 연결되면 삭제 (R-11, C-14) -->
         <!-- Android 16(targetSdk 36) 태블릿·폴더블에서도 세로 고정이 무시되지 않게 -->
         <property
                 android:name="android.window.PROPERTY_COMPAT_ALLOW_RESTRICTED_RESIZABILITY"

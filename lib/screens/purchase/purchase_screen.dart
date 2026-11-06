@@ -1,15 +1,11 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:hoho_hanja/services/purchase/verify_receipt_service.dart';
+import 'package:hoho_hanja/services/purchase/purchase_controller.dart';
 import 'package:hoho_hanja/widgets/dialog/show_parental_dialog.dart';
-import 'package:hoho_hanja/widgets/parental_gate.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
-import 'package:in_app_purchase_storekit/store_kit_wrappers.dart';
-import 'package:intl/intl.dart';
 
 import 'package:hoho_hanja/_core/colors.dart';
 import 'package:hoho_hanja/data/models/product_data.dart';
@@ -28,154 +24,37 @@ class PurchaseScreen extends StatefulWidget {
 
 class _PurchaseScreenState extends State<PurchaseScreen> {
   final productController = Get.find<ProductDataController>();
-  final InAppPurchase _inAppPurchase = InAppPurchase.instance;
+  final purchaseController = ensurePurchaseController();
 
-  List<ProductDetails> products = [];
-  late StreamSubscription<List<PurchaseDetails>> _purchaseUpdatedSubscription;
-  bool _isPendingTransaction = false;
-
-  String currentProblem = '';
-  dynamic currentSolution;
+  // 서버 상품(다이아 수·색) ↔ 스토어 상품(실제 결제·가격)을 product_name == product.id 로 짝지음 (C-09)
+  List<StoreProduct> products = [];
+  bool _loaded = false;
 
   @override
   void initState() {
     super.initState();
-    _initializePurchaseFlow();
-  }
-
-  Future<void> _initializePurchaseFlow() async {
-    if (Platform.isIOS) {
-      final transactions = await SKPaymentQueueWrapper().transactions();
-      for (var tx in transactions) {
-        Logger().d("iOS 미완료 결제 정리: ${tx.transactionIdentifier}");
-        await SKPaymentQueueWrapper().finishTransaction(tx);
-      }
-    }
-    await _fetchProducts();
-    _purchaseUpdatedSubscription = _inAppPurchase.purchaseStream.listen(_handlePurchaseUpdate, onError: (error) {
-      Logger().d(error);
-    });
+    // iOS 미완료 거래를 지급 없이 finish 하던 코드 삭제 (C-01): 전역 리스너가 받아 지급 후 끝냄
+    _fetchProducts();
   }
 
   Future<void> _fetchProducts() async {
-    Set<String> ids = productController.productData!.map((item) => item.productName).toSet();
-
-    ProductDetailsResponse response = await _inAppPurchase.queryProductDetails(ids);
-
-    final Map<String, ProductDetails> productDetailsMap = {
-      for (var product in response.productDetails) product.id: product
-    };
-
-    final List<ProductDetails> orderedProducts =
-        ids.map((id) => productDetailsMap[id]).where((product) => product != null).cast<ProductDetails>().toList();
-
+    final serverProducts = productController.productData ?? [];
+    List<ProductDetails> storeProducts = [];
+    try {
+      final response =
+          await InAppPurchase.instance.queryProductDetails(serverProducts.map((p) => p.productName).toSet());
+      storeProducts = response.productDetails;
+    } catch (e) {
+      Logger().e('스토어 상품 조회 실패: $e');
+    }
+    for (final p in storeProducts) {
+      purchaseController.storePrices[p.id] = p.price;
+    }
     if (!mounted) return;
     setState(() {
-      products = orderedProducts;
+      products = matchStoreProducts(serverProducts, storeProducts);
+      _loaded = true;
     });
-  }
-
-  Future<void> _buyProduct(ProductDetails product) async {
-    if (_isPendingTransaction) {
-      return;
-    }
-    setState(() {
-      _isPendingTransaction = true;
-    });
-
-    try {
-      await _inAppPurchase.buyConsumable(
-        purchaseParam: PurchaseParam(productDetails: product),
-        autoConsume: true,
-      );
-    } catch (error) {
-      setState(() {
-        _isPendingTransaction = false;
-      });
-    }
-  }
-
-  Future<void> _handlePurchaseUpdate(List<PurchaseDetails> purchaseDetailsList) async {
-    for (var purchaseDetails in purchaseDetailsList) {
-      Logger().d(purchaseDetails.status);
-      switch (purchaseDetails.status) {
-        case PurchaseStatus.pending:
-          setState(() => _isPendingTransaction = true);
-          Get.snackbar(
-            '결제 대기',
-            '대표 계정의 승인을 기다리고 있습니다.',
-            snackPosition: SnackPosition.BOTTOM,
-          );
-          break;
-
-        case PurchaseStatus.purchased:
-        case PurchaseStatus.restored:
-          Logger().d("구매 완료/복원: ${purchaseDetails.productID}");
-          final isVerified = await _verifyPurchase(purchaseDetails);
-          await _inAppPurchase.completePurchase(purchaseDetails);
-          if (isVerified) {
-            Logger().d("결제 처리 완료: ${purchaseDetails.productID}");
-            Get.snackbar('구매 완료', '다이아 구매가 완료되었습니다.');
-          } else {
-            Logger().w("결제 검증 실패: ${purchaseDetails.productID}");
-            Get.snackbar('결제 실패', '영수증 검증에 실패했습니다.');
-          }
-          setState(() => _isPendingTransaction = false);
-          break;
-
-        case PurchaseStatus.error:
-          Logger().e("결제 오류: ${purchaseDetails.error}");
-          Get.snackbar(
-            '결제 실패',
-            '오류가 발생했습니다: ${purchaseDetails.error?.message}',
-            snackPosition: SnackPosition.BOTTOM,
-          );
-          setState(() => _isPendingTransaction = false);
-          break;
-
-        default:
-          setState(() => _isPendingTransaction = false);
-          break;
-      }
-    }
-  }
-
-  Future<bool> _verifyPurchase(PurchaseDetails purchaseDetails) async {
-    try {
-      final platform = Platform.isAndroid ? 'google' : 'apple';
-      final matchingProduct = products.firstWhere(
-        (product) => product.id == purchaseDetails.productID,
-        orElse: () => throw Exception(
-          'Product not found: ${purchaseDetails.productID}',
-        ),
-      );
-      final statusToSend = (purchaseDetails.status == PurchaseStatus.restored)
-          ? 'purchased'
-          : purchaseDetails.status.toString().split('.').last;
-
-      bool result = false;
-      if (platform == 'google') {
-        result = await verifyGoogleReceipt(
-          purchaseDetails,
-          matchingProduct.price,
-        );
-      } else if (platform == 'apple') {
-        result = await verifyAppleReceipt(
-          purchaseDetails,
-          matchingProduct.price,
-        );
-      }
-      print('===============result: $result ===============');
-      return result;
-    } catch (e, st) {
-      Logger().e("영수증 검증 중 오류 $e, $st");
-      return false;
-    }
-  }
-
-  String _formatPrice(int price) {
-    final formatter = NumberFormat('#,###');
-    return formatter.format(price);
   }
 
   // 시안(360 폭) 기준 크기. 배율 하나로만 키우거나 줄이고, 태블릿에서는 시안 폭으로 가운데 정렬
@@ -204,7 +83,12 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
                   PurchaseHeader(scale: sc),
                   Expanded(
                     child: products.isEmpty
-                        ? const Center(child: CircularProgressIndicator(color: primaryColor))
+                        ? Center(
+                            child: _loaded
+                                ? Text('지금은 구매할 수 있는 상품이 없습니다.',
+                                    style: TextStyle(fontSize: d(16), fontFamily: 'BMJUA', color: Colors.black54))
+                                : const CircularProgressIndicator(color: primaryColor),
+                          )
                         : Center(
                             child: SizedBox(
                               width: d(DesignScale.designWidth),
@@ -227,6 +111,16 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
                 ],
               ),
             ),
+            // 결제 진행 중 표시 (앱바는 위에 두어 뒤로가기는 가능)
+            // Positioned는 Stack 바로 아래에 있어야 하므로 Obx를 안쪽에 둠
+            Positioned.fill(
+              child: Obx(() => purchaseController.busy.value
+                  ? const ColoredBox(
+                      color: Colors.black26,
+                      child: Center(child: CircularProgressIndicator(color: primaryColor)),
+                    )
+                  : const SizedBox.shrink()),
+            ),
             // 앱바 (다른 화면과 같은 시안 좌표·크기)
             Positioned(
               left: 0,
@@ -242,11 +136,14 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
 
   Widget _productCard(DesignScale sc, int index) {
     double d(num v) => sc.d(v);
-    final data = productController.productData![index];
-    final color = Color(int.parse(data.color));
+    final data = products[index].data;
+    final storeProduct = products[index].store;
+    // 서버 색상 값 형식이 다르면 기본색 (C-22)
+    final colorValue = int.tryParse(data.color);
+    final color = colorValue != null ? Color(colorValue) : primaryColor;
 
     return GestureDetector(
-      onTap: () => confirmPurchase(products[index]),
+      onTap: () => confirmPurchase(storeProduct),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -267,14 +164,22 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
               width: d(100),
               height: d(100),
               fit: BoxFit.contain,
+              // dia_30·40·45·50 외의 개수면 기본 다이아 아이콘 (C-22)
+              errorBuilder: (context, error, stackTrace) => Image.asset(
+                'assets/images/icon/diamond.png',
+                width: d(100),
+                height: d(100),
+                fit: BoxFit.contain,
+              ),
             ),
             Padding(
               padding: EdgeInsets.all(d(8)),
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: d(24), vertical: d(4)),
                 decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(d(15))),
+                // 스토어 현지화 가격 표시 (스토어 정책, C-23)
                 child: Text(
-                  '${_formatPrice(data.price)}원',
+                  storeProduct.price,
                   style:
                       TextStyle(color: mFontWhite, fontSize: d(14), fontWeight: FontWeight.bold, fontFamily: 'BMJUA'),
                 ),
@@ -286,7 +191,11 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
     );
   }
 
-  void confirmPurchase(product) {
+  void confirmPurchase(ProductDetails product) {
+    if (purchaseController.busy.value) {
+      Get.snackbar('결제 진행 중', '진행 중인 결제가 끝난 뒤 다시 시도해주세요.', snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
     Get.defaultDialog(
       title: '결제',
       middleText: '정말로 결제 하시겠습니까?',
@@ -298,20 +207,29 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
         Get.back();
         if (!Platform.isAndroid) {
           showParentalDialog(context, () async {
-            Logger().d('클릭');
-            await _buyProduct(product);
+            await purchaseController.buy(product);
           });
         } else {
-          await _buyProduct(product);
+          await purchaseController.buy(product);
         }
       },
       onCancel: () {},
     );
   }
+}
 
-  @override
-  void dispose() {
-    _purchaseUpdatedSubscription.cancel();
-    super.dispose();
-  }
+/// 화면에 보여줄 상품 하나: 서버 상품 정보 + 실제 결제할 스토어 상품
+class StoreProduct {
+  const StoreProduct(this.data, this.store);
+  final ProductData data;
+  final ProductDetails store;
+}
+
+/// 서버 상품 순서대로, 같은 id의 스토어 상품이 있는 것만 (스토어에 없는 상품은 숨김, C-09)
+List<StoreProduct> matchStoreProducts(List<ProductData> serverProducts, List<ProductDetails> storeProducts) {
+  final byId = {for (final p in storeProducts) p.id: p};
+  return [
+    for (final data in serverProducts)
+      if (byId[data.productName] != null) StoreProduct(data, byId[data.productName]!),
+  ];
 }

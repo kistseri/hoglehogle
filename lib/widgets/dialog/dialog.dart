@@ -21,7 +21,7 @@
 // }
 
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:hoho_hanja/utils/design_scale.dart';
 import 'package:get/get.dart';
 
 Future<dynamic> failDialog(title, description) {
@@ -40,18 +40,20 @@ Future<dynamic> failDialog(title, description) {
           Navigator.of(context).removeRoute(route);
         }
       });
+      // 다른 화면과 같은 배율 하나로 글자 크기 (ScreenUtil 대신, C-34)
+      final sc = DesignScale.fromContext(context);
       return AlertDialog(
         title: Center(
           child: Text(
             title,
             style: TextStyle(
-              fontSize: 18.sp,
+              fontSize: sc.d(18),
             ),
           ),
         ),
         content: Text(
           description,
-          style: TextStyle(fontSize: 16.sp),
+          style: TextStyle(fontSize: sc.d(16)),
           textAlign: TextAlign.center,
         ),
         actions: <Widget>[
@@ -60,7 +62,7 @@ Future<dynamic> failDialog(title, description) {
               // 제목·내용처럼 화면 크기에 맞춤 (태블릿에서 너무 작게 보이지 않도록)
               child: Text(
                 "확인",
-                style: TextStyle(color: Colors.red, fontSize: 15.sp),
+                style: TextStyle(color: Colors.red, fontSize: sc.d(15)),
               ),
               onPressed: () {
                 Navigator.of(context).pop(); // 다이얼로그 닫기
