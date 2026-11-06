@@ -168,7 +168,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver, Ro
   Widget build(BuildContext context) {
     return PopScope(
       canPop: _selectedIndex != 2 ? false : true,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         _onWillPop();
       },
       child: Scaffold(

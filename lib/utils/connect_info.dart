@@ -1,4 +1,3 @@
-import 'dart:convert';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
@@ -8,41 +7,29 @@ import 'package:hoho_hanja/utils/network_check.dart';
 import 'package:hoho_hanja/widgets/dialog/dialog.dart';
 import 'package:logger/logger.dart';
 
-// 콘텐츠 접속 정보
+// 콘텐츠 접속 정보 (접속 기록용이라 실패해도 콘텐츠 진입은 막지 않음)
 Future<void> connectInfo(code) async {
   final connectivityController = Get.put(ConnectivityController());
   final logincontroller = Get.put(LoginDataController(), permanent: true);
-  if (connectivityController.isConnected.value) {
-    String url = dotenv.get('CONNECT_INFO_URL');
-
-    final Map<String, dynamic> requestData = {
-      'id': logincontroller.loginData.value!.id,
-      'code': code,
-    };
-
-    try {
-      // HTTP POST 요청 (시간 초과·서버 오류도 아래 catch에서 처리)
-      final response = await dio.post(url, data: jsonEncode(requestData));
-
-      // 응답을 성공적으로 받았을 때
-      if (response.statusCode == 200) {
-        final resultList = json.decode(response.data);
-        final resultValue = resultList['result'];
-
-        // 응답 결과가 있는 경우
-        if (resultValue == "0000") {
-        }
-        // 응답 데이터가 오류일 때("9999": 오류)
-        else {
-          failDialog('접근 실패', '${resultList['message']}');
-        }
-      }
-    }
-    // 예외처리
-    catch (e) {
-      Logger().d('e = $e');
-    }
-  } else {
+  if (!connectivityController.isConnected.value) {
     failDialog("연결 실패", "인터넷 연결을 확인해주세요");
+    return;
+  }
+
+  // 로그인 정보가 없으면 요청하지 않음 (C-21)
+  final id = logincontroller.userId;
+  if (id == null) {
+    Logger().w('connectInfo: 로그인 정보 없음');
+    return;
+  }
+
+  // 요청·응답 처리를 공통 함수로 (C-18)
+  final result = await postJson(dotenv.get('CONNECT_INFO_URL'), {'id': id, 'code': code});
+  if (result == null) {
+    Logger().w('connectInfo: 요청 실패');
+    return;
+  }
+  if (result['result'] != "0000") {
+    failDialog('접근 실패', '${result['message'] ?? ''}');
   }
 }

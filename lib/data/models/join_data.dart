@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:hoho_hanja/data/models/json_parse.dart';
 
 class JoinData {
   final String result;
@@ -9,7 +10,7 @@ class JoinData {
 
   factory JoinData.fromJson(Map<String, dynamic> json) {
     return JoinData(
-      result: json['result'] ?? "",
+      result: jsonStr(json['result']),
     );
   }
 }

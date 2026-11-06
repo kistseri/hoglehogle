@@ -1,7 +1,6 @@
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 
 List<String> getSocialPlatforms() {
@@ -23,16 +22,6 @@ List<String> getSocialPlatforms() {
   return ["local"]; // 기본값 (웹이나 다른 플랫폼일 경우)
 }
 
-final List<Map<String, dynamic>> iconData = [
-  {'icon': Icons.circle, 'color': Colors.amber, 'size': 30.sp, 'top': 135.h, 'left': 35.w},
-  {'icon': Icons.circle, 'color': Colors.amber, 'size': 15.sp, 'top': 165.h, 'left': 20.w},
-  {'icon': Icons.circle, 'color': Colors.lightGreen, 'size': 7.5.sp, 'top': 400.h, 'left': 15.w},
-  {'icon': Icons.star, 'color': Colors.white, 'size': 10.sp, 'top': 520.h, 'left': 35.w},
-  {'icon': Icons.star, 'color': Colors.amber, 'size': 20.sp, 'top': 160.h, 'left': 300.w},
-  {'icon': Icons.circle, 'color': Colors.lightGreen, 'size': 10.sp, 'top': 180.h, 'left': 325.w},
-  {'icon': Icons.star, 'color': Colors.white, 'size': 25.sp, 'top': 520.h, 'left': 300.w},
-  {'icon': Icons.circle, 'color': Colors.amber, 'size': 10.sp, 'top': 505.h, 'left': 325.w},
-];
 
 const List<Color> gridColors = [
   Color(0xFFC7E7C1),

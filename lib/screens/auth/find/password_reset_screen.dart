@@ -81,7 +81,6 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                   AuthButton(
                     text: '변경하기',
                     color: mBtnActive,
-                    fontFamily: 'mainFont',
                     onTap: () {
                       final password = passwordController.text;
                       final passwordConfirm = passwordConfirmController.text;

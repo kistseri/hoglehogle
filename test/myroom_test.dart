@@ -5,7 +5,6 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:hoho_hanja/data/models/goods_data.dart';
@@ -61,12 +60,9 @@ Future<void> _pump(WidgetTester tester, {Size size = const Size(360, 780), doubl
   tester.view.padding = FakeViewPadding(top: top, bottom: bottom);
   addTearDown(tester.view.reset);
   await tester.pumpWidget(
-    ScreenUtilInit(
-      designSize: const Size(360, 720),
-      builder: (_, __) => GetMaterialApp(
-        theme: ThemeData(fontFamily: 'NotoSansKR-Regular'),
-        home: RepaintBoundary(child: MyRoomScreen(onPressed: () {})),
-      ),
+    GetMaterialApp(
+      theme: ThemeData(fontFamily: 'NotoSansKR-Regular'),
+      home: RepaintBoundary(child: MyRoomScreen(onPressed: () {})),
     ),
   );
   // 오프라인이라 앱바의 코인 조회가 띄우는 '연결 실패' 팝업이 3초 뒤 저절로 닫히길 기다림
@@ -77,12 +73,6 @@ Future<void> _pump(WidgetTester tester, {Size size = const Size(360, 780), doubl
 
 void main() {
   setUp(() {
-    ScreenUtil.configure(
-      data: const MediaQueryData(size: Size(360, 780)),
-      designSize: const Size(360, 720),
-      splitScreenMode: false,
-      minTextAdapt: false,
-    );
     _setUpControllers();
   });
 

@@ -1,4 +1,3 @@
-import 'dart:convert';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
@@ -20,7 +19,7 @@ Future<void> settingScreen() async {
 
     // 응답을 성공적으로 받았을 때
     if (response.statusCode == 200) {
-      final Map<String, dynamic> resultList = json.decode(response.data);
+      final Map<String, dynamic> resultList = firstJsonMap(decodeBody(response.data)) ?? {}; // C-18
       // 응답 결과가 있는 경우
       if (resultList['result'] == "0000") {
         final yn = resultList['yn'];

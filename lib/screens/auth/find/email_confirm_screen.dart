@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:hoho_hanja/_core/colors.dart';
 import 'package:hoho_hanja/screens/auth/auth_widgets/auth_layout.dart';
 import 'package:hoho_hanja/screens/auth/find/password_find_screen.dart';
+import 'package:hoho_hanja/screens/auth/login/local_login_screen.dart';
+import 'package:hoho_hanja/screens/auth/login/social_login_screen.dart';
 import 'package:hoho_hanja/utils/design_scale.dart';
 
 class EmailConfirmScreen extends StatelessWidget {
@@ -56,15 +58,17 @@ class EmailConfirmScreen extends StatelessWidget {
                 AuthButton(
                   text: '로그인 하기',
                   color: mBtnActive,
-                  fontFamily: 'mainFont',
-                  onTap: () {},
+                  // 찾기 화면들을 닫고 이메일 로그인 화면으로 (C-11)
+                  onTap: () {
+                    Get.offAll(() => const LoginScreen());
+                    Get.to(() => const LocalLoginScreen());
+                  },
                 ),
                 Padding(
                   padding: EdgeInsets.only(top: sc.d(16)),
                   child: AuthButton(
                     text: '비밀번호 찾기',
                     color: mBtnBack,
-                    fontFamily: 'mainFont',
                     onTap: () {
                       Get.to(() => const PasswordFindScreen());
                     },

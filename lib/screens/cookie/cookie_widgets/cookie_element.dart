@@ -16,20 +16,24 @@ final Map<int, Vector2> _textCenters = {
   4: Vector2(0.505, 0.58), // 폭탄: 위 심지를 빼고 조금 아래
 };
 
-class CookieElement extends SpriteComponent
-    with TapCallbacks, HasGameReference<CookieGame> {
-  // 문제의 정답으로 떨어뜨린 쿠키인지 (놓치면 게임오버, 정답 판정은 누르는 순간의 문제로 함)
+// 떨어지는 한자 쿠키. position 은 쿠키의 가운데
+class CookieElement extends SpriteComponent with TapCallbacks, HasGameReference<CookieGame> {
+
+  // 문제의 정답으로 떨어뜨린 쿠키인지 (놓치면 목숨 -1, 정답 판정은 누르는 순간의 문제로 함)
   final bool isAnswer;
   final String text;
   final double speed;
-  bool isPopping = false; // 정답을 맞혀 터지는 중 (더 떨어지지 않고 눌리지 않음)
+  // 사라지는 연출 중 (정답 터짐·오답·놓침): 더 떨어지지 않고 눌리지 않으며 판정에서 빠짐
+  bool isLeaving = false;
+
+  final Random _random = Random();
 
   CookieElement({
     required this.isAnswer,
     required this.text,
     required this.speed,
     required double cookieSize,
-  }) {
+  }) : super(anchor: Anchor.center) {
     // 정사각형 (태블릿에서 납작해지지 않게)
     width = cookieSize;
     height = cookieSize;
@@ -38,8 +42,8 @@ class CookieElement extends SpriteComponent
   @override
   Future<void> onLoad() async {
     super.onLoad();
-    final imageIndex =
-        isAnswer ? Random().nextInt(3) + 1 : Random().nextInt(4) + 1;
+
+    final imageIndex = isAnswer ? _random.nextInt(3) + 1 : _random.nextInt(4) + 1;
 
     final imagePath = 'cookie/cookie_c0$imageIndex.png';
     sprite = await Sprite.load(imagePath);
@@ -60,32 +64,66 @@ class CookieElement extends SpriteComponent
     );
 
     add(textComponent);
+
+    // 등장: 작게 시작해서 톡 커지며 나타남
+    scale = Vector2.all(0.2);
+    add(ScaleEffect.to(Vector2.all(1), EffectController(duration: 0.3, curve: Curves.easeOutBack)));
   }
 
   @override
   void update(double dt) {
     super.update(dt);
-    if (game.isGameOver || isPopping) return;
+    if (game.isGameOver || isLeaving) return;
     position.y += speed * dt;
   }
 
-  // 정답 연출: 제자리에서 톡 커졌다가 사라짐
+  // 정답: 제자리에서 톡 커졌다가 사라짐
   void pop() {
-    if (isPopping) return;
-    isPopping = true;
-    // 가운데를 기준으로 커지게
-    anchor = Anchor.center;
-    position += size / 2;
+    if (!_startLeaving()) return;
     addAll([
       ScaleEffect.to(Vector2.all(1.4), EffectController(duration: 0.15, curve: Curves.easeOut)),
       RemoveEffect(delay: 0.18),
     ]);
   }
 
+  // 오답: 회색으로 바뀌며 부르르 떨다가 작아지며 사라짐 (무엇을 눌렀는지 보이게)
+  void reject() {
+    if (!_startLeaving()) return;
+    tint(const Color(0x99777777));
+    _shakeThenShrink();
+  }
+
+  // 정답을 놓침: 빨갛게 반짝이며 부르르 떨다가 사라짐
+  void missed() {
+    if (!_startLeaving()) return;
+    tint(const Color(0x88FF3B3B));
+    _shakeThenShrink();
+  }
+
+  bool _startLeaving() {
+    if (isLeaving || isRemoving) return false;
+    isLeaving = true;
+    return true;
+  }
+
+  void _shakeThenShrink() {
+    final d = width * 0.1;
+    addAll([
+      SequenceEffect([
+        MoveByEffect(Vector2(-d, 0), EffectController(duration: 0.05)),
+        MoveByEffect(Vector2(d * 2, 0), EffectController(duration: 0.08)),
+        MoveByEffect(Vector2(-d * 2, 0), EffectController(duration: 0.08)),
+        MoveByEffect(Vector2(d, 0), EffectController(duration: 0.05)),
+      ]),
+      ScaleEffect.to(Vector2.all(0), EffectController(duration: 0.25, startDelay: 0.3, curve: Curves.easeIn)),
+      RemoveEffect(delay: 0.58),
+    ]);
+  }
+
   @override
   void onTapDown(TapDownEvent event) {
     // 이미 사라지는 중인 쿠키를 같은 순간 또 누르면 무시 (목숨 두 번 깎임 방지)
-    if (isRemoving || isPopping) return;
+    if (isRemoving || isLeaving) return;
     game.onCookieTapped(this);
   }
 }

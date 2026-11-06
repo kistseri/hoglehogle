@@ -4,8 +4,10 @@ import 'package:hoho_hanja/data/models/goods_data.dart';
 import 'package:hoho_hanja/data/models/rank_data.dart';
 import 'package:hoho_hanja/screens/auth/login/local_login_screen.dart';
 import 'package:hoho_hanja/screens/auth/login/social_login_screen.dart';
+import 'package:hoho_hanja/services/auth/login/auto_login.dart';
 import 'package:hoho_hanja/services/auth/login/social/google_service.dart';
 import 'package:hoho_hanja/services/auth/login/social/kakao_service.dart';
+import 'package:hoho_hanja/services/purchase/purchase_controller.dart';
 
 // 중복 탭 막기
 bool _loggingOut = false;
@@ -29,9 +31,12 @@ Future<void> logout() async {
 /// 마이룸 옷·옷장은 다음 로그인 때 계정이 바뀌면 resetFor가 지움.
 /// 로그인 정보(LoginDataController)는 아직 떠 있는 화면이 읽을 수 있어 그대로 두고, 다음 로그인 때 덮어씀.
 Future<void> clearLoginState({bool unlinkSocial = false}) async {
+  // 결제 리스너 해제 (끝나지 않은 결제는 다음 로그인 때 다시 받아 처리)
+  if (Get.isRegistered<PurchaseController>()) Get.find<PurchaseController>().stop();
+
   final storage = Get.put(const FlutterSecureStorage());
   try {
-    await storage.delete(key: "login");
+    await storage.delete(key: storedLoginKey);
   } catch (_) {}
 
   final loginController = Get.put(LoginController());

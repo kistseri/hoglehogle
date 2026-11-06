@@ -163,7 +163,7 @@ class MyroomItem extends StatelessWidget {
                     Image.asset('assets/images/icon/coin.png', height: w * 0.18),
                     Padding(
                       padding: EdgeInsets.only(left: w * 0.02),
-                      child: Text('${item.coin}', style: outlineTextStyle(w * 0.13).copyWith(fontSize: w * 0.13)),
+                      child: Text('${item.coin}', style: outlineTextStyle(w * 0.13)),
                     ),
                   ],
                 ),

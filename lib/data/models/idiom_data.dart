@@ -43,7 +43,7 @@ class IdiomData {
 }
 
 class IdiomDataController extends GetxController {
-  List<IdiomData> _idiomDataList = <IdiomData>[].obs;
+  List<IdiomData> _idiomDataList = <IdiomData>[]; // 화면이 값을 지켜보지 않고 열기 전에 넣으므로 일반 List + update() (C-38)
 
   // 정답 한자가 빈 데이터는 뺌
   void setIdiomDataList(List<IdiomData> idiomDataList) {

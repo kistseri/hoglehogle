@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:hoho_hanja/data/models/json_parse.dart';
 
 class ContentsData {
   final String result;
@@ -18,16 +19,17 @@ class ContentsData {
   });
 
   ContentsData.fromJson(Map<String, dynamic> json)
-      : result = json["result"],
-        phase = json["phase"],
-        code = json["code"],
-        contentName = json["contentsName"],
-        lock = json["lock"] == "Y",
-        openPage = json["openpage"];
+      // 서버 값 타입이 바뀌어도 TypeError 없이 받음 (C-37)
+      : result = jsonStr(json["result"]),
+        phase = jsonStr(json["phase"]),
+        code = jsonStr(json["code"]),
+        contentName = jsonStr(json["contentsName"]),
+        lock = jsonStr(json["lock"]).trim().toUpperCase() == "Y",
+        openPage = jsonInt(json["openpage"]);
 }
 
 class ContentsDataController extends GetxController {
-  List<ContentsData> _contentsDataList = <ContentsData>[].obs;
+  List<ContentsData> _contentsDataList = <ContentsData>[]; // 화면이 값을 지켜보지 않고 열기 전에 넣으므로 일반 List + update() (C-38)
 
   void setContentsDataList(List<ContentsData> contentsDataList) {
     _contentsDataList = contentsDataList;

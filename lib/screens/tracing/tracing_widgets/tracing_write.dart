@@ -128,7 +128,7 @@ class _TracingWriteState extends State<TracingWrite> {
     String result = await resultService(widget.code, count);
     await Future.delayed(const Duration(seconds: 1));
     if (!mounted) return;
-    resultDialog(context, count, totalIndex, result);
+    resultDialog(context, count, totalIndex, result, onRetry: () => resultService(widget.code, count));
   }
 
   void _onResetTracing() {

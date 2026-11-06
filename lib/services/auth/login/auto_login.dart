@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
@@ -12,6 +14,29 @@ import 'package:hoho_hanja/widgets/dialog/dialog.dart';
 // 자동 로그인 //
 /////////////////
 
+/// 보안 저장소 키
+const String storedLoginKey = 'login';
+
+/// 자동 로그인 저장값: JSON {"id": 이메일, "pw": 비밀번호 해시} (C-29)
+String encodeStoredLogin(String id, String shaPassword) => jsonEncode({'id': id, 'pw': shaPassword});
+
+/// 저장값 읽기. 예전 형식("id 이메일 password 해시")도 읽음. 형식이 틀리면 null
+({String id, String pw})? decodeStoredLogin(String? raw) {
+  if (raw == null || raw.isEmpty) return null;
+  try {
+    final m = jsonDecode(raw);
+    if (m is Map && m['id'] is String && m['pw'] is String && m['id'] != '' && m['pw'] != '') {
+      return (id: m['id'] as String, pw: m['pw'] as String);
+    }
+  } on FormatException {
+    final parts = raw.split(' ');
+    if (parts.length == 4 && parts[0] == 'id' && parts[2] == 'password' && parts[1] != '' && parts[3] != '') {
+      return (id: parts[1], pw: parts[3]);
+    }
+  }
+  return null;
+}
+
 // 기기에 저장된 유저 정보 컨트롤러
 class CheckStoredUserInfoController extends GetxController {
   AutoLoginCheckController autoLoginCheckController =
@@ -24,11 +49,15 @@ class CheckStoredUserInfoController extends GetxController {
 
   checkStoredUserInfo() async {
     // read 함수를 통해 key값에 맞는 정보를 불러옴(불러오는 타입은 String 데이터가 없다면 null)
-    String? userInfo = await storage.read(key: "login");
+    String? userInfo;
+    try {
+      userInfo = await storage.read(key: storedLoginKey);
+    } catch (_) {}
+    final stored = decodeStoredLogin(userInfo);
 
-    if (userInfo != null) {
-      storedUserId = userInfo.split(" ")[1];
-      storedUserPassword = userInfo.split(" ")[3];
+    if (stored != null) {
+      storedUserId = stored.id;
+      storedUserPassword = stored.pw;
       autoLoginCheckController.isChecked.value = true;
       return true;
     } else {

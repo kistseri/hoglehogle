@@ -27,7 +27,7 @@ class BakeData {
 }
 
 class BakeDataController extends GetxController {
-  List<BakeData> _bakeDataList = <BakeData>[].obs;
+  List<BakeData> _bakeDataList = <BakeData>[]; // 화면이 값을 지켜보지 않고 열기 전에 넣으므로 일반 List + update() (C-38)
   List<List<String>> _options = [];
 
   // 문제 순서와 문제별 보기 순서는 불러올 때 한 번만 섞음

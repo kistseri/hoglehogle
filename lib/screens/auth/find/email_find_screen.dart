@@ -57,7 +57,6 @@ class _EmailFindScreenState extends State<EmailFindScreen> {
                   AuthButton(
                     text: '인증번호 받기',
                     color: mBtnActive,
-                    fontFamily: 'mainFont',
                     onTap: () {
                       if (phoneController.text.isEmpty) {
                         Get.defaultDialog(

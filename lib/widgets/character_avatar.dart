@@ -35,19 +35,15 @@ class CharacterAvatar extends StatelessWidget {
 
   static int safeIndex(int i) => (i >= 0 && i < characterList.length) ? i : 0;
 
-  // 모자별 위치 보정 (마이룸과 같음): 파일 이름 hat_6 → 오른쪽, hat_9 → 왼쪽, hat_8 → 아래
-  static ({double dx, double dy}) hatAdjust(String url) {
-    switch (_fileName(url)) {
-      case 'hat_6':
-        return (dx: 10, dy: 0);
-      case 'hat_9':
-        return (dx: -10, dy: 0);
-      case 'hat_8':
-        return (dx: 0, dy: 5);
-      default:
-        return (dx: 0, dy: 0);
-    }
-  }
+  // 모자별 위치 보정 표 (파일 이름 → 마이룸 단위, dx 양수 = 오른쪽, dy 양수 = 아래)
+  // 새 모자 그림이 어긋나 보이면 여기에 한 줄 추가 (switch 문 대신 옷 보정과 같은 표 방식, C-43)
+  static const Map<String, ({double dx, double dy})> hatOffsets = {
+    'hat_6': (dx: 10, dy: 0),
+    'hat_9': (dx: -10, dy: 0),
+    'hat_8': (dx: 0, dy: 5),
+  };
+
+  static ({double dx, double dy}) hatAdjust(String url) => hatOffsets[_fileName(url)] ?? (dx: 0, dy: 0);
 
   // 옷별 크기 보정 (파일 이름 → 배율, 위쪽(목) 위치는 그대로)
   static final Map<String, double> clothesScale = {

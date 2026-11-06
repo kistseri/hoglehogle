@@ -40,5 +40,11 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+    # 마이크를 쓰지 않으므로 audio_session(just_audio 의존)의 마이크 코드를 빼서
+    # NSMicrophoneUsageDescription 없이도 App Store 업로드가 되게 함 (C-51)
+    target.build_configurations.each do |config|
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'AUDIO_SESSION_MICROPHONE=0'
+    end
   end
 end
