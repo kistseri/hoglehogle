@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:hoho_hanja/_core/colors.dart';
 import 'package:hoho_hanja/_core/constants.dart';
 import 'package:hoho_hanja/screens/auth/auth_widgets/auth_layout.dart';
@@ -7,6 +6,7 @@ import 'package:hoho_hanja/screens/auth/join/join_widgets/join_textfield.dart';
 import 'package:hoho_hanja/services/auth/update/password_reset_service.dart';
 import 'package:hoho_hanja/utils/design_scale.dart';
 import 'package:hoho_hanja/utils/encryption.dart';
+import 'package:hoho_hanja/widgets/dialog/dialog.dart';
 
 class PasswordResetScreen extends StatefulWidget {
   final String id;
@@ -22,12 +22,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
   final TextEditingController passwordConfirmController = TextEditingController();
 
   void _showInputError(String message) {
-    Get.snackbar(
-      '입력 확인',
-      message,
-      snackPosition: SnackPosition.BOTTOM,
-      duration: const Duration(seconds: 3),
-    );
+    failDialog('입력 확인', message);
   }
 
   @override
@@ -81,7 +76,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                   AuthButton(
                     text: '변경하기',
                     color: mBtnActive,
-                    onTap: () {
+                    onTap: () async {
                       final password = passwordController.text;
                       final passwordConfirm = passwordConfirmController.text;
 
@@ -98,7 +93,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                         return;
                       }
 
-                      passwordResetService(widget.id, sha256_convertHash(password));
+                      await passwordResetService(widget.id, sha256_convertHash(password));
                     },
                   ),
                 ],

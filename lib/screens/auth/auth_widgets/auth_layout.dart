@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -76,10 +77,11 @@ TextStyle authInputStyle(DesignScale sc) => TextStyle(fontSize: sc.d(15), height
 const double _inputLineHeight = 1.2; // 입력칸 글자 줄 높이 (글자 크기 배수)
 
 /// 둥근 큰 버튼 (로그인·인증·확인 등)
-class AuthButton extends StatelessWidget {
+/// [onTap]이 Future를 돌려주면 끝날 때까지 다시 눌러도 무시 (인증번호 문자·가입 요청이 두 번 가지 않도록)
+class AuthButton extends StatefulWidget {
   final String text;
   final Color color;
-  final VoidCallback? onTap;
+  final FutureOr<void> Function()? onTap;
   final double fontSize; // 시안 단위
   final String? fontFamily;
 
@@ -93,18 +95,35 @@ class AuthButton extends StatelessWidget {
   });
 
   @override
+  State<AuthButton> createState() => _AuthButtonState();
+}
+
+class _AuthButtonState extends State<AuthButton> {
+  bool _busy = false;
+
+  Future<void> _handleTap() async {
+    if (_busy || widget.onTap == null) return;
+    _busy = true;
+    try {
+      await widget.onTap!();
+    } finally {
+      _busy = false;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final sc = DesignScale.fromContext(context);
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap == null ? null : _handleTap,
       child: Container(
         width: double.infinity,
         height: sc.d(50),
         alignment: Alignment.center,
-        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(sc.d(50))),
+        decoration: BoxDecoration(color: widget.color, borderRadius: BorderRadius.circular(sc.d(50))),
         child: Text(
-          text,
-          style: TextStyle(color: Colors.white, fontSize: sc.d(fontSize), fontFamily: fontFamily),
+          widget.text,
+          style: TextStyle(color: Colors.white, fontSize: sc.d(widget.fontSize), fontFamily: widget.fontFamily),
         ),
       ),
     );

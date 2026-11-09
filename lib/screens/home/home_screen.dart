@@ -71,10 +71,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver, Ro
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    // 홈 위에 게임이 떠 있어도 이 화면이 받으므로, 홈 음악을 새로 틀지 않고 지금 음악을 멈췄다 이어서 틂
+    // (예전에는 게임 중에 앱을 내렸다 오면 게임 음악 대신 홈 음악이 나왔음)
     if (state == AppLifecycleState.paused) {
-      music.stopBackgroundMusic();
-    } else if (state == AppLifecycleState.resumed && _selectedIndex == 2) {
-      music.playBackgroundMusic('main');
+      music.pauseForBackground();
+    } else if (state == AppLifecycleState.resumed) {
+      music.resumeFromBackground();
     }
     super.didChangeAppLifecycleState(state);
   }

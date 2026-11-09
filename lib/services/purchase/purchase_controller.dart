@@ -11,6 +11,7 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 import 'package:in_app_purchase_storekit/in_app_purchase_storekit.dart';
 import 'package:logger/logger.dart';
+import 'package:hoho_hanja/widgets/dialog/dialog.dart';
 
 /// 등록된 결제 컨트롤러를 돌려줌. 없으면(핫 리로드 등으로 main을 안 거친 경우) 만들고,
 /// 로그인한 상태인데 리스너가 아직 없으면 시작
@@ -45,7 +46,7 @@ class PurchaseController extends GetxController {
         _consume = consume,
         _pastPurchases = pastPurchases,
         _onGranted = onGranted ?? myGoodsService,
-        _notify = notify ?? ((t, m) => Get.snackbar(t, m, snackPosition: SnackPosition.BOTTOM));
+        _notify = notify ?? ((t, m) => failDialog(t, m));
 
   final InAppPurchase? _iapOverride;
   final PostJsonFn _post;

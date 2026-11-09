@@ -14,6 +14,7 @@ import 'package:hoho_hanja/screens/purchase/purchase_widgets/toggle_button.dart'
 import 'package:hoho_hanja/utils/design_scale.dart';
 import 'package:hoho_hanja/widgets/appbar/design_app_bar.dart';
 import 'package:logger/logger.dart';
+import 'package:hoho_hanja/widgets/dialog/dialog.dart';
 
 class PurchaseScreen extends StatefulWidget {
   const PurchaseScreen({super.key});
@@ -191,11 +192,17 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
     );
   }
 
+  bool _confirmOpen = false; // 결제 확인창이 떠 있는지
+
   void confirmPurchase(ProductDetails product) {
     if (purchaseController.busy.value) {
-      Get.snackbar('결제 진행 중', '진행 중인 결제가 끝난 뒤 다시 시도해주세요.', snackPosition: SnackPosition.BOTTOM);
+      failDialog('결제 진행 중', '진행 중인 결제가 끝난 뒤 다시 시도해주세요.');
       return;
     }
+    // 상품을 연타해도 확인창은 하나만
+    // (Get.isDialogOpen은 잠금해제 창 위에서 상점을 열면 계속 true라 결제창이 안 떴음 → 이 화면이 직접 기억)
+    if (_confirmOpen) return;
+    _confirmOpen = true;
     Get.defaultDialog(
       title: '결제',
       middleText: '정말로 결제 하시겠습니까?',
@@ -214,7 +221,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
         }
       },
       onCancel: () {},
-    );
+    ).whenComplete(() => _confirmOpen = false);
   }
 }
 

@@ -1,5 +1,6 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
+import 'package:hoho_hanja/data/models/contents_data.dart';
 import 'package:hoho_hanja/data/models/goods_data.dart';
 import 'package:hoho_hanja/data/models/rank_data.dart';
 import 'package:hoho_hanja/screens/auth/login/local_login_screen.dart';
@@ -27,7 +28,7 @@ Future<void> logout() async {
 /// 기기에 남은 로그인 흔적 지우기 (로그아웃·탈퇴 공통)
 /// - 자동 로그인 정보, 이메일 로그인 입력칸
 /// - 카카오·구글 로그인 (다음에 다른 계정을 고를 수 있도록). 애플은 앱에서 해제하는 기능이 없음.
-/// - 코인·다이아·랭킹 (다음 계정에 이전 계정 값이 잠깐 보이지 않도록)
+/// - 코인·다이아·랭킹·콘텐츠 잠금 정보 (다음 계정에 이전 계정 값이 잠깐 보이지 않도록)
 /// 마이룸 옷·옷장은 다음 로그인 때 계정이 바뀌면 resetFor가 지움.
 /// 로그인 정보(LoginDataController)는 아직 떠 있는 화면이 읽을 수 있어 그대로 두고, 다음 로그인 때 덮어씀.
 Future<void> clearLoginState({bool unlinkSocial = false}) async {
@@ -50,6 +51,9 @@ Future<void> clearLoginState({bool unlinkSocial = false}) async {
   }
   if (Get.isRegistered<RankDataController>()) {
     Get.find<RankDataController>().setRankData([]);
+  }
+  if (Get.isRegistered<ContentsDataController>()) {
+    Get.find<ContentsDataController>().clear();
   }
 
   await Future.wait([

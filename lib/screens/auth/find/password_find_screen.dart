@@ -68,7 +68,7 @@ class _PasswordFindScreenState extends State<PasswordFindScreen> {
                   AuthButton(
                     text: '확인',
                     color: mBtnActive,
-                    onTap: () {
+                    onTap: () async {
                       // 입력값 확인 후 요청 (C-27)
                       final email = emailController.text.trim();
                       final phone = phoneController.text.replaceAll(RegExp(r'[^0-9]'), '');
@@ -78,7 +78,7 @@ class _PasswordFindScreenState extends State<PasswordFindScreen> {
                       } else if (phone.length != 10 && phone.length != 11) {
                         failDialog('비밀번호 찾기 실패', '휴대폰 번호를 정확히 입력해주세요.');
                       } else {
-                        passwordFindService(email, phone);
+                        await passwordFindService(email, phone);
                       }
                     },
                   ),

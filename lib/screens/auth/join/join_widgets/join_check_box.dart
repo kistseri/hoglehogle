@@ -9,6 +9,7 @@ import 'package:hoho_hanja/screens/auth/join/join_screen.dart';
 import 'package:hoho_hanja/screens/auth/join/join_widgets/join_button.dart';
 import 'package:hoho_hanja/services/auth/join/get_auth_code.dart';
 import 'package:hoho_hanja/utils/design_scale.dart';
+import 'package:hoho_hanja/widgets/dialog/dialog.dart';
 
 class JoinCheckBox extends StatefulWidget {
   final String method;
@@ -63,12 +64,7 @@ class _JoinCheckBoxState extends State<JoinCheckBox> {
             movePage: () async {
               final error = _validateInputs(joinController);
               if (error != null) {
-                Get.snackbar(
-                  '입력 확인',
-                  error,
-                  snackPosition: SnackPosition.BOTTOM,
-                  duration: const Duration(seconds: 3),
-                );
+                failDialog('입력 확인', error);
                 return;
               }
 
@@ -77,13 +73,11 @@ class _JoinCheckBoxState extends State<JoinCheckBox> {
               final status = await nicknameCheckService('join', nickName);
               if (status == 'duplication') {
                 joinController.nickNameController.text = '';
-                Get.snackbar('알림', '중복된 닉네임입니다. 다른 닉네임을 입력해주세요.',
-                    snackPosition: SnackPosition.BOTTOM, duration: const Duration(seconds: 3));
+                failDialog('알림', '중복된 닉네임입니다. 다른 닉네임을 입력해주세요.');
                 return;
               }
               if (status == '예외발생') {
-                Get.snackbar('알림', '닉네임을 확인하지 못했습니다. 잠시 후 다시 시도해주세요.',
-                    snackPosition: SnackPosition.BOTTOM, duration: const Duration(seconds: 3));
+                failDialog('알림', '닉네임을 확인하지 못했습니다. 잠시 후 다시 시도해주세요.');
                 return;
               }
               if (status != 'available') return; // 인터넷 연결 없음 (안내창은 nicknameCheckService가 띄움)

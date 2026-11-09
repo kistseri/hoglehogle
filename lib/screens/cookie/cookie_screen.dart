@@ -141,18 +141,31 @@ class _CookieScreenState extends State<CookieScreen> {
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeOutBack,
                       builder: (context, value, child) => Transform.scale(scale: value, child: child),
-                      child: Text(
-                        text,
-                        style: TextStyle(
-                          fontSize: d(text.length <= 1 ? 80 : (text.length <= 3 ? 56 : 44)),
-                          fontWeight: FontWeight.w900,
-                          color: mFontYellow,
-                          shadows: [
-                            for (final o in const [Offset(2, 2), Offset(-2, -2), Offset(2, -2), Offset(-2, 2)])
-                              Shadow(color: mFontBrown, offset: o * sc.s),
+                      // 기본 폰트(NotoSansKR-Regular)에 w900 + 대각선 그림자로 테두리를 흉내 내면 글자가 깨져 보여서
+                      // 굵은 단일 폰트(BMJUA)에 실제 외곽선(stroke)을 깔고 그 위에 채운 글자를 겹침
+                      child: Builder(builder: (context) {
+                        final fontSize = d(text.length <= 1 ? 80 : (text.length <= 3 ? 56 : 44));
+                        return Stack(
+                          children: [
+                            Text(
+                              text,
+                              style: TextStyle(
+                                fontSize: fontSize,
+                                fontFamily: 'BMJUA',
+                                foreground: Paint()
+                                  ..style = PaintingStyle.stroke
+                                  ..strokeWidth = 6 * sc.s
+                                  ..strokeJoin = StrokeJoin.round
+                                  ..color = mFontBrown,
+                              ),
+                            ),
+                            Text(
+                              text,
+                              style: TextStyle(fontSize: fontSize, fontFamily: 'BMJUA', color: mFontYellow),
+                            ),
                           ],
-                        ),
-                      ),
+                        );
+                      }),
                     ),
                   );
                 }),
@@ -179,7 +192,7 @@ class _CookieScreenState extends State<CookieScreen> {
 
   @override
   void dispose() {
-    music.stopBackgroundMusic();
+    music.stopBackgroundMusic('cookie'); // 홈으로 돌아가며 홈이 다시 튼 음악은 그대로
     super.dispose();
   }
 }

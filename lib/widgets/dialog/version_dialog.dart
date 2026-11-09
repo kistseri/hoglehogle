@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:hoho_hanja/_core/colors.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:hoho_hanja/widgets/dialog/dialog.dart';
 
 Future<void> versionDialog(String platform) async {
   // iOS는 SystemNavigator.pop()으로 앱이 종료되지 않아 '취소'를 누르면 업데이트 없이 그대로 쓸 수 있었음.
@@ -29,7 +30,7 @@ Future<void> versionDialog(String platform) async {
       if (await canLaunchUrl(Uri.parse(url))) {
         await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
       } else {
-        Get.snackbar('오류', '스토어로 이동할 수 없습니다.');
+        failDialog('오류', '스토어로 이동할 수 없습니다.');
       }
       if (!isIos) SystemNavigator.pop();
     },

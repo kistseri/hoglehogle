@@ -31,8 +31,20 @@ class ContentsData {
 class ContentsDataController extends GetxController {
   List<ContentsData> _contentsDataList = <ContentsData>[]; // 화면이 값을 지켜보지 않고 열기 전에 넣으므로 일반 List + update() (C-38)
 
+  // 받은 급수 것만 바꾸고 다른 급수 것은 그대로 둠
+  // (급수를 빨리 바꿔 이전 급수 응답이 늦게 와도 지금 급수 정보를 지우지 않도록)
   void setContentsDataList(List<ContentsData> contentsDataList) {
-    _contentsDataList = contentsDataList;
+    final phases = contentsDataList.map((c) => c.phase).toSet();
+    _contentsDataList = [
+      ..._contentsDataList.where((c) => !phases.contains(c.phase)),
+      ...contentsDataList,
+    ];
+    update();
+  }
+
+  // 로그아웃·탈퇴 때 (다음 계정이 이전 계정의 잠금 정보로 콘텐츠에 들어가지 않도록)
+  void clear() {
+    _contentsDataList = [];
     update();
   }
 
