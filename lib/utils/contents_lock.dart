@@ -49,27 +49,40 @@ Future<void> contentsLock(phase) async {
   }
 }
 
-// 컨텐츠 open
-Future<void> contentsUnlock(String phase) async {
+bool _unlocking = false;
+
+// 컨텐츠 open. 성공하면 true (잠금 해제 창은 부른 쪽에서 닫음)
+// '잠금해제' 연타로 다이아가 두 번 빠지지 않도록 요청 중에는 무시
+Future<bool> contentsUnlock(String phase) async {
+  if (_unlocking) return false;
+  _unlocking = true;
+  try {
+    return await _unlock(phase);
+  } finally {
+    _unlocking = false;
+  }
+}
+
+Future<bool> _unlock(String phase) async {
   final connectivityController = Get.put(ConnectivityController());
   final logincontroller = Get.put(LoginDataController(), permanent: true);
 
   if (!connectivityController.isConnected.value) {
     failDialog("연결 실패", "인터넷 연결을 확인해주세요");
-    return;
+    return false;
   }
 
   final id = logincontroller.userId;
   if (id == null) {
     Logger().w('contentsUnlock: 로그인 정보 없음');
-    return;
+    return false;
   }
 
   // 요청·응답 처리를 공통 함수로 (C-17)
   final result = await postJson(dotenv.get('CONTENTS_UNLOCK_URL'), {'id': id, 'phase': phase});
   if (result == null) {
     failDialog(networkFailTitle, networkFailMessage);
-    return;
+    return false;
   }
 
   final resultValue = result['result'];
@@ -77,10 +90,13 @@ Future<void> contentsUnlock(String phase) async {
   if (resultValue == "0000") {
     await myGoodsService();
     await contentsLock(phase);
-    Get.back();
+    return true;
   }
   // 다이아가 부족할 때("9999") → 상점 상품 불러오기
   else if (resultValue == '9999') {
     await productService();
+  } else {
+    failDialog('잠금 해제 실패', '${result['message'] ?? '잠시 후 다시 시도해주세요.'}');
   }
+  return false;
 }

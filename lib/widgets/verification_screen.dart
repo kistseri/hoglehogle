@@ -165,9 +165,7 @@ class ConfirmButton extends StatelessWidget {
     return AuthButton(
       text: text,
       color: mBtnActive,
-      onTap: () {
-        verificationService(controller.code, id, isJoin);
-      },
+      onTap: () => verificationService(controller.code, id, isJoin),
     );
   }
 }

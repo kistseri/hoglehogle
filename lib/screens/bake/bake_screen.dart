@@ -111,7 +111,7 @@ class _BakeScreenState extends State<BakeScreen> {
 
   @override
   void dispose() {
-    music.stopBackgroundMusic();
+    music.stopBackgroundMusic('bakery'); // 홈으로 돌아가며 홈이 다시 튼 음악은 그대로
     super.dispose();
   }
 }

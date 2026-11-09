@@ -159,7 +159,17 @@ void showUnlockDialog(phase) {
                   child: Row(
                     children: [
                       button('취소', mBtnBack, () => Get.back()),
-                      button('잠금해제', primaryColor, () => contentsUnlock(phase)),
+                      button('잠금해제', primaryColor, () async {
+                        if (!await contentsUnlock(phase) || !context.mounted) return;
+                        // 기다리는 사이 바깥을 눌러 이미 닫았으면 그대로 (홈 화면이 닫히지 않도록 이 창만 닫음)
+                        final route = ModalRoute.of(context);
+                        if (route == null || !route.isActive) return;
+                        if (route.isCurrent) {
+                          Navigator.of(context).pop();
+                        } else {
+                          Navigator.of(context).removeRoute(route);
+                        }
+                      }),
                     ],
                   ),
                 ),

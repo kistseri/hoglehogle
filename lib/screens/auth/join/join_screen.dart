@@ -7,6 +7,7 @@ import 'package:hoho_hanja/screens/auth/join/join_widgets/join_check_box.dart';
 import 'package:hoho_hanja/screens/auth/join/join_widgets/join_textfield.dart';
 import 'package:hoho_hanja/services/auth/update/nickname_check_service.dart';
 import 'package:hoho_hanja/utils/design_scale.dart';
+import 'package:hoho_hanja/widgets/dialog/dialog.dart';
 
 class JoinTextController extends GetxController {
   TextEditingController emailController = TextEditingController();
@@ -39,12 +40,7 @@ class _JoinScreenState extends State<JoinScreen> {
           final status = await nicknameCheckService('join', nickName);
           if (status == 'duplication') {
             joinController.nickNameController.text = '';
-            Get.snackbar(
-              '알림',
-              '중복된 닉네임입니다.',
-              snackPosition: SnackPosition.BOTTOM,
-              duration: const Duration(seconds: 3),
-            );
+            failDialog('알림', '중복된 닉네임입니다.');
           }
         }
       }

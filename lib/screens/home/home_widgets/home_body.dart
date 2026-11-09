@@ -137,10 +137,11 @@ class _HomeBodyState extends State<HomeBody> {
     );
   }
 
-  bool _tracingBusy = false; // 따라쓰기 연타 방지
+  // 콘텐츠 하나를 여는 중이면 다른 타일도 무시 (두 손가락으로 두 타일을 동시에 눌러 화면이 두 개 열리지 않도록)
+  bool _busy = false;
 
   Future<void> _onTracing() async {
-    if (_tracingBusy) return;
+    if (_busy) return;
     // 잠금 정보를 아직 못 받았으면(불러오기 실패·급수 바꾸는 중) 들어가지 않음
     final tracing = contentsData.contentsDataList.firstWhereOrNull((content) => content.code == contentsCodes['tracing'] && content.phase == grade);
     if (tracing == null) {
@@ -148,19 +149,17 @@ class _HomeBodyState extends State<HomeBody> {
       return;
     }
 
-    _tracingBusy = true;
+    _busy = true;
     try {
       await connectInfo(contentsCodes['tracing']);
       await tracingBodyService(grade, tracing.openPage, isContentOpen(grade));
     } finally {
-      _tracingBusy = false;
+      _busy = false;
     }
   }
 
-  bool _matchingBusy = false; // 맞추기 연타 방지
-
   Future<void> _onMatching() async {
-    if (_matchingBusy) return;
+    if (_busy) return;
     // 잠금 정보를 아직 못 받았으면(불러오기 실패·급수 바꾸는 중) 들어가지 않음
     final matching = contentsData.contentsDataList.firstWhereOrNull((content) => content.code == contentsCodes['matching'] && content.phase == grade);
     if (matching == null) {
@@ -168,12 +167,12 @@ class _HomeBodyState extends State<HomeBody> {
       return;
     }
 
-    _matchingBusy = true;
+    _busy = true;
     try {
       await connectInfo(contentsCodes['matching']);
       await matchingBodyService(grade, matching.openPage, isContentOpen(grade));
     } finally {
-      _matchingBusy = false;
+      _busy = false;
     }
   }
 
@@ -187,11 +186,9 @@ class _HomeBodyState extends State<HomeBody> {
     }
   }
 
-  bool _defineBusy = false; // 뜻 찾기 연타 방지
-
   Future<void> _onDefine() async {
-    if (_defineBusy) return;
-    _defineBusy = true;
+    if (_busy) return;
+    _busy = true;
     try {
       if (isContentOpen(grade)) {
         await connectInfo(contentsCodes['define']);
@@ -200,15 +197,13 @@ class _HomeBodyState extends State<HomeBody> {
         await _unlockOrPreparing('DEFINE_URL');
       }
     } finally {
-      _defineBusy = false;
+      _busy = false;
     }
   }
 
-  bool _bakeBusy = false; // 베이커리 연타 방지
-
   Future<void> _onBake() async {
-    if (_bakeBusy) return;
-    _bakeBusy = true;
+    if (_busy) return;
+    _busy = true;
     try {
       if (isContentOpen(grade)) {
         await connectInfo(contentsCodes['bake']);
@@ -217,15 +212,13 @@ class _HomeBodyState extends State<HomeBody> {
         await _unlockOrPreparing('BAKE_URL');
       }
     } finally {
-      _bakeBusy = false;
+      _busy = false;
     }
   }
 
-  bool _cookieBusy = false; // 쿠키 연타 방지
-
   Future<void> _onCookie() async {
-    if (_cookieBusy) return;
-    _cookieBusy = true;
+    if (_busy) return;
+    _busy = true;
     try {
       if (isContentOpen(grade)) {
         await connectInfo(contentsCodes['cookie']);
@@ -234,15 +227,13 @@ class _HomeBodyState extends State<HomeBody> {
         await _unlockOrPreparing('COOKIE_URL');
       }
     } finally {
-      _cookieBusy = false;
+      _busy = false;
     }
   }
 
-  bool _idiomBusy = false; // 한자성어 연타 방지
-
   Future<void> _onIdiom() async {
-    if (_idiomBusy) return;
-    _idiomBusy = true;
+    if (_busy) return;
+    _busy = true;
     try {
       if (isContentOpen(grade)) {
         await connectInfo(contentsCodes['idiom']);
@@ -251,7 +242,7 @@ class _HomeBodyState extends State<HomeBody> {
         await _unlockOrPreparing('IDIOM_URL');
       }
     } finally {
-      _idiomBusy = false;
+      _busy = false;
     }
   }
 

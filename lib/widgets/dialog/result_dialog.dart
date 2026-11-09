@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hoho_hanja/_core/colors.dart';
-import 'package:hoho_hanja/screens/home/home_screen.dart';
 import 'package:hoho_hanja/services/auth/my_goods_service.dart';
 import 'package:hoho_hanja/utils/design_scale.dart';
 import 'package:lottie/lottie.dart';
+import 'package:hoho_hanja/widgets/dialog/dialog.dart';
 
 // 결과창 (시안: 360 x 720 휴대폰 기준)
 // 화면 가운데에 280 x 360 카드, 그 주위에 장식 아이콘. 모두 배율 하나로만 키우거나 줄여서
@@ -32,6 +32,7 @@ void resultDialog(BuildContext context, int correctAnswers, int totalQuestions, 
     {Future<String> Function()? onRetry}) {
   String coinText = _coinText(coin);
   bool saving = false;
+  bool leaving = false; // '메인으로'를 이미 눌렀는지
 
   showGeneralDialog(
     context: context,
@@ -78,13 +79,17 @@ void resultDialog(BuildContext context, int correctAnswers, int totalQuestions, 
           coinText = _coinText(newCoin);
         });
         if (coinText == '-') {
-          Get.snackbar('저장 실패', '인터넷 연결을 확인하고 다시 시도해주세요.', snackPosition: SnackPosition.BOTTOM);
+          failDialog('저장 실패', '인터넷 연결을 확인하고 다시 시도해주세요.');
         }
       }
 
       Future<void> goHome() async {
+        if (leaving) return; // 연타 방지
+        leaving = true;
         await myGoodsService();
-        Get.offAll(() => const HomeScreen());
+        // 홈을 새로 만들지 않고 아래 깔린 홈까지 닫기만 함
+        // (새로 만들면 공지·잠금·랭킹·마이룸 요청이 매번 다시 나가고 공지 팝업도 다시 뜸)
+        Get.until((route) => route.isFirst);
       }
 
       return PopScope(

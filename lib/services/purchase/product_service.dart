@@ -7,8 +7,15 @@ import 'package:hoho_hanja/utils/network_check.dart';
 import 'package:hoho_hanja/widgets/dialog/dialog.dart';
 import 'package:logger/logger.dart';
 
-// 상품 정보 불러오기
-Future<void> productService() async {
+Future<void>? _running;
+
+// 상품 정보 불러오기 → 상점 화면
+// 다이아 버튼 연타·여러 곳에서 동시에 불러도 요청·화면 이동은 한 번만
+Future<void> productService() {
+  return _running ??= _load().whenComplete(() => _running = null);
+}
+
+Future<void> _load() async {
   final connectivityController = Get.put(ConnectivityController());
   if (!connectivityController.isConnected.value) {
     failDialog("연결 실패", "인터넷 연결을 확인해주세요");

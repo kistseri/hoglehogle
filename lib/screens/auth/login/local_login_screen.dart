@@ -292,7 +292,7 @@ class _LocalLoginScreenState extends State<LocalLoginScreen> {
         },
       );
     } else {
-      loginService(
+      await loginService(
         setLoginDTO(),
         autoLoginCheckController.isChecked.value,
       );

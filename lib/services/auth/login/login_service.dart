@@ -15,8 +15,21 @@ import 'package:hoho_hanja/widgets/dialog/loading_dialog.dart';
 import 'package:logger/logger.dart';
 
 
+// 로그인 버튼 연타·자동 로그인과 겹쳐도 요청은 한 번만
+bool _loggingIn = false;
+
 // 로그인 요청
 Future<void> loginService(LoginDTO loginDTO, bool isAutoLoginChecked) async {
+  if (_loggingIn) return;
+  _loggingIn = true;
+  try {
+    await _login(loginDTO, isAutoLoginChecked);
+  } finally {
+    _loggingIn = false;
+  }
+}
+
+Future<void> _login(LoginDTO loginDTO, bool isAutoLoginChecked) async {
   final connectivityController = Get.put(ConnectivityController());
   final LoginController loginController = Get.put(LoginController());
 

@@ -57,7 +57,7 @@ class _EmailFindScreenState extends State<EmailFindScreen> {
                   AuthButton(
                     text: '인증번호 받기',
                     color: mBtnActive,
-                    onTap: () {
+                    onTap: () async {
                       if (phoneController.text.isEmpty) {
                         Get.defaultDialog(
                           title: '아이디 찾기 실패',
@@ -69,7 +69,7 @@ class _EmailFindScreenState extends State<EmailFindScreen> {
                           },
                         );
                       } else {
-                        emailFindService(phoneController.text);
+                        await emailFindService(phoneController.text);
                       }
                     },
                   ),

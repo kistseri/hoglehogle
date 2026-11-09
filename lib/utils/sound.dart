@@ -5,10 +5,15 @@ class BackgroundMusicController {
   final AudioPlayer _audioPlayer = AudioPlayer();
   double _volume = 0;
 
+  String? _page; // 지금 틀어 둔 배경음 (없으면 null)
+
   Future<void> playBackgroundMusic(String page) async {
+    _page = page;
     // 파일이 없거나 오디오 장치 오류가 나도 화면 진입은 계속되도록 (C-30)
     try {
       await _audioPlayer.setAsset('assets/audio/bgm/$page.mp3');
+      // 불러오는 사이 다른 화면이 음악을 끄거나 바꿨으면 재생하지 않음
+      if (_page != page) return;
       await _audioPlayer.setLoopMode(LoopMode.one);
       await _audioPlayer.setVolume(_volume);
       _audioPlayer.play();
@@ -17,8 +22,20 @@ class BackgroundMusicController {
     }
   }
 
-  void stopBackgroundMusic() {
+  /// [page]를 주면 그 음악이 아직 나오고 있을 때만 끔.
+  /// 게임 화면은 닫히는 애니메이션이 끝난 뒤 dispose되므로, 그사이 홈이 다시 튼 홈 음악까지 끄지 않도록 자기 이름을 넘김.
+  void stopBackgroundMusic([String? page]) {
+    if (page != null && page != _page) return;
+    _page = null;
     _audioPlayer.stop();
+  }
+
+  /// 앱이 백그라운드로 갈 때 잠깐 멈춤 (어느 화면이든 지금 음악 그대로)
+  void pauseForBackground() => _audioPlayer.pause();
+
+  /// 앱으로 돌아오면 멈췄던 음악을 다시 (게임 중이면 게임 음악, 끈 상태면 그대로 조용히)
+  void resumeFromBackground() {
+    if (_page != null) _audioPlayer.play();
   }
 
   void setVolume(double volume) {

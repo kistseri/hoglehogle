@@ -10,6 +10,8 @@ import 'package:hoho_hanja/services/auth/login/social/kakao_service.dart';
 import 'package:hoho_hanja/utils/design_scale.dart';
 import 'package:hoho_hanja/widgets/social_login_button.dart';
 
+bool _socialBusy = false; // 소셜 로그인 진행 중 (연타 방지)
+
 Widget socialLogin(BuildContext context, DesignScale sc) {
   return Padding(
     padding: EdgeInsets.all(sc.d(32)),
@@ -21,20 +23,27 @@ Widget socialLogin(BuildContext context, DesignScale sc) {
             padding: EdgeInsets.all(sc.d(8)),
             child: getPlatform(platform, sc),
           ),
-          onTap: () {
-            switch (platform) {
-              case "local":
-                Get.to(() => const LocalLoginScreen());
-                break;
-              case "kakao":
-                kakaoLogin();
-                break;
-              case "google":
-                googleLogin();
-                break;
-              case "apple":
-                appleLogin();
-                break;
+          onTap: () async {
+            // 로그인 진행 중에는 다른 버튼·같은 버튼을 다시 눌러도 무시 (홈 화면이 두 번 열리지 않도록)
+            if (_socialBusy) return;
+            _socialBusy = true;
+            try {
+              switch (platform) {
+                case "local":
+                  Get.to(() => const LocalLoginScreen());
+                  break;
+                case "kakao":
+                  await kakaoLogin();
+                  break;
+                case "google":
+                  await googleLogin();
+                  break;
+                case "apple":
+                  await appleLogin();
+                  break;
+              }
+            } finally {
+              _socialBusy = false;
             }
           },
         );

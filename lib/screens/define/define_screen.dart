@@ -363,7 +363,7 @@ class _DefineScreenState extends State<DefineScreen> {
 
   @override
   void dispose() {
-    music.stopBackgroundMusic();
+    music.stopBackgroundMusic('quiz'); // 홈으로 돌아가며 홈이 다시 튼 음악은 그대로
     super.dispose();
   }
 }
